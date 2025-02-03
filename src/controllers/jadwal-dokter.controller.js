@@ -1,17 +1,12 @@
 import { JadwalDokterService } from "../services/jadwal-dokter.service.js";
-
 export class JadwalDokterController {
   static async findAll(req, res, next) {
     try {
-      const faskes_uuid = req.author.faskesUuid;
-      const { result, paginationProperties } =
-        await JadwalDokterService.findAll(faskes_uuid, req.body);
+      // Kita asumsi bahwa faskesUuid sudah pasti ada karena sudah dihandle oleh auth middleware sdk
+      const { faskesUuid } = req.author;
+      const result = await JadwalDokterService.findAll(faskesUuid, req.query);
 
-      res.status(200).json({
-        message: "Data berhasil ditemukan",
-        properties: paginationProperties,
-        payload: result,
-      });
+      res.status(200).json(result);
     } catch (err) {
       next(err);
     }

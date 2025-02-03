@@ -30,4 +30,6 @@ export class CommonSchema {
     if (minute < 0 || minute > 59) return false;
     return true;
   });
+
+  static STRING_TO_NUMBER = z.string().regex(/^\d+$/).transform(Number);
 }

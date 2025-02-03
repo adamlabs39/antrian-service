@@ -7,17 +7,19 @@ export class JadwalDokterSchema {
    *
    * dokter: zahro
    * poli: poli gigi
-   * start_date:  01-01-2024
-   * end_date: 02-03-2024
-   * status: aktif
+   * aktif: true
    */
   static FILTER_QUERY = z
     .object({
       dokter: z.string().optional(),
       poli: z.string().optional(),
-      start_date: CommonSchema.STRING_DATE.optional(),
-      end_date: CommonSchema.STRING_DATE.optional(),
-      status: CommonSchema.ACTIVE_ENUM.optional(),
+      aktif: z.preprocess((val) => {
+        if (val === "true") return true;
+        if (val === "false") return false;
+        return undefined;
+      }, z.boolean().optional()),
+      page: CommonSchema.STRING_TO_NUMBER.optional(),
+      page_size: CommonSchema.STRING_TO_NUMBER.optional(),
     })
     .strict();
 

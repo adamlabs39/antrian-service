@@ -2,8 +2,7 @@ import JwtUtils from "./helpers/jwt-utils.js";
 
 import { createClient } from "redis";
 import "dotenv/config";
-
-const UUID_1 = "0194be13-98de-78e3-a3f3-5ead1ec373ce";
+import { UUIDS } from "./libs/constants.js";
 
 function generateRedisKeyByJwtToken(token) {
   const [, , signature] = token.split(".");
@@ -34,7 +33,7 @@ redisClient.on("error", (err) => console.error("❌ Redis error:", err));
 
 async function generateJwt() {
   const payload = {
-    faskesUuid: UUID_1,
+    faskesUuid: UUIDS[0],
   };
 
   try {

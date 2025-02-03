@@ -6,7 +6,6 @@ import database from "./configurations/db.js";
 import { routes } from "./routes/routes.js";
 import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import cors from "cors";
-import { MODELS } from "./models/models-sync.js";
 import authorizationSdk from "@adameds/authorization-sdk";
 
 // See is the database is connected.
@@ -57,10 +56,6 @@ app.use(errorHandler);
 
 // Start the server.
 app.listen(APPLICATION_PORT, APPLICATION_HOST, async () => {
-  for (const model of MODELS) {
-    await model.sync({ alter: false, force: true });
-  }
-
   // Log telling that the server is successfully running.
   console.log(
     `Server is running on http://${APPLICATION_HOST}:${APPLICATION_PORT}`

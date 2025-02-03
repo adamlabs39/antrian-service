@@ -1,3 +1,5 @@
+import { BadRequestException } from "../exceptions/bad-request.exception.js";
+
 export default class ZodValidator {
   static validate(schema, objectValidate) {
     try {
