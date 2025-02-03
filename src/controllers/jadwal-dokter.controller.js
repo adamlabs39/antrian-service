@@ -4,9 +4,16 @@ export class JadwalDokterController {
     try {
       // Kita asumsi bahwa faskesUuid sudah pasti ada karena sudah dihandle oleh auth middleware sdk
       const { faskesUuid } = req.author;
-      const result = await JadwalDokterService.findAll(faskesUuid, req.query);
+      const { pagination, data } = await JadwalDokterService.findAll(
+        faskesUuid,
+        req.query
+      );
 
-      res.status(200).json(result);
+      res.status(200).json({
+        message: "Data berhasil ditampilkan",
+        properties: pagination,
+        payload: data,
+      });
     } catch (err) {
       next(err);
     }
