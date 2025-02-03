@@ -9,19 +9,17 @@ export class JadwalDokterSchema {
    * poli: poli gigi
    * aktif: true
    */
-  static FILTER_QUERY = z
-    .object({
-      dokter: z.string().optional(),
-      poli: z.string().optional(),
-      aktif: z.preprocess((val) => {
-        if (val === "true") return true;
-        if (val === "false") return false;
-        return undefined;
-      }, z.boolean().optional()),
-      page: CommonSchema.STRING_TO_NUMBER.optional(),
-      page_size: CommonSchema.STRING_TO_NUMBER.optional(),
-    })
-    .strict();
+  static FILTER_QUERY = z.object({
+    dokter: z.string().optional(),
+    poli: z.string().optional(),
+    aktif: z.preprocess((val) => {
+      if (val === "true") return true;
+      if (val === "false") return false;
+      return undefined;
+    }, z.boolean().optional()),
+    page: CommonSchema.STRING_TO_NUMBER.optional(),
+    page_size: CommonSchema.STRING_TO_NUMBER.optional(),
+  });
 
   /**
    * e.g.
