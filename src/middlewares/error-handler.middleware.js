@@ -30,20 +30,21 @@ export const errorHandler = (err, req, res, next) => {
   const message = err.message || "Internal Server Error";
 
   res.status(status).json({
-    message,
+    message: "Data gagal ditampilkan",
     errors: [
       {
-        message: statusCodes[status] || statusCodes[500],
+        type: statusCodes[status],
+        message,
       },
     ],
   });
 };
 
 const statusCodes = {
-  400: "Bad Request",
-  401: "Unauthorized",
-  403: "Forbidden",
-  404: "Not Found",
-  409: "Conflict",
-  500: "Internal Server Error",
+  400: "Request tidak valid",
+  401: "Tidak terautentikasi",
+  403: "Tidak diizinkan",
+  404: "Tidak ditemukan",
+  409: "Konflik",
+  500: "Kesalahan internal server",
 };
