@@ -1,14 +1,14 @@
-import { uuidv7 } from "uuidv7";
-import { UUIDS } from "../libs/constants.js";
+import { PractitionerModel, PegawaiModel } from "@adameds/model-sdk/datamaster";
 import moment from "moment";
-import { PegawaiModel } from "@adameds/model-sdk/datamaster";
-import { PractitionerModel } from "@adameds/model-sdk/datamaster";
+import { uuidv7 } from "uuidv7";
 
 export class PractitionerSeeder {
   static async seed() {
     console.log("🌱 Seeding Practitioner...");
 
-    const pegawaiList = await PegawaiModel.findAll({ attributes: ["uuid"] });
+    const pegawaiList = await PegawaiModel.findAll({
+      attributes: ["uuid", "faskes_uuid"],
+    });
 
     if (!pegawaiList.length) {
       console.error("❌ No pegawai found! Seeding aborted.");
@@ -17,14 +17,11 @@ export class PractitionerSeeder {
 
     const practitioners = [];
 
-    for (let i = 0; i < 10; i++) {
-      const pegawai =
-        pegawaiList[Math.floor(Math.random() * pegawaiList.length)];
-      const faskesUuid = UUIDS[Math.floor(Math.random() * UUIDS.length)];
-
+    for (const pegawai of pegawaiList) {
+      // Ensure each Pegawai has a Practitioner
       practitioners.push({
         uuid: uuidv7(),
-        faskes_uuid: faskesUuid,
+        faskes_uuid: pegawai.faskes_uuid, // Use the same faskes as Pegawai
         pegawai_uuid: pegawai.uuid,
         sip: `SIP-${Math.floor(1000 + Math.random() * 9000)}`,
         str: `STR-${Math.floor(1000 + Math.random() * 9000)}`,

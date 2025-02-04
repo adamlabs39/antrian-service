@@ -22,7 +22,7 @@ export class CommonSchema {
   });
 
   static TIME = z.string().refine((val) => {
-    const time = val.split(".");
+    const time = val.split(":");
     const hour = parseInt(time[0]);
     const minute = parseInt(time[1]);
     if (isNaN(hour) || isNaN(minute)) return false;
@@ -31,5 +31,9 @@ export class CommonSchema {
     return true;
   });
 
-  static STRING_TO_NUMBER = z.string().regex(/^\d+$/).transform(Number);
+  static STRING_MUST_NUMBER = z.string().regex(/^\d+$/);
+
+  static STRING_TO_NUMBER = this.STRING_MUST_NUMBER.transform((val) =>
+    isNaN(Number(val)) ? undefined : Number(val)
+  );
 }

@@ -1,4 +1,7 @@
 import { ZodError } from "zod";
+import jwt from "jsonwebtoken"; // Correct import for CommonJS module
+
+const { JsonWebTokenError, TokenExpiredError, NotBeforeError } = jwt;
 
 /**
  * Thrown Error will be caught here.
@@ -11,7 +14,7 @@ export const errorHandler = (err, req, res, next) => {
     const status = 400;
 
     let formattedErrors = "";
-    err.errors.map((error) => {
+    err.errors.forEach((error) => {
       formattedErrors += `${error.message}`;
       if (error.path.length > 0) {
         formattedErrors += ` at ${error.path.join(".")}, `;
@@ -20,20 +23,46 @@ export const errorHandler = (err, req, res, next) => {
 
     res.status(status).json({
       success: false,
-      message: formattedErrors,
+      message: formattedErrors.trim(),
       data: null,
     });
     return;
   }
 
-  const status = err.status || 500;
+  if (
+    err instanceof JsonWebTokenError ||
+    err instanceof TokenExpiredError ||
+    err instanceof NotBeforeError
+  ) {
+    const status = 401;
+    let message = "Token tidak valid";
+
+    if (err instanceof TokenExpiredError) {
+      message = "Token sudah kedaluwarsa";
+    } else if (err instanceof NotBeforeError) {
+      message = "Token belum berlaku";
+    }
+
+    res.status(status).json({
+      message: "Authorization token tidak valid",
+      errors: [
+        {
+          type: statusCodes[401],
+          message,
+        },
+      ],
+    });
+    return;
+  }
+
+  const status = err.status || err.code || 500;
   const message = err.message || "Internal Server Error";
 
   res.status(status).json({
     message: "Data gagal ditampilkan",
     errors: [
       {
-        type: statusCodes[status],
+        type: statusCodes[status] || "Kesalahan tidak diketahui",
         message,
       },
     ],

@@ -21,6 +21,11 @@ export class JadwalDokterSchema {
     page_size: CommonSchema.STRING_TO_NUMBER.optional(),
   });
 
+  static DOCTOR_LOCATION_UUID_PARAM = z.object({
+    doctor_uuid: CommonSchema.UUID_PARAM,
+    location_uuid: CommonSchema.UUID_PARAM,
+  });
+
   /**
    * e.g.
    * {
@@ -41,12 +46,45 @@ export class JadwalDokterSchema {
         })
         .int()
         .min(1)
-        .max(7),
+        .max(7)
+        .transform((val) => {
+          const days = [
+            "Senin",
+            "Selasa",
+            "Rabu",
+            "Kamis",
+            "Jumat",
+            "Sabtu",
+            "Minggu",
+          ];
+          return days[val - 1];
+        }),
       start_time: CommonSchema.TIME,
       end_time: CommonSchema.TIME,
       durasi_pelayanan: z.number().int().positive(),
       kuota_jkn: z.number().int().positive(),
       kuota_non_jkn: z.number().int().positive(),
+      aktif: z.boolean(),
     })
     .strict();
+
+  static CREATE = z
+    .object({
+      poliklinik_uuid: z.string().uuid(),
+      dokter_uuid: z.string().uuid(),
+      jadwal: z.array(JadwalDokterSchema.JADWAL_DETAIL),
+    })
+    .strict();
+
+  static UPDATE = z.object({
+    added: z.array(JadwalDokterSchema.JADWAL_DETAIL).optional(),
+    deleted: z.array(z.string().uuid()).optional(),
+    updated: z
+      .array(
+        JadwalDokterSchema.JADWAL_DETAIL.partial().extend({
+          uuid: z.string().uuid(),
+        })
+      )
+      .optional(),
+  });
 }
