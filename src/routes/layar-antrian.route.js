@@ -5,10 +5,13 @@ export const layarAntrianRouter = express.Router();
 
 layarAntrianRouter.get("/", LayarAntrianController.findAll);
 
-layarAntrianRouter.get("/:layarAntrianUUID", LayarAntrianController.findOne);
+layarAntrianRouter.get("/:layar_antrian_uuid", LayarAntrianController.findOne);
 
 layarAntrianRouter.post("/", LayarAntrianController.create);
 
-layarAntrianRouter.put("/:layarAntrianUUID", LayarAntrianController.update);
+layarAntrianRouter.put("/:layar_antrian_uuid", LayarAntrianController.update);
 
-layarAntrianRouter.delete("/:layarAntrianUUID", LayarAntrianController.delete);
+layarAntrianRouter.delete(
+  "/:layar_antrian_uuid",
+  LayarAntrianController.delete
+);

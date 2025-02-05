@@ -1,4 +1,6 @@
-import { LayarAntrianSchema } from "../validations/layar-antrian.schema.js";
+import { NotFoundException } from "../exceptions/not-found.exception.js";
+import { LayarAntrianRepository } from "../repositories/layar-antrian.repository.js";
+import { LayarAntrianSchema } from "../validations/layar-antrian.validation.js";
 import ZodValidator from "../validations/zod.validation.js";
 
 export class LayarAntrianService {
@@ -24,5 +26,23 @@ export class LayarAntrianService {
     }
 
     return { pagination, data };
+  }
+
+  static async findOne({ faskesUuid, params }) {
+    const { uuid } = ZodValidator.validate(
+      LayarAntrianSchema.UUID_PARAM,
+      params
+    );
+
+    const data = await LayarAntrianRepository.findOne({
+      faskesUuid,
+      uuid,
+    });
+
+    if (!data) {
+      throw new NotFoundException("Data tidak ditemukan");
+    }
+
+    return data;
   }
 }

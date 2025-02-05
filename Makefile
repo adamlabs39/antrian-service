@@ -1,3 +1,5 @@
+.PHONY: run jwt start-redis seed
+
 run:
 	@nodemon
 
@@ -6,3 +8,6 @@ jwt:
 
 start-redis:
 	@redis-server  ./redis.conf --port 6380
+
+seed: 
+	@node ./src/seed.js

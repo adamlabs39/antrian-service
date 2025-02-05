@@ -3,6 +3,7 @@ import database from "../configurations/db.js";
 import { hookModel } from "./hook-model.js";
 import { LokasiModel } from "@adameds/model-sdk/datamaster";
 import LayarAntrianModel from "./layar-antrian.model.js";
+import { uuidv7 } from "uuidv7";
 
 export default class LayarAntrianPoliModel extends Model {}
 
@@ -16,7 +17,11 @@ LayarAntrianPoliModel.init(
     uuid: {
       type: DataTypes.STRING(255),
       primaryKey: true,
+      defaultValue: function () {
+        return uuidv7();
+      },
       allowNull: false,
+      unique: true,
     },
     faskesUuid: {
       type: DataTypes.STRING(255),

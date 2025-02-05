@@ -1,4 +1,6 @@
 import { JadwalDokterSeeder } from "./jadwal-dokter.seeder.js";
+import { LayarAntrianPoliSeeder } from "./layar-antrian-poli.seeder.js";
+import { LayarAntrianSeeder } from "./layar-antrian.seeder.js";
 import { LokasiSeeder } from "./lokasi.seeder.js";
 import { PegawaiSeeder } from "./pegawai.seeder.js";
 import { PractitionerSeeder } from "./practitioner.seeder.js";
@@ -6,6 +8,8 @@ import { PractitionerSeeder } from "./practitioner.seeder.js";
 export async function seed() {
   const seeders = [
     LokasiSeeder,
+    LayarAntrianSeeder,
+    LayarAntrianPoliSeeder,
     PegawaiSeeder,
     PractitionerSeeder,
     JadwalDokterSeeder,

@@ -1,6 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import database from "../configurations/db.js";
 import { hookModel } from "./hook-model.js";
+import { uuidv7 } from "uuidv7";
+import moment from "moment";
 
 export default class LayarAntrianModel extends Model {}
 

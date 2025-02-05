@@ -4,6 +4,8 @@ import {
   PractitionerPoliModel,
 } from "@adameds/model-sdk/datamaster";
 import { JadwalDokterModel } from "@adameds/model-sdk/antrian";
+import LayarAntrianModel from "./layar-antrian.model.js";
+import LayarAntrianPoliModel from "./layar-antrian-poli.model.js";
 
 PractitionerModel.hasMany(JadwalDokterModel, {
   foreignKey: "practitionerUuid",
@@ -11,10 +13,10 @@ PractitionerModel.hasMany(JadwalDokterModel, {
   constraints: false,
 });
 
-PractitionerModel.belongsToMany(LokasiModel, {
-  through: PractitionerPoliModel,
-  foreignKey: "practitioner_uuid",
-  otherKey: "lokasi_uuid",
-  as: "locations",
+LayarAntrianModel.belongsToMany(LokasiModel, {
+  through: LayarAntrianPoliModel,
+  foreignKey: "layarAntrianUuid",
+  otherKey: "lokasiUuid",
+  as: "location",
   constraints: false,
 });

@@ -36,4 +36,10 @@ export class CommonSchema {
   static STRING_TO_NUMBER = this.STRING_MUST_NUMBER.transform((val) =>
     isNaN(Number(val)) ? undefined : Number(val)
   );
+
+  static TRUE_FALSE_UNDEFINED_STRING = z.preprocess((val) => {
+    if (val === "true") return true;
+    if (val === "false") return false;
+    return undefined;
+  }, z.boolean().optional());
 }

@@ -5,6 +5,10 @@ export default class ZodValidator {
     try {
       return schema.parse(objectValidate);
     } catch (error) {
+      console.log(error);
+      if (!error.errors) {
+        throw new BadRequestException("Invalid request");
+      }
       const errorMessage = error.errors.map((err) => {
         return `${err.path} ${err.message}`;
       });

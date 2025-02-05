@@ -12,11 +12,7 @@ export class JadwalDokterSchema {
   static FILTER_QUERY = z.object({
     dokter: z.string().optional(),
     poli: z.string().optional(),
-    aktif: z.preprocess((val) => {
-      if (val === "true") return true;
-      if (val === "false") return false;
-      return undefined;
-    }, z.boolean().optional()),
+    aktif: CommonSchema.TRUE_FALSE_UNDEFINED_STRING.optional(),
     page: CommonSchema.STRING_TO_NUMBER.optional(),
     page_size: CommonSchema.STRING_TO_NUMBER.optional(),
   });
