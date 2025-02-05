@@ -1,3 +1,5 @@
+import moment from "moment";
+
 export const hookModel = {
   beforeCreate: (instance, options) => {
     const unixTimestamp = moment().unix();

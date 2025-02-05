@@ -53,6 +53,9 @@ AntrianModel.init(
     createdAt: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: function () {
+        return moment().unix();
+      },
     },
     updatedAt: {
       type: DataTypes.INTEGER,

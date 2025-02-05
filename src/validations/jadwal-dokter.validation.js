@@ -10,8 +10,24 @@ export class JadwalDokterSchema {
    * aktif: true
    */
   static FILTER_QUERY = z.object({
-    dokter: z.string().optional(),
-    poli: z.string().optional(),
+    dokter: z
+      .string()
+      .min(1, {
+        message: "Nama dokter tidak boleh kosong",
+      })
+      .max(255, {
+        message: "Nama dokter tidak bisa terlalu panjang!",
+      })
+      .optional(),
+    poli: z
+      .string()
+      .min(1, {
+        message: "Nama poliklinik tidak boleh kosong",
+      })
+      .max(255, {
+        message: "Nama poliklinik tidak bisa terlalu panjang!",
+      })
+      .optional(),
     aktif: CommonSchema.TRUE_FALSE_UNDEFINED_STRING.optional(),
     page: CommonSchema.STRING_TO_NUMBER.optional(),
     page_size: CommonSchema.STRING_TO_NUMBER.optional(),
@@ -66,8 +82,12 @@ export class JadwalDokterSchema {
 
   static CREATE = z
     .object({
-      poliklinik_uuid: z.string().uuid(),
-      dokter_uuid: z.string().uuid(),
+      poliklinik_uuid: z.string().uuid({
+        message: "poliklinik_uuid harus berupa UUID.",
+      }),
+      dokter_uuid: z.string().uuid({
+        message: "dokter_uuid harus berupa UUID.",
+      }),
       jadwal: z.array(JadwalDokterSchema.JADWAL_DETAIL),
     })
     .strict();

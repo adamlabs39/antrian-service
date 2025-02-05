@@ -28,4 +28,17 @@ export class PoliklinikRepository {
       },
     });
   }
+
+  static async findAllByPoliklinikUUIDs({ faskesUuid, poliklinikUuids }) {
+    return await LokasiModel.findAll({
+      raw: true,
+      nest: true,
+      where: {
+        faskes_uuid: faskesUuid,
+        uuid: poliklinikUuids,
+        is_poli: true,
+        deletedAt: null,
+      },
+    });
+  }
 }

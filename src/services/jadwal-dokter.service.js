@@ -220,12 +220,11 @@ export class JadwalDokterService {
           },
           camelCasedBody.updated
         );
-        const ret = await JadwalDokterRepository.bulkUpdate({
+        await JadwalDokterRepository.bulkUpdate({
           faskesUuid,
           jadwalDokterToBeUpdated: expectedPayload,
           transaction: tx,
         });
-        console.log(ret);
       }
 
       // Bulk create
@@ -239,13 +238,11 @@ export class JadwalDokterService {
           },
           camelCasedBody.added
         );
-        const ret = await JadwalDokterRepository.bulkCreate({
+        await JadwalDokterRepository.bulkCreate({
           faskesUuid,
           jadwalDokterToBeCreated: expectedPayload,
           transaction: tx,
         });
-
-        console.log(ret);
       }
     });
   }

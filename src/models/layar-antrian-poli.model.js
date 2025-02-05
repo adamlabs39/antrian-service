@@ -4,6 +4,7 @@ import { hookModel } from "./hook-model.js";
 import { LokasiModel } from "@adameds/model-sdk/datamaster";
 import LayarAntrianModel from "./layar-antrian.model.js";
 import { uuidv7 } from "uuidv7";
+import moment from "moment";
 
 export default class LayarAntrianPoliModel extends Model {}
 
@@ -38,6 +39,9 @@ LayarAntrianPoliModel.init(
     createdAt: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: function () {
+        return moment().unix();
+      },
     },
     updatedAt: {
       type: DataTypes.INTEGER,
