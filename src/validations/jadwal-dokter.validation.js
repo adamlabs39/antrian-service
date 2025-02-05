@@ -82,7 +82,7 @@ export class JadwalDokterSchema {
     updated: z
       .array(
         JadwalDokterSchema.JADWAL_DETAIL.partial().extend({
-          uuid: z.string().uuid(),
+          jadwal_dokter_uuid: z.string().uuid(),
         })
       )
       .optional(),

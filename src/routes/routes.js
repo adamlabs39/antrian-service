@@ -1,13 +1,19 @@
 import express from "express";
-import { JadwalDokterController } from "../controllers/jadwal-dokter.controller.js";
-import { jadwalDokterRoutes } from "./jadwal-dokter.route.js";
+import { jadwalDokterRouter } from "./jadwal-dokter.route.js";
+import { layarAntrianRouter } from "./layar-antrian.route.js";
 
-export const routes = express.Router();
+export const router = express.Router();
 
-routes.get("/health", (req, res) => res.status(200).json({ message: "OK" }));
+router.get("/health", (req, res) => res.status(200).json({ message: "OK" }));
 
 /**
  * Api Konfigurasi Jadwal Dokter
- * @ref
+ * @ref ./jadwal-dokter.route.js
  */
-routes.use("/jadwal-dokter", jadwalDokterRoutes);
+router.use("/jadwal-dokter", jadwalDokterRouter);
+
+/**
+ * Api Konfigurasi Layar Antrian
+ * @ref ./layar-antrian.route.js
+ */
+router.use("/layar-antrian", layarAntrianRouter);

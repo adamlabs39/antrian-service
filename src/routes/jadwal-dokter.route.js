@@ -1,18 +1,23 @@
 import express from "express";
 import { JadwalDokterController } from "../controllers/jadwal-dokter.controller.js";
 
-export const jadwalDokterRoutes = express.Router();
+export const jadwalDokterRouter = express.Router();
 
-jadwalDokterRoutes.get("/", JadwalDokterController.findAll);
+jadwalDokterRouter.get("/", JadwalDokterController.findAll);
 
-jadwalDokterRoutes.get(
+jadwalDokterRouter.get(
   "/:doctor_uuid/:location_uuid",
-  JadwalDokterController.findOneByDoctorAndLocation
+  JadwalDokterController.findAllByDoctorAndLocation
 );
 
-jadwalDokterRoutes.post("/", JadwalDokterController.create);
+jadwalDokterRouter.post("/", JadwalDokterController.create);
 
-jadwalDokterRoutes.put(
+jadwalDokterRouter.put(
   "/:doctor_uuid/:location_uuid",
   JadwalDokterController.updateByDoctorAndLocation
+);
+
+jadwalDokterRouter.delete(
+  "/:doctor_uuid/:location_uuid",
+  JadwalDokterController.deleteByDoctorAndLocation
 );

@@ -3,7 +3,7 @@ import express from "express";
 import { APPLICATION_HOST, APPLICATION_PORT } from "./configurations/env.js";
 import morgan from "morgan";
 import database from "./configurations/db.js";
-import { routes } from "./routes/routes.js";
+import { router } from "./routes/routes.js";
 import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import cors from "cors";
 import authorizationSdk from "@adameds/authorization-sdk";
@@ -51,7 +51,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(authorizationSdk([]));
 
 // Use the routes and error handler middleware.
-app.use(baseUrl, routes);
+app.use(baseUrl, router);
 app.use(errorHandler);
 
 // Start the server.

@@ -6,40 +6,40 @@ import {
   PegawaiModel,
   LokasiModel,
 } from "@adameds/model-sdk/datamaster";
-import { BadRequestException } from "../exceptions/bad-request.exception.js";
+import moment from "moment";
+import { FormatterService } from "../services/formatter.service.js";
 
 export class JadwalDokterRepository {
   /**
    *
-   * @TODO : Implement pagination (DONE)
-   * @TODO : return also the status of each jadwal returned. (DONE)
    */
-  static async findAll(faskes_uuid, filterQuery, page = 2, pageSize = 2) {
+  static async findAll({ faskesUuid, filters, page, pageSize }) {
     const whereClause = {
-      faskes_uuid,
+      faskes_uuid: faskesUuid,
       is_doctor: true,
+      deletedAt: null,
     };
 
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
 
-    if (filterQuery.dokter) {
+    if (filters.dokter) {
       whereClause["$pegawai.name$"] = {
-        [Op.iLike]: `%${filterQuery.dokter}%`,
+        [Op.iLike]: `%${filters.dokter}%`,
       };
     }
 
     /**
      *
      */
-    if (filterQuery.poli) {
+    if (filters.poli) {
       whereClause["$jadwal_dokter.lokasi.name$"] = {
-        [Op.iLike]: `%${filterQuery.poli}%`,
+        [Op.iLike]: `%${filters.poli}%`,
       };
     }
 
-    if (filterQuery.aktif !== undefined) {
-      whereClause["$jadwal_dokter.status$"] = filterQuery.aktif;
+    if (filters.aktif !== undefined) {
+      whereClause["$jadwal_dokter.status$"] = filters.aktif;
     }
 
     const { count, rows: result } = await PractitionerModel.findAndCountAll({
@@ -147,7 +147,11 @@ export class JadwalDokterRepository {
             attributes: [],
             where: {
               is_poli: true,
+              deletedAt: null,
             },
+          },
+          where: {
+            deletedAt: null,
           },
         },
       ],
@@ -155,7 +159,6 @@ export class JadwalDokterRepository {
       group: ["PractitionerModel.uuid", "jadwal_dokter.lokasi.uuid"],
       raw: true,
       nest: true,
-      paranoid: true,
       subQuery: false,
     });
 
@@ -188,7 +191,7 @@ export class JadwalDokterRepository {
       pagination: {
         page,
         pageSize,
-        maxPage: Math.ceil(count.length / pageSize),
+        total: count.length,
       },
       data: ret,
     };
@@ -197,8 +200,12 @@ export class JadwalDokterRepository {
   /**
    *
    */
-  static async findOneByDoctorAndLocation(faskes_uuid, dokter_uuid, poli_uuid) {
-    console.log("here");
+  static async findAllByDoctorAndLocation({
+    faskesUuid,
+    dokterUuid,
+    poliUuid,
+    transaction,
+  }) {
     const row = await PractitionerModel.findOne({
       attributes: [
         // Get the uuid - group by this
@@ -295,20 +302,25 @@ export class JadwalDokterRepository {
             attributes: [],
             where: {
               is_poli: true,
+              deletedAt: null,
             },
+          },
+          where: {
+            deletedAt: null,
           },
         },
       ],
       where: {
-        faskes_uuid,
+        faskes_uuid: faskesUuid,
         is_doctor: true,
-        uuid: dokter_uuid,
-        "$jadwal_dokter.lokasi.uuid$": poli_uuid,
+        uuid: dokterUuid,
+        "$jadwal_dokter.lokasi.uuid$": poliUuid,
+        deletedAt: null,
       },
       group: ["PractitionerModel.uuid", "jadwal_dokter.lokasi.uuid"],
       raw: true,
       nest: true,
-      paranoid: true,
+      transaction,
     });
 
     return (
@@ -338,11 +350,11 @@ export class JadwalDokterRepository {
     );
   }
 
-  static async create(faskes_uuid, data) {
-    const toBeCreated = data.jadwal.map((jadwal) => ({
-      practitionerUuid: data.dokter_uuid,
-      lokasiUuid: data.poliklinik_uuid,
-      faskesUuid: faskes_uuid,
+  static async create({ faskesUuid, jadwalDokter }) {
+    const toBeCreated = jadwalDokter.jadwal.map((jadwal) => ({
+      practitionerUuid: jadwalDokter.dokter_uuid,
+      lokasiUuid: jadwalDokter.poliklinik_uuid,
+      faskesUuid,
       day: jadwal.day,
       start_time: jadwal.start_time,
       end_time: jadwal.end_time,
@@ -350,15 +362,141 @@ export class JadwalDokterRepository {
       kuotaNonJkn: jadwal.kuota_non_jkn,
       kuotaJkn: jadwal.kuota_jkn,
       durasiPelayanan: jadwal.durasi_pelayanan,
-      codeAntrianDokter: data.code_antrian_dokter,
-      codeAntrianPoli: data.code_antrian_poli,
+      codeAntrianDokter: jadwalDokter.code_antrian_dokter,
+      codeAntrianPoli: jadwalDokter.code_antrian_poli,
       status: jadwal.aktif,
     }));
 
-    const jadwalDokter = await JadwalDokterModel.bulkCreate(toBeCreated, {
+    const returning = await JadwalDokterModel.bulkCreate(toBeCreated, {
       returning: true,
     });
 
-    return jadwalDokter;
+    return returning;
+  }
+
+  static async bulkDelete({ faskesUuid, UUIDsToBeDeleted, transaction }) {
+    await JadwalDokterModel.update(
+      { deletedAt: moment().unix() },
+      {
+        where: {
+          faskes_uuid: faskesUuid,
+          uuid: UUIDsToBeDeleted,
+          deletedAt: null,
+        },
+        transaction,
+      }
+    );
+  }
+
+  /**
+   * Bulk update schedules using CASE statements
+   */
+  static async bulkUpdate({
+    faskesUuid,
+    jadwalDokterToBeUpdated,
+    transaction,
+  }) {
+    if (jadwalDokterToBeUpdated.length === 0) return [];
+
+    const { sequelize } = JadwalDokterModel;
+    const uuidList = jadwalDokterToBeUpdated.map((j) => j.jadwalDokterUuid);
+
+    const fieldMap = {
+      day: "day",
+      start_time: "startTime",
+      end_time: "endTime",
+      durasiPelayanan: "durasiPelayanan",
+      kuotaJkn: "kuotaJkn",
+      kuotaNonJkn: "kuotaNonJkn",
+      codeAntrianPoli: "codeAntrianPoli",
+      codeAntrianDokter: "codeAntrianDokter",
+      status: "aktif",
+    };
+
+    const updatePayload = {
+      updatedAt: moment().unix(),
+    };
+
+    Object.entries(fieldMap).forEach(([modelField, inputField]) => {
+      const cases = jadwalDokterToBeUpdated
+        .map((jadwal) => {
+          const value = jadwal[inputField];
+          if (value === undefined) return null;
+          return `WHEN uuid = ${sequelize.escape(
+            jadwal.jadwalDokterUuid
+          )} THEN ${sequelize.escape(value)}`;
+        })
+        .filter(Boolean)
+        .join(" ");
+
+      if (cases) {
+        updatePayload[modelField] = sequelize.literal(
+          `(CASE ${cases} ELSE "${FormatterService.camelToSnake(
+            modelField
+          )}" END)`
+        );
+      }
+    });
+
+    return JadwalDokterModel.update(updatePayload, {
+      where: {
+        faskes_uuid: faskesUuid,
+        uuid: { [Op.in]: uuidList },
+        deletedAt: null,
+      },
+      transaction,
+    });
+  }
+
+  /**
+   * Bulk create new schedules
+   */
+  static async bulkCreate({
+    faskesUuid,
+    jadwalDokterToBeCreated,
+    transaction,
+  }) {
+    if (jadwalDokterToBeCreated.length === 0) return [];
+
+    const createPayload = jadwalDokterToBeCreated.map((j) => ({
+      faskesUuid: faskesUuid,
+      practitionerUuid: j.dokterUuid,
+      lokasiUuid: j.poliklinikUuid,
+      day: j.day,
+      start_time: j.startTime,
+      end_time: j.endTime,
+      durasiPelayanan: j.durasiPelayanan,
+      kuota: j.kuotaJkn + j.kuotaNonJkn,
+      kuotaJkn: j.kuotaJkn,
+      kuotaNonJkn: j.kuotaNonJkn,
+      codeAntrianPoli: j.codeAntrianPoli,
+      codeAntrianDokter: j.codeAntrianDokter,
+      status: j.aktif,
+      createdAt: moment().unix(),
+    }));
+
+    return JadwalDokterModel.bulkCreate(createPayload, {
+      transaction,
+    });
+  }
+
+  static async deleteAllByDoctorAndLocation({
+    faskesUuid,
+    dokterUuid,
+    poliUuid,
+    transaction,
+  }) {
+    await JadwalDokterModel.update(
+      { deletedAt: moment().unix() },
+      {
+        where: {
+          faskes_uuid: faskesUuid,
+          practitionerUuid: dokterUuid,
+          lokasiUuid: poliUuid,
+          deletedAt: null,
+        },
+        transaction,
+      }
+    );
   }
 }

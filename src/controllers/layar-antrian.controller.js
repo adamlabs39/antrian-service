@@ -1,12 +1,9 @@
-import { FormatterService } from "../services/formatter.service.js";
-import { JadwalDokterService } from "../services/jadwal-dokter.service.js";
-
-export class JadwalDokterController {
+export class LayarAntrianController {
   static async findAll(req, res, next) {
     try {
-      // Kita asumsi bahwa faskesUuid sudah pasti ada karena sudah dihandle oleh auth middleware sdk
       const { faskesUuid } = req.author;
-      const { pagination, data } = await JadwalDokterService.findAll({
+
+      const { pagination, data } = await LayarAntrianService.findAll({
         faskesUuid,
         filterBy: req.query,
       });
@@ -21,10 +18,10 @@ export class JadwalDokterController {
     }
   }
 
-  static async findAllByDoctorAndLocation(req, res, next) {
+  static async findOne(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      const data = await JadwalDokterService.findAllByDoctorAndLocation({
+      const data = await LayarAntrianService.findOne({
         faskesUuid,
         params: req.params,
       });
@@ -41,10 +38,11 @@ export class JadwalDokterController {
   static async create(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      const data = await JadwalDokterService.create({
+      const data = await LayarAntrianService.create({
         faskesUuid,
-        jadwalDokter: req.body,
+        layarAntrian: req.body,
       });
+
       res.status(201).json({
         message: "Data berhasil ditambahkan",
         payload: FormatterService.toSnakeCase(data),
@@ -54,10 +52,10 @@ export class JadwalDokterController {
     }
   }
 
-  static async updateByDoctorAndLocation(req, res, next) {
+  static async update(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      await JadwalDokterService.updateByDoctorAndLocation({
+      await LayarAntrianService.update({
         faskesUuid,
         params: req.params,
         body: req.body,
@@ -71,10 +69,10 @@ export class JadwalDokterController {
     }
   }
 
-  static async deleteByDoctorAndLocation(req, res, next) {
+  static async delete(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      await JadwalDokterService.deleteAllByDoctorAndLocation({
+      await LayarAntrianService.delete({
         faskesUuid,
         params: req.params,
       });

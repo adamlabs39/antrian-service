@@ -1,16 +1,20 @@
 import { PractitionerModel } from "@adameds/model-sdk/datamaster";
 
 export class DokterRepository {
-  static async findOneByUUID(faskes_uuid, practitioner_uuid) {
-    const practitioner = await PractitionerModel.findByPk(practitioner_uuid, {
+  static async findOneByUUID({ faskesUuid, dokterUuid, transaction }) {
+    const practitioner = await PractitionerModel.findByPk(dokterUuid, {
       raw: true,
       nest: true,
-      paranoid: true,
+      where: {
+        faskesUuid,
+        deletedAt: null,
+      },
+      transaction,
     });
 
     if (
       practitioner &&
-      practitioner.faskes_uuid === faskes_uuid &&
+      practitioner.faskes_uuid === faskesUuid &&
       practitioner.is_doctor
     ) {
       return practitioner;
@@ -28,6 +32,7 @@ export class DokterRepository {
         code_antrian_dokter,
         faskes_uuid,
         is_doctor: true,
+        deletedAt: null,
       },
     });
   }

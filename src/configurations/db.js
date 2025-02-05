@@ -53,4 +53,6 @@ const database = new Database();
 // Freeze the object to prevent modification
 Object.freeze(database);
 
+export const sequelize = database.getSequelize();
+
 export default database;

@@ -26,10 +26,6 @@ LayarAntrianModel.init(
       allowNull: false,
       unique: false,
     },
-    faskesUuid: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
     namaLayar: {
       type: DataTypes.STRING(255),
       allowNull: false,
