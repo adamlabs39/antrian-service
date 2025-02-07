@@ -7,6 +7,7 @@ export class PoliklinikRepository {
       nest: true,
       deletedAt: null,
     });
+    console.log(lokasi);
 
     if (lokasi && lokasi.faskes_uuid === faskesUuid && lokasi.is_poli) {
       return lokasi;

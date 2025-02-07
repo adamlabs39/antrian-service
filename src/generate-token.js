@@ -1,8 +1,7 @@
-import JwtUtils from "./helpers/jwt-utils.js";
-
 import { createClient } from "redis";
 import "dotenv/config";
 import { UUIDS } from "./libs/constants.js";
+import JwtUtils from "@adameds/authorization-sdk/jwt-utils";
 
 function generateRedisKeyByJwtToken(token) {
   const [, , signature] = token.split(".");

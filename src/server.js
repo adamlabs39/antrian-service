@@ -14,9 +14,9 @@ import authorizationSdk from "@adameds/authorization-sdk";
 })();
 
 // Define the base URL for the API.
-const apiBase = process.env.API_BASE || "api";
-const apiVersion = process.env.API_VERSION || "v3";
-const baseUrl = `/${apiBase}/${apiVersion}/antrian`;
+const API_PREFIX = process.env.API_BASE || "api";
+const API_VERSION = process.env.API_VERSION || "v3";
+const BASE_URL = `/${API_PREFIX}/${API_VERSION}/antrian`;
 
 const app = express();
 
@@ -51,7 +51,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(authorizationSdk([]));
 
 // Use the routes and error handler middleware.
-app.use(baseUrl, router);
+app.use(BASE_URL, router);
 app.use(errorHandler);
 
 // Start the server.

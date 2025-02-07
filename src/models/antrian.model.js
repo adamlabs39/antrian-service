@@ -1,4 +1,5 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Op } from "sequelize";
+import moment from "moment";
 import database from "../configurations/db.js";
 import { hookModel } from "./hook-model.js";
 
@@ -9,7 +10,6 @@ AntrianModel.init(
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
-      primaryKey: true,
     },
     uuid: {
       type: DataTypes.STRING(255),
@@ -50,12 +50,14 @@ AntrianModel.init(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    kodeFarmasi: {
+      type: DataTypes.STRING(255),
+      allowNull: true, // Will be generated dynamically
+    },
     createdAt: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: function () {
-        return moment().unix();
-      },
+      defaultValue: () => moment().unix(),
     },
     updatedAt: {
       type: DataTypes.INTEGER,
@@ -72,6 +74,23 @@ AntrianModel.init(
     tableName: "antrian",
     underscored: true,
     timestamps: false,
-    hooks: hookModel,
+    hooks: {
+      ...hookModel,
+      async beforeCreate(instance) {
+        if (instance.pelayanan === "farmasi" && instance.jenisResep) {
+          const count = await AntrianModel.count({
+            where: {
+              pelayanan: "farmasi",
+              createdAt: {
+                [Op.gte]: moment().startOf("day").unix(),
+                [Op.lt]: moment().endOf("day").unix(),
+              },
+            },
+          });
+
+          instance.kodeFarmasi = `${instance.jenisResep}-${count + 1}`;
+        }
+      },
+    },
   }
 );

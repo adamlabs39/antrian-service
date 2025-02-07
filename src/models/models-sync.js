@@ -7,6 +7,8 @@ import {
   LokasiModel,
   PegawaiModel,
 } from "@adameds/model-sdk/datamaster";
+import AdmissionRJModel from "./admission-rj.model.js";
+import PencatatTaskIdModel from "./pencatat-task-id.model.js";
 
 export const MODELS = [
   JadwalDokterModel,
@@ -15,5 +17,7 @@ export const MODELS = [
   LayarAntrianPoliModel,
   LokasiModel,
   PegawaiModel,
+  AdmissionRJModel,
   AntrianModel,
+  PencatatTaskIdModel,
 ];

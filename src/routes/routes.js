@@ -1,6 +1,7 @@
 import express from "express";
 import { jadwalDokterRouter } from "./jadwal-dokter.route.js";
 import { layarAntrianRouter } from "./layar-antrian.route.js";
+import { dataAntrianRouter } from "./data-antrian.route.js";
 
 export const router = express.Router();
 
@@ -17,3 +18,9 @@ router.use("/jadwal-dokter", jadwalDokterRouter);
  * @ref ./layar-antrian.route.js
  */
 router.use("/layar-antrian", layarAntrianRouter);
+
+/**
+ * Api data antrian
+ * @red ./data-antrian.route.js
+ */
+router.use("/data-antrian", dataAntrianRouter);

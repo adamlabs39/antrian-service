@@ -73,10 +73,12 @@ export class JadwalDokterService {
       }
       validated.code_antrian_dokter = dokter.code_antrian_dokter;
 
+      console.log(validated.poliklinik_uuid);
       const poli = await PoliklinikRepository.findOneByUUID({
         faskesUuid,
         poliklinikUuid: validated.poliklinik_uuid,
       });
+      console.log(poli);
 
       if (!poli) {
         throw new BadRequestException(
