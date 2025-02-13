@@ -13,11 +13,6 @@ export class PatientRepository {
       },
       include: [
         {
-          model: AdmissionRJModel,
-          as: "admission_rj",
-          required: false,
-        },
-        {
           model: BirthDetailModel,
           as: "birth_detail",
           required: false,

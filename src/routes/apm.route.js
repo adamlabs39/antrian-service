@@ -11,3 +11,5 @@ APMRouter.get(
   "/jadwal-tersedia/:poli_uuid",
   APMController.getAvailableSchedule
 );
+
+APMRouter.post("/register/jkn", APMController.registerJknAPM);

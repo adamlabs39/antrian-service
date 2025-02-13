@@ -88,4 +88,21 @@ export class APMController {
       next(err);
     }
   }
+
+  static async registerJknAPM(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const data = await APMService.registerJknAPM({
+        faskesUuid,
+        body: req.body,
+      });
+
+      res.status(201).json({
+        message: "Data berhasil ditambahkan",
+        payload: FormatterService.toSnakeCase(data),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

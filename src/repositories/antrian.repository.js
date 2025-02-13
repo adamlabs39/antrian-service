@@ -111,5 +111,28 @@ export class AntrianRepository {
     };
   }
 
-  static async findAllRawatJalan({ faskesUuid, filterQuery }) {}
+  static async generateNoUrutRegistrasi({ faskesUuid }) {
+    // Logicnya adalah menghitung berapa banyak antrian yang sudah ada hari ini
+
+    const today = new Date();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+
+    const startOfDayUnix = Math.floor(startOfDay.getTime() / 1000);
+    const endOfDayUnix = startOfDayUnix + 86400;
+
+    const count = await AntrianModel.count({
+      where: {
+        faskesUuid,
+        createdAt: {
+          [Op.between]: [startOfDayUnix, endOfDayUnix],
+        },
+      },
+    });
+
+    return count + 1;
+  }
 }

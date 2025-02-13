@@ -5,6 +5,11 @@ import ZodValidator from "../validations/zod.validation.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
 import { AppointmentRepository } from "../repositories/appointment.repository.js";
+import { AntrianRepository } from "../repositories/antrian.repository.js";
+import { Sequelize } from "sequelize";
+import { sequelize } from "../configurations/db.js";
+import { CodeGenerator } from "../helpers/code-generator.js";
+import { AdmissionRJRepository } from "../repositories/admission-rj.repository.js";
 
 export class APMService {
   static async getDataByIdentity({ faskesUuid, query, params }) {
@@ -22,8 +27,6 @@ export class APMService {
       faskesUuid,
       identity,
     });
-
-    console.log(data);
 
     if (!data) {
       throw new NotFoundException("Data tidak ditemukan");
@@ -119,5 +122,39 @@ export class APMService {
     }
 
     return jadwalDokter;
+  }
+
+  static async registerJknAPM({ faskesUuid, body }) {
+    const result = await sequelize.transaction(async (t) => {
+      console.log("body ", body);
+      const validated = ZodValidator.validate(
+        APMSchema.CREATE_APPOINTMENT_BODY,
+        body
+      );
+
+      // Check if the patient is already registered
+      const patient = await PatientRepository.findDetailByIdentity({
+        faskesUuid,
+        identity: validated.no_identitas,
+        transaction: t,
+      });
+
+      let noRm;
+      if (!patient) {
+        noRm = AdmissionRJRepository.generateNoRm();
+      } else {
+        noRm = patient.noRm;
+      }
+
+      const noBooking = AdmissionRJRepository.generateKodeBooking({
+        faskesUuid,
+      });
+
+      const noRegistrasi = AntrianRepository.generateNoUrutRegistrasi({
+        faskesUuid,
+      });
+
+      return patient;
+    });
   }
 }
