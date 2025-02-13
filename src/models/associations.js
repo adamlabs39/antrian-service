@@ -32,3 +32,9 @@ AdmissionRJModel.hasMany(PencatatTaskIdModel, {
 
 AntrianModel.belongsTo(AdmissionRJModel, { foreignKey: "admissionRjUuid" });
 AdmissionRJModel.hasMany(AntrianModel, { foreignKey: "admissionRjUuid" });
+
+JadwalDokterModel.hasMany(AdmissionRJModel, {
+  foreignKey: "jadwalDokterUuid",
+  as: "admission_rj",
+  constraints: false,
+});

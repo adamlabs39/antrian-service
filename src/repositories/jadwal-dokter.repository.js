@@ -8,6 +8,10 @@ import {
 } from "@adameds/model-sdk/datamaster";
 import moment from "moment";
 import { FormatterService } from "../services/formatter.service.js";
+import { ToIndoDay } from "../helpers/to-indo-day.js";
+import AdmissionRJModel from "../models/admission-rj.model.js";
+import AntrianModel from "../models/antrian.model.js";
+import { InternalServerErrorException } from "../exceptions/internal-server-error.exception.js";
 
 export class JadwalDokterRepository {
   /**
@@ -498,5 +502,101 @@ export class JadwalDokterRepository {
         transaction,
       }
     );
+  }
+
+  static async findAllByLocationToday({ faskesUuid, poliUuid }) {
+    // Find exactly at today
+    const today = moment().format("dddd").toLowerCase();
+
+    // To bahasa indonesia
+    const hariApa = ToIndoDay.fromEng("saturday");
+
+    const whereClause = {
+      faskes_uuid: faskesUuid,
+      lokasi_uuid: poliUuid,
+      day: hariApa,
+      deletedAt: null,
+    };
+
+    const result = JadwalDokterModel.findAll({
+      where: whereClause,
+      raw: true,
+      nest: true,
+      subQuery: false,
+    });
+
+    return result;
+  }
+
+  static async getKodeBookingsAPMTodayByUuids({
+    faskesUuid,
+    jadwalDokterUuids,
+  }) {
+    const whereClause = {
+      faskes_uuid: faskesUuid,
+      uuid: jadwalDokterUuids,
+      deletedAt: null,
+    };
+
+    const result = await JadwalDokterModel.findAll({
+      where: whereClause,
+      raw: true,
+      nest: true,
+      subQuery: false,
+      include: [
+        {
+          model: AdmissionRJModel,
+          as: "admission_rj",
+          required: true,
+          where: {
+            deletedAt: null,
+            tanggalDaftar: moment().startOf("day").unix(),
+          },
+          include: [
+            {
+              model: AntrianModel,
+              as: "antrian",
+              where: {
+                deletedAt: null,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    let formatted = {};
+    for (const res of result) {
+      console.log(res);
+      if (formatted[res.uuid]) {
+        if (res.admission_rj.antrian.jenisPasien == "JKN") {
+          formatted[res.uuid]["jkn"].add(res.admission_rj.kodeBooking);
+        } else if (res.admission_rj.antrian.jenisPasien == "NON JKN") {
+          formatted[res.uuid]["nonJkn"].add(res.admission_rj.kodeBooking);
+        } else {
+          throw new InternalServerErrorException("Unknown jenis pasien");
+        }
+      } else {
+        formatted[res.uuid] = {
+          jkn: new Set(),
+          nonJkn: new Set(),
+        };
+
+        if (res.admission_rj.antrian.jenisPasien == "JKN") {
+          formatted[res.uuid]["jkn"].add(res.admission_rj.kodeBooking);
+        } else if (res.admission_rj.antrian.jenisPasien == "NON JKN") {
+          formatted[res.uuid]["nonJkn"].add(res.admission_rj.kodeBooking);
+        } else {
+          throw new InternalServerErrorException("Unknown jenis pasien");
+        }
+      }
+    }
+
+    for (const key in formatted) {
+      formatted[key]["jkn"] = Array.from(formatted[key]["jkn"]);
+      formatted[key]["nonJkn"] = Array.from(formatted[key]["nonJkn"]);
+    }
+
+    return formatted;
   }
 }

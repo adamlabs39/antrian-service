@@ -2,6 +2,7 @@ import express from "express";
 import { jadwalDokterRouter } from "./jadwal-dokter.route.js";
 import { layarAntrianRouter } from "./layar-antrian.route.js";
 import { dataAntrianRouter } from "./data-antrian.route.js";
+import { APMRouter } from "./apm.route.js";
 
 export const router = express.Router();
 
@@ -24,3 +25,9 @@ router.use("/layar-antrian", layarAntrianRouter);
  * @red ./data-antrian.route.js
  */
 router.use("/data-antrian", dataAntrianRouter);
+
+/**
+ * Api apm
+ * @ref ./apm.route.js
+ */
+router.use("/apm", APMRouter);

@@ -3,7 +3,7 @@ import AdmissionRJModel from "../models/admission-rj.model.js";
 import AntrianModel from "../models/antrian.model.js";
 import PencatatTaskIdModel from "../models/pencatat-task-id.model.js";
 
-export class DataAntrianRepository {
+export class AntrianRepository {
   static async findAll({ faskesUuid, filterQuery }) {
     const whereClause = {
       faskesUuid,

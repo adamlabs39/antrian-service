@@ -9,6 +9,8 @@ import {
 } from "@adameds/model-sdk/datamaster";
 import AdmissionRJModel from "./admission-rj.model.js";
 import PencatatTaskIdModel from "./pencatat-task-id.model.js";
+import { PatientModel, BirthDetailModel } from "@adameds/model-sdk/admisi";
+import AppointmentModel from "./appointment.model.js";
 
 export const MODELS = [
   JadwalDokterModel,
@@ -20,4 +22,7 @@ export const MODELS = [
   AdmissionRJModel,
   AntrianModel,
   PencatatTaskIdModel,
+  PatientModel,
+  BirthDetailModel,
+  AppointmentModel,
 ];

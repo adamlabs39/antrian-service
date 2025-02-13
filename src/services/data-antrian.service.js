@@ -1,5 +1,5 @@
 import { NotFoundException } from "../exceptions/not-found.exception.js";
-import { DataAntrianRepository } from "../repositories/data-antrian.repository.js";
+import { AntrianRepository } from "../repositories/antrian.repository.js";
 import { DataAntrianSchema } from "../validations/data-antrian.validation.js";
 import ZodValidator from "../validations/zod.validation.js";
 
@@ -10,7 +10,7 @@ export class DataAntrianService {
       filterQuery
     );
 
-    const { pagination, data } = await DataAntrianRepository.findAll({
+    const { pagination, data } = await AntrianRepository.findAll({
       faskesUuid,
       filterQuery: validatedFilter,
     });
@@ -28,7 +28,7 @@ export class DataAntrianService {
       filterQuery
     );
 
-    const { pagination, data } = await DataAntrianRepository.findAllAdmisi({
+    const { pagination, data } = await AntrianRepository.findAllAdmisi({
       faskesUuid,
       filterQuery: validatedFilter,
     });

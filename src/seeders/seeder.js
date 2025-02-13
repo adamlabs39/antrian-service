@@ -1,9 +1,12 @@
 import { AdmissionRJSeeder } from "./admission-rj.seeder.js";
 import { AntrianSeeder } from "./antrian.seeder.js";
+import { AppointmentSeeder } from "./appointment.seeder.js";
+import { BirthDetailSeeder } from "./birth-detail.seeder.js";
 import { JadwalDokterSeeder } from "./jadwal-dokter.seeder.js";
 import { LayarAntrianPoliSeeder } from "./layar-antrian-poli.seeder.js";
 import { LayarAntrianSeeder } from "./layar-antrian.seeder.js";
 import { LokasiSeeder } from "./lokasi.seeder.js";
+import { PatientSeeder } from "./patient.seeder.js";
 import { PegawaiSeeder } from "./pegawai.seeder.js";
 import { PractitionerSeeder } from "./practitioner.seeder.js";
 import { PencatatTaskIdSeeder } from "./task-id.seeder.js";
@@ -19,6 +22,9 @@ export async function seed() {
     AdmissionRJSeeder,
     AntrianSeeder,
     PencatatTaskIdSeeder,
+    PatientSeeder,
+    BirthDetailSeeder,
+    AppointmentSeeder,
   ];
 
   for (const seeder of seeders) {

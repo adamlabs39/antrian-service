@@ -1,8 +1,9 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes, Model, Op } from "sequelize";
 import { hookModel } from "./hook-model.js";
 import { sequelize } from "../configurations/db.js";
 import { PractitionerModel, LokasiModel } from "@adameds/model-sdk/datamaster";
 import moment from "moment";
+import AntrianModel from "./antrian.model.js";
 
 export default class AdmissionRJModel extends Model {}
 
@@ -233,6 +234,19 @@ AdmissionRJModel.init(
     underscored: true,
     timestamps: false,
     hooks: hookModel,
+    indexes: [
+      {
+        unique: true,
+        fields: ["no_rm", "faskes_uuid"],
+      },
+    ],
+    defaultScope: {
+      where: {
+        deletedAt: {
+          [Op.is]: null,
+        },
+      },
+    },
   }
 );
 
@@ -245,5 +259,12 @@ AdmissionRJModel.belongsTo(PractitionerModel, {
 AdmissionRJModel.belongsTo(LokasiModel, {
   foreignKey: "lokasiUuid",
   as: "lokasi",
+  constraints: false,
+});
+
+AdmissionRJModel.hasOne(AntrianModel, {
+  foreignKey: "admissionRjUuid",
+  sourceKey: "uuid",
+  as: "antrian",
   constraints: false,
 });

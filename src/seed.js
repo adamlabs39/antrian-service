@@ -3,6 +3,9 @@ import { seed } from "./seeders/seeder.js";
 
 for (const model of MODELS) {
   await model.drop();
+}
+
+for (const model of MODELS) {
   await model.sync({ alter: false, force: true });
 }
 seed();
