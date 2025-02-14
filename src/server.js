@@ -8,7 +8,7 @@ import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import cors from "cors";
 import authorizationSdk from "@adameds/authorization-sdk";
 
-// See is the database is connected.
+// See if the database is connected.
 (async () => {
   await database.authenticate();
 })();

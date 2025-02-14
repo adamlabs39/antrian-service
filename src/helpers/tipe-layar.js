@@ -1,3 +1,10 @@
+/**
+ * Tipe layar
+ * @class
+ * @classdesc Tipe layar yang tersedia
+ * @exports TipeLayar
+ *
+ */
 export class TipeLayar {
   static layar_titles = [
     "layar 3x3 panggilan",

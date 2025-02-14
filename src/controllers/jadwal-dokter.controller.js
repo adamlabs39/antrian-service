@@ -2,10 +2,23 @@ import { FormatterService } from "../services/formatter.service.js";
 import { JadwalDokterService } from "../services/jadwal-dokter.service.js";
 
 export class JadwalDokterController {
+  /**
+   * gets all the schedules available grouped by the doctor and location.
+   *
+   * @param {*} req
+   * req must have author object with faskesUuid, if it is not there,
+   * then you forgot to put the auth middleware
+   *
+   * @param {*} res
+   * @param {*} next
+   */
   static async findAll(req, res, next) {
     try {
-      // Kita asumsi bahwa faskesUuid sudah pasti ada karena sudah dihandle oleh auth middleware sdk
       const { faskesUuid } = req.author;
+
+      // We are calling the findAll method from JadwalDokterService
+      // and passing the faskesUuid and filterBy from req.query
+      // to get the data and pagination properties
       const { pagination, data } = await JadwalDokterService.findAll({
         faskesUuid,
         filterBy: req.query,

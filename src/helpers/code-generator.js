@@ -1,3 +1,7 @@
+/**
+ * Class untuk meng-generate kode booking, nomor rekam medis, nomor registrasi, nomor antrian admisi, dan nomor antrian poli
+ * Sesuai dengan kebutuhan aplikasi
+ */
 export class CodeGenerator {
   static kodeBooking() {
     let result = "";

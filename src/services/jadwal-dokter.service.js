@@ -10,6 +10,14 @@ import { FormatterService } from "./formatter.service.js";
 import { TransactionService } from "./transaction.service.js";
 
 export class JadwalDokterService {
+  /**
+   * What does this method do?
+   * 1. Validate the filter query
+   * 2. If the page and page_size is not defined, then set it to 1 and 10 respectively
+   * 3. Call the findAll method from JadwalDokterRepository
+   * 4. If the data length is 0, then throw NotFoundException
+   * 5. Return the pagination and data
+   */
   static async findAll({ faskesUuid, filterBy: filterQuery }) {
     const queries = ZodValidator.validate(
       JadwalDokterSchema.FILTER_QUERY,
@@ -34,6 +42,14 @@ export class JadwalDokterService {
     return { pagination, data };
   }
 
+  /**
+   *
+   * What does this method do?
+   * 1. Validate the params
+   * 2. Call the findAllByDoctorAndLocation method from JadwalDokterRepository
+   * 3. If the data is not exist, then throw NotFoundException
+   * 4. Return the data
+   */
   static async findAllByDoctorAndLocation({ faskesUuid, params }) {
     const { doctor_uuid: dokterUuid, location_uuid: poliUuid } =
       ZodValidator.validate(
@@ -54,6 +70,18 @@ export class JadwalDokterService {
     return data;
   }
 
+  /**
+   * What does this method do?
+   * 1. Validate the jadwalDokter
+   * 2. Get the dokter by UUID
+   * 3. If the dokter is not exist, then throw BadRequestException
+   * 4. Get the poliklinik by UUID
+   * 5. If the poliklinik is not exist, then throw BadRequestException
+   * 6. Get the jadwal dokter by dokterUuid and poliUuid
+   * 7. If the jadwal dokter is exist, then throw ConflictException
+   * 8. Create the jadwal dokter
+   * 9. Return the formatted data
+   */
   static async create({ faskesUuid, jadwalDokter }) {
     return TransactionService.run(async (tx) => {
       const validated = ZodValidator.validate(
@@ -132,6 +160,29 @@ export class JadwalDokterService {
     });
   }
 
+  /**
+   * What does this method do?
+   * 1. Validate the UUIDs
+   * 2. Validate the body
+   * 3. Get the dokter by UUID taken from the params
+   * 4. If the dokter is not exist, then throw BadRequestException
+   * 5. Get the poliklinik by UUID taken from the params
+   * 6. If the poliklinik is not exist, then throw BadRequestException
+   * 7. Get the jadwal dokter by dokterUuid and poliUuid
+   * 8. If the jadwal dokter is not exist, then throw NotFoundException
+   * 9. Check if there is booking, if yes, then throw ConflictException
+   * 10. Bulk delete the jadwal dokter
+   * 11. Bulk update the jadwal dokter
+   * 12. Bulk create the jadwal dokter
+   *
+   * where the params expect this schema:
+   * {
+   *  doctor_uuid: string,
+   *  location_uuid: string
+   * }
+   *
+   *
+   */
   static async updateByDoctorAndLocation({ faskesUuid, params, body }) {
     return await TransactionService.run(async (tx) => {
       // Validate the UUIDs
@@ -249,6 +300,14 @@ export class JadwalDokterService {
     });
   }
 
+  /**
+   * What does this method do?
+   * 1. Validate the UUIDs
+   * 2. Get the jadwal dokter by dokterUuid and poliUuid
+   * 3. If the jadwal dokter is not exist, then throw NotFoundException
+   * 4. @TODO Check if there is booking, if yes, then throw ConflictException (
+   * 5. Delete all the jadwal dokter by dokterUuid and poliUuid
+   */
   static async deleteAllByDoctorAndLocation({ faskesUuid, params }) {
     await TransactionService.run(async (tx) => {
       /**
