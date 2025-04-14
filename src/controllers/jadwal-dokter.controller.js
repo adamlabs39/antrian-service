@@ -1,5 +1,6 @@
 import { FormatterService } from "../services/formatter.service.js";
 import { JadwalDokterService } from "../services/jadwal-dokter.service.js";
+import { generateSuccessMessage } from "../helpers/generate-message.js";
 
 export class JadwalDokterController {
   /**
@@ -24,14 +25,30 @@ export class JadwalDokterController {
         filterBy: req.query,
       });
 
-      res.status(200).json({
-        message: "Data berhasil ditampilkan",
-        properties: FormatterService.toSnakeCase(pagination),
-        payload: FormatterService.toSnakeCase(data),
-      });
+      res.status(200).json(generateSuccessMessage("Data berhasil ditampilkan", data, pagination));
     } catch (err) {
       next(err);
     }
+  }
+
+  /**
+   * find all for API-KEY version
+   */
+  static async findAllWithAPIKey(req, res, next){
+    try{
+      const  faskesUuid = req.headers['faskes-uuid'];
+
+      const { pagination, data } = await JadwalDokterService.findAll({
+        faskesUuid:faskesUuid,
+        filterBy: req.query,
+      });
+
+      res.status(200).json(generateSuccessMessage("Data berhasil ditampilkan", data, pagination));
+
+    } catch(error){
+      next(error)
+    }
+
   }
 
   static async findAllByDoctorAndLocation(req, res, next) {
@@ -42,10 +59,7 @@ export class JadwalDokterController {
         params: req.params,
       });
 
-      res.status(200).json({
-        message: "Data berhasil ditampilkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
+      res.status(200).json(generateSuccessMessage("Data berhasil ditampilkan", data));
     } catch (err) {
       next(err);
     }

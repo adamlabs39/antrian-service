@@ -4,7 +4,7 @@ import { PoliklinikRepository } from "../repositories/poliklinik.repository.js";
 import { LayarAntrianSchema } from "../validations/layar-antrian.validation.js";
 import ZodValidator from "../validations/zod.validation.js";
 import { FormatterService } from "./formatter.service.js";
-import { LayarAntrianPoliRepository } from "./layar-antrian-poli.repository.js";
+import { LayarAntrianPoliRepository } from "../repositories/layar-antrian-poli.repository.js";
 import { TransactionService } from "./transaction.service.js";
 
 export class LayarAntrianService {
@@ -91,11 +91,12 @@ export class LayarAntrianService {
   static async update({ faskesUuid, params, layarAntrian }) {
     await TransactionService.run(async (tx) => {
       ZodValidator.validate(LayarAntrianSchema.UPDATE, layarAntrian);
-
+      console.log(params)
       const { layar_antrian_uuid } = ZodValidator.validate(
         LayarAntrianSchema.LAYAR_ANTRIAN_PARAM,
         params
       );
+    
 
       const existingLayarAntrian = await LayarAntrianRepository.findOne({
         faskesUuid,

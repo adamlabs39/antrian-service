@@ -17,20 +17,20 @@ const REDIS_DATABASE = process.env.REDIS_DATABASE || 0;
 
 // Create Redis client
 const redisClient = createClient({
-  socket: {
-    host: REDIS_HOST,
-    port: Number(REDIS_PORT),
-  },
   username: REDIS_USERNAME,
   password: REDIS_PASSWORD,
-  database: Number(REDIS_DATABASE),
+  database: REDIS_DATABASE,
+  socket: {
+    host: REDIS_HOST,
+    port: REDIS_PORT,
+  },
 });
 
 // Handle Redis connection
 redisClient.on("connect", () => console.log("✅ Redis connected!"));
 redisClient.on("error", (err) => console.error("❌ Redis error:", err));
 
-async function generateJwt() {
+export async function generateJwt() {
   const payload = {
     faskesUuid: UUIDS[0],
   };
@@ -48,7 +48,7 @@ async function generateJwt() {
     await redisClient.setEx(
       // ✅ Await the Redis command
       `token-${generateRedisKeyByJwtToken(token)}`,
-      10800,
+      108000,
       JSON.stringify(author)
     );
 
@@ -57,10 +57,11 @@ async function generateJwt() {
 
     await redisClient.quit(); // ✅ Gracefully close Redis after the operation
     console.log("✅ Redis connection closed.");
+    return token
   } catch (error) {
     console.error("❌ Error generating JWT:", error);
   }
 }
 
 // Run the function
-generateJwt();
+// generateJwt();

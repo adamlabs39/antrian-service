@@ -59,7 +59,7 @@ export class JadwalDokterRepository {
         // Get the code_antrian_poli
         [
           Sequelize.fn(
-            "ANY_VALUE",
+            "MAX",
             Sequelize.col("jadwal_dokter.lokasi.code_antrian_poli")
           ),
           "code_antrian_poli",
@@ -67,7 +67,7 @@ export class JadwalDokterRepository {
 
         // Get the location name - dont group by this
         [
-          Sequelize.fn("ANY_VALUE", Sequelize.col("jadwal_dokter.lokasi.name")),
+          Sequelize.fn("MAX", Sequelize.col("jadwal_dokter.lokasi.name")),
           "lokasi_name",
         ],
 
@@ -76,13 +76,13 @@ export class JadwalDokterRepository {
 
         // Get the name - dont group by this
         [
-          Sequelize.fn("ANY_VALUE", Sequelize.col("pegawai.name")),
+          Sequelize.fn("MAX", Sequelize.col("pegawai.name")),
           "pegawai_name",
         ],
 
         // Get the location name - dont group by this
         [
-          Sequelize.fn("ANY_VALUE", Sequelize.col("jadwal_dokter.status")),
+          Sequelize.fn("BOOL_OR", Sequelize.col("jadwal_dokter.status")),
           "status",
         ],
 
@@ -165,6 +165,7 @@ export class JadwalDokterRepository {
       nest: true,
       subQuery: false,
     });
+    console.log(result)
 
     const ret = result.map((row) => ({
       doctor: {
@@ -219,7 +220,7 @@ export class JadwalDokterRepository {
 
         // Get the location name - dont group by this
         [
-          Sequelize.fn("ANY_VALUE", Sequelize.col("jadwal_dokter.lokasi.name")),
+          Sequelize.fn("MAX", Sequelize.col("jadwal_dokter.lokasi.name")),
           "lokasi_name",
         ],
 
@@ -232,13 +233,13 @@ export class JadwalDokterRepository {
 
         // Get the name - dont group by this
         [
-          Sequelize.fn("ANY_VALUE", Sequelize.col("pegawai.name")),
+          Sequelize.fn("MAX", Sequelize.col("pegawai.name")),
           "pegawai_name",
         ],
 
         // Get the location name - dont group by this
         [
-          Sequelize.fn("ANY_VALUE", Sequelize.col("jadwal_dokter.status")),
+          Sequelize.fn("BOOL_OR", Sequelize.col("jadwal_dokter.status")),
           "status",
         ],
 

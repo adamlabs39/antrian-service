@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
 import jwt from "jsonwebtoken"; // Correct import for CommonJS module
+import { UnauthorizedException } from "../exceptions/unauthorized.exception.js";
 
 const { JsonWebTokenError, TokenExpiredError, NotBeforeError } = jwt;
 
@@ -9,6 +10,7 @@ const { JsonWebTokenError, TokenExpiredError, NotBeforeError } = jwt;
  */
 export const errorHandler = (err, req, res, next) => {
   console.log("[ERROR] ---\n", err.stack, "\n---");
+  console.log(err.message)
 
   if (err instanceof ZodError) {
     const status = 400;
@@ -53,6 +55,9 @@ export const errorHandler = (err, req, res, next) => {
       ],
     });
     return;
+  }
+  if(err instanceof UnauthorizedException){
+    res.status(err.status).json(err.message)
   }
 
   const status = err.status || err.code || 500;

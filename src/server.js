@@ -7,6 +7,7 @@ import { router } from "./routes/routes.js";
 import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import cors from "cors";
 import authorizationSdk from "@adameds/authorization-sdk";
+import { apiKeyMiddleware } from "./middlewares/x-api-key-handler.middleware.js";
 
 // See if the database is connected.
 (async () => {
@@ -48,7 +49,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // use authorization middleware SDK
-app.use(authorizationSdk([]));
+app.use(authorizationSdk([
+  //developer only
+  `${BASE_URL}/token`
+]));
+
+// use API KEY for communication between API
+app.use(apiKeyMiddleware([
+  // url have api key
+  `${BASE_URL}/mobile/jadwal-dokter`
+]))
 
 // Use the routes and error handler middleware.
 app.use(BASE_URL, router);
