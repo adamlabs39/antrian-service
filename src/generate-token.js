@@ -1,7 +1,7 @@
 import { createClient } from "redis";
 import "dotenv/config";
 import { UUIDS } from "./libs/constants.js";
-import JwtUtils from "@adameds/authorization-sdk/jwt-utils";
+import { JwtUtils } from "@adameds/authorization-sdk/jwt-utils";
 
 function generateRedisKeyByJwtToken(token) {
   const [, , signature] = token.split(".");
@@ -36,7 +36,10 @@ export async function generateJwt() {
   };
 
   try {
-    await redisClient.connect(); // ✅ Ensure Redis is connected
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+    }
+    // await redisClient.connect(); // ✅ Ensure Redis is connected
 
     console.log("Generated JWT...");
     const token = await JwtUtils.sign(payload);
@@ -57,7 +60,7 @@ export async function generateJwt() {
 
     await redisClient.quit(); // ✅ Gracefully close Redis after the operation
     console.log("✅ Redis connection closed.");
-    return token
+    return token;
   } catch (error) {
     console.error("❌ Error generating JWT:", error);
   }

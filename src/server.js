@@ -14,6 +14,14 @@ import { apiKeyMiddleware } from "./middlewares/x-api-key-handler.middleware.js"
   await database.authenticate();
 })();
 
+// try {
+//     await database.authenticate();
+//     await database.sequelize.sync({ force: false });
+//     console.log("Database connected and tables synced.");
+//   } catch (error) {
+//     console.error("Unable to connect to the database:", error);
+//   }
+
 // Define the base URL for the API.
 const API_PREFIX = process.env.API_BASE || "api";
 const API_VERSION = process.env.API_VERSION || "v3";
