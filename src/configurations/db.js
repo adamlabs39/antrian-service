@@ -16,6 +16,9 @@ export class Database {
       const DB_HOST = process.env.DB_HOST;
       const DB_PORT = process.env.DB_PORT;
 
+      console.log("Mencoba terhubung ke HOST:", DB_HOST);
+      console.log("Mencoba terhubung ke DATABASE:", DB_NAME);
+
       this.sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
         host: DB_HOST,
         port: DB_PORT,

@@ -89,6 +89,7 @@ export class JadwalDokterService {
         jadwalDokter
       );
 
+      //verifikasi dokter
       const dokter = await DokterRepository.findOneByUUID({
         faskesUuid,
         dokterUuid: validated.dokter_uuid,
@@ -102,6 +103,7 @@ export class JadwalDokterService {
       validated.code_antrian_dokter = dokter.code_antrian_dokter;
 
       console.log(validated.poliklinik_uuid);
+      //verifikasi poli
       const poli = await PoliklinikRepository.findOneByUUID({
         faskesUuid,
         poliklinikUuid: validated.poliklinik_uuid,
@@ -115,6 +117,7 @@ export class JadwalDokterService {
       }
       validated.code_antrian_poli = poli.code_antrian_poli;
 
+      //verifikasi apakah jadwal dokter sudah ada
       const jadwal_dokter =
         await JadwalDokterRepository.findAllByDoctorAndLocation({
           faskesUuid,
@@ -128,9 +131,11 @@ export class JadwalDokterService {
         );
       }
 
+      //create jadwal dokter
       const data = await JadwalDokterRepository.create({
         faskesUuid,
         jadwalDokter: validated,
+        transaction: tx,
       });
 
       const formattedData = {
