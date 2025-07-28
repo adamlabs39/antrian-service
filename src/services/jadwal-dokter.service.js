@@ -2,7 +2,6 @@ import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { AdmissionRJRepository } from "../repositories/admission-rj.repository.js";
-import { AppointmentRepository } from "../repositories/appointment.repository.js";
 import { DokterRepository } from "../repositories/dokter.repository.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
 import { PoliklinikRepository } from "../repositories/poliklinik.repository.js";
@@ -10,6 +9,7 @@ import { JadwalDokterSchema } from "../validations/jadwal-dokter.validation.js";
 import ZodValidator from "../validations/zod.validation.js";
 import { FormatterService } from "./formatter.service.js";
 import { TransactionService } from "./transaction.service.js";
+import { AppointmentClient } from "../clients/appointment.client.js";
 
 export class JadwalDokterService {
   /**
@@ -204,7 +204,7 @@ export class JadwalDokterService {
       validated.dokterUuid = dokterUuid;
       validated.poliUuid = poliUuid;
 
-      const [dokter, poli] = await Promise.all([
+      const [dokter, poli, jadwalDokter] = await Promise.all([
         DokterRepository.findOneByUUID({
           faskesUuid,
           dokterUuid,
@@ -213,6 +213,12 @@ export class JadwalDokterService {
         PoliklinikRepository.findOneByUUID({
           faskesUuid,
           poliklinikUuid: poliUuid,
+          transaction: tx,
+        }),
+        JadwalDokterRepository.findAllByDoctorAndLocation({
+          faskesUuid,
+          dokterUuid,
+          poliUuid,
           transaction: tx,
         }),
       ]);
@@ -233,15 +239,6 @@ export class JadwalDokterService {
       }
       validated.code_antrian_poli = poli.code_antrian_poli;
 
-      const jadwalDokter =
-        await JadwalDokterRepository.findAllByDoctorAndLocation({
-          faskesUuid,
-          dokterUuid,
-          poliUuid,
-        });
-
-      // If the jadwal dokter itu bahkan ga ada.
-      // Throw not found.
       if (!jadwalDokter) {
         throw new NotFoundException(
           "Jadwal dokter untuk poliklinik tersebut tidak ditemukan, silakan create terlebih dahulu."
@@ -252,28 +249,24 @@ export class JadwalDokterService {
        *Do there exist booking? If yes, then we cannot update schedule that has delete
        */
 
-      let existingAppointments = 0;
-      let existingAdmissions = 0;
-
       if (validated.deleted && validated.deleted.length > 0) {
-        [existingAppointments, existingAdmissions] = await Promise.all([
-          AppointmentRepository.countByJadwalDokterUuids({
+        const existingAppointments =
+          await AppointmentClient.countByJadwalDokterUuids({
             faskesUuid,
             jadwalDokterUuids: validated.deleted,
-            transaction: tx,
-          }),
-          AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-            faskesUuid,
-            jadwalDokterUuids: validated.deleted,
-            transaction: tx,
-          }),
-        ]);
-      }
+          });
 
-      if (existingAppointments > 0 || existingAdmissions > 0) {
-        throw new ConflictException(
-          "Tidak dapat mengupdate jadwal dokter karena ada booking yang sudah dilakukan pada jadwal tersebut."
-        );
+        const existingAdmissions =
+          await AdmissionRJRepository.countByJadwalDokterUuidsForToday({
+            faskesUuid,
+            jadwalDokterUuids: validated.deleted,
+            transaction: tx,
+          });
+        if (existingAppointments > 0 || existingAdmissions > 0) {
+          throw new ConflictException(
+            "Gagal mengupdate karena ada jadwal yang akan dihapus tetapi sudah memiliki booking pasien."
+          );
+        }
       }
 
       const camelCasedBody = FormatterService.toCamelCase(validated);
@@ -361,23 +354,42 @@ export class JadwalDokterService {
         (j) => j.jadwal_dokter_uuid
       );
 
-      const [existingAppointments, existingAdmissions] = await Promise.all([
-        AppointmentRepository.countByJadwalDokterUuids({
+      const existingAppointments =
+        await AppointmentClient.countByJadwalDokterUuids({
           faskesUuid,
           jadwalDokterUuids,
-          transaction: tx,
-        }),
-        AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-          faskesUuid,
-          jadwalDokterUuids,
-          transaction: tx,
-        }),
-      ]);
-      if (existingAppointments > 0 || existingAdmissions > 0) {
-        throw new ConflictException(
-          "Gagal menghapus karena sudah ada pasien yang booking di jadwal ini."
-        );
-      }
+        });
+
+        const existingAdmissions =
+          await AdmissionRJRepository.countByJadwalDokterUuidsForToday({
+            faskesUuid,
+            jadwalDokterUuids,
+            transaction: tx,
+          });
+
+          if (existingAppointments > 0 || existingAdmissions > 0) {
+            throw new ConflictException(
+              "Gagal menghapus karena sudah ada pasien yang terdaftar di jadwal ini."
+            );
+          }
+
+      // const [existingAppointments, existingAdmissions] = await Promise.all([
+      //   AppointmentRepository.countByJadwalDokterUuids({
+      //     faskesUuid,
+      //     jadwalDokterUuids,
+      //     transaction: tx,
+      //   }),
+      //   AdmissionRJRepository.countByJadwalDokterUuidsForToday({
+      //     faskesUuid,
+      //     jadwalDokterUuids,
+      //     transaction: tx,
+      //   }),
+      // ]);
+      // if (existingAppointments > 0 || existingAdmissions > 0) {
+      //   throw new ConflictException(
+      //     "Gagal menghapus karena sudah ada pasien yang booking di jadwal ini."
+      //   );
+      // }
 
       await JadwalDokterRepository.deleteAllByDoctorAndLocation({
         faskesUuid,

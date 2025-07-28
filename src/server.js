@@ -8,10 +8,12 @@ import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import cors from "cors";
 import authorizationSdk from "@adameds/authorization-sdk";
 import { apiKeyMiddleware } from "./middlewares/x-api-key-handler.middleware.js";
+import { defineAssociations } from "./models/associations.js";
 
 // See if the database is connected.
 (async () => {
   await database.authenticate();
+  defineAssociations();
 })();
 
 // try {

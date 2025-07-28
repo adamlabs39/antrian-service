@@ -250,21 +250,3 @@ AdmissionRJModel.init(
   }
 );
 
-AdmissionRJModel.belongsTo(PractitionerModel, {
-  foreignKey: "practitionerUuid",
-  as: "practitioner",
-  constraints: false,
-});
-
-AdmissionRJModel.belongsTo(LokasiModel, {
-  foreignKey: "lokasiUuid",
-  as: "lokasi",
-  constraints: false,
-});
-
-AdmissionRJModel.hasOne(AntrianModel, {
-  foreignKey: "admissionRjUuid",
-  sourceKey: "uuid",
-  as: "antrian",
-  constraints: false,
-});

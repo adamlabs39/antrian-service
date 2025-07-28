@@ -6,6 +6,7 @@ import PencatatTaskIdModel from "./pencatat-task-id.model.js";
 import AdmissionRJModel from "./admission-rj.model.js";
 import AntrianModel from "./antrian.model.js";
 
+export function defineAssociations() {
 PractitionerModel.hasMany(JadwalDokterModel, {
   foreignKey: "practitionerUuid",
   as: "jadwal_dokter",
@@ -38,3 +39,4 @@ JadwalDokterModel.hasMany(AdmissionRJModel, {
   as: "admission_rj",
   constraints: false,
 });
+}

@@ -62,14 +62,3 @@ LayarAntrianPoliModel.init(
   }
 );
 
-LayarAntrianPoliModel.belongsTo(LokasiModel, {
-  foreignKey: "lokasi_uuid",
-  as: "lokasi",
-  constraints: false,
-});
-
-LayarAntrianPoliModel.belongsTo(LayarAntrianModel, {
-  foreignKey: "layar_antrian_uuid",
-  as: "layar_antrian",
-  constraints: false,
-});
