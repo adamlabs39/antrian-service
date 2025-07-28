@@ -1,6 +1,28 @@
 import AppointmentModel from "../models/appointment.model.js";
+import { Op } from "sequelize";
 
 export class AppointmentRepository {
+ 
+  static async countByJadwalDokterUuids({ 
+    faskesUuid, 
+    jadwalDokterUuids,
+    transaction,
+   }) {
+    return AppointmentModel.count({
+      where: {
+        faskesUuid,
+        jadwalDokterUuid: {
+          [Op.in]: jadwalDokterUuids,
+        },
+        status: {
+          [Op.ne]: 0,
+        },
+        deletedAt: null,
+      },
+        transaction,
+   });
+  }
+
   static async getKodeBookingsMobileTodayByUuids({
     faskesUuid,
     jadwalDokterUuids,

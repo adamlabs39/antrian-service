@@ -11,7 +11,7 @@ jadwalDokterRouter.get("/", JadwalDokterController.findAll);
 /**
  * api key version
  */
-// jadwalDokterRouter.get("/", JadwalDokterController.findAllWithAPIKey);
+jadwalDokterRouter.get("/by-key", JadwalDokterController.findAllWithAPIKey);
 
 /**
  * Gets all the schedules available for a specific doctor and location.

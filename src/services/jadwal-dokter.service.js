@@ -1,6 +1,7 @@
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
+import { AppointmentRepository } from "../repositories/appointment.repository.js";
 import { DokterRepository } from "../repositories/dokter.repository.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
 import { PoliklinikRepository } from "../repositories/poliklinik.repository.js";
@@ -336,6 +337,21 @@ export class JadwalDokterService {
       if (!jadwalDokter) {
         throw new NotFoundException("Data tidak ditemukan");
       }
+
+      const  jadwalDokterUuids = jadwalDokter.map(
+        (j) => j.jadwal_dokter_uuid
+      );
+
+      const existingAppointments = await AppointmentRepository.countByJadwalDokterUuids({
+        faskesUuid,
+        jadwalDokterUuids,
+      });
+      if (existingAppointments > 0) {
+        throw new ConflictException(
+          "Tidak dapat menghapus jadwal dokter karena ada booking yang sudah dilakukan pada jadwal tersebut."
+        );
+      }
+
 
       await JadwalDokterRepository.deleteAllByDoctorAndLocation({
         faskesUuid,
