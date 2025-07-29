@@ -1,5 +1,6 @@
 import LayarAntrianPoliModel from "../models/layar-antrian-poli.model.js";
-import moment from "moment"
+import moment from "moment";
+
 export class LayarAntrianPoliRepository {
   static async bulkCreate({
     faskesUuid,
@@ -9,8 +10,8 @@ export class LayarAntrianPoliRepository {
   }) {
     const data = poliklinikUuids.map((poliklinikUuid) => ({
       faskesUuid: faskesUuid,
-      layar_antrian_uuid: layarAntrianUuid,
-      lokasi_uuid: poliklinikUuid,
+      layarAntrianUuid: layarAntrianUuid,
+      lokasiUuid: poliklinikUuid,
     }));
 
     await LayarAntrianPoliModel.bulkCreate(data, { transaction });

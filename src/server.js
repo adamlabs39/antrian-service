@@ -59,10 +59,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // use authorization middleware SDK
-app.use(authorizationSdk([
-  //developer only
-  `${BASE_URL}/token`
-]));
+app.use(authorizationSdk([]));
 
 // use API KEY for communication between API
 app.use(apiKeyMiddleware([

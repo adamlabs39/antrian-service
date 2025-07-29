@@ -3,7 +3,7 @@ import { jadwalDokterRouter } from "./jadwal-dokter.route.js";
 import { layarAntrianRouter } from "./layar-antrian.route.js";
 import { dataAntrianRouter } from "./data-antrian.route.js";
 import { APMRouter } from "./apm.route.js";
-import { tokenRouter } from "./token-helper.route.js";
+// import { tokenRouter } from "./token-helper.route.js";
 
 export const router = express.Router();
 
@@ -44,4 +44,4 @@ router.use("/apm", APMRouter);
  * for developing necessery
  * @ref ./token-helper.route.js
  */
-router.use("/token", tokenRouter)
+// router.use("/token", tokenRouter)
