@@ -8,11 +8,21 @@ import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import cors from "cors";
 import authorizationSdk from "@adameds/authorization-sdk";
 import { apiKeyMiddleware } from "./middlewares/x-api-key-handler.middleware.js";
+import { defineAssociations } from "./models/associations.js";
 
 // See if the database is connected.
 (async () => {
   await database.authenticate();
+  defineAssociations();
 })();
+
+// try {
+//     await database.authenticate();
+//     await database.sequelize.sync({ force: false });
+//     console.log("Database connected and tables synced.");
+//   } catch (error) {
+//     console.error("Unable to connect to the database:", error);
+//   }
 
 // Define the base URL for the API.
 const API_PREFIX = process.env.API_BASE || "api";
@@ -49,10 +59,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // use authorization middleware SDK
-app.use(authorizationSdk([
-  //developer only
-  `${BASE_URL}/token`
-]));
+app.use(authorizationSdk([]));
 
 // use API KEY for communication between API
 app.use(apiKeyMiddleware([

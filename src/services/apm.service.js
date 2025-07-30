@@ -4,7 +4,7 @@ import { APMSchema } from "../validations/apm.validation.js";
 import ZodValidator from "../validations/zod.validation.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
-import { AppointmentRepository } from "../repositories/appointment.repository.js";
+// import { AppointmentRepository } from "../repositories/appointment.repository.js";
 import { AntrianRepository } from "../repositories/antrian.repository.js";
 import { Sequelize } from "sequelize";
 import { sequelize } from "../configurations/db.js";
@@ -67,11 +67,11 @@ export class APMService {
         jadwalDokterUuids,
       });
 
-    const listKodeBookingByMobile =
-      await AppointmentRepository.getKodeBookingsMobileTodayByUuids({
-        faskesUuid,
-        jadwalDokterUuids,
-      });
+    // const listKodeBookingByMobile =
+    //   await AppointmentRepository.getKodeBookingsMobileTodayByUuids({
+    //     faskesUuid,
+    //     jadwalDokterUuids,
+    //   });
 
     const kodeBookingGroupedByJadwal = {};
 
@@ -127,10 +127,10 @@ export class APMService {
   static async registerJknAPM({ faskesUuid, body }) {
     const result = await sequelize.transaction(async (t) => {
       console.log("body ", body);
-      const validated = ZodValidator.validate(
-        APMSchema.CREATE_APPOINTMENT_BODY,
-        body
-      );
+      // const validated = ZodValidator.validate(
+      //   APMSchema.CREATE_APPOINTMENT_BODY,
+      //   body
+      // );
 
       // Check if the patient is already registered
       const patient = await PatientRepository.findDetailByIdentity({

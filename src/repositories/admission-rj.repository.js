@@ -1,6 +1,32 @@
 import { CodeGenerator } from "../helpers/code-generator.js";
+import { Op } from "sequelize";
+import moment from "moment";
+import AdmissionRJModel  from "../models/admission-rj.model.js";
+
 
 export class AdmissionRJRepository {
+  
+  static async countByJadwalDokterUuidsForToday({
+    faskesUuid,
+    jadwalDokterUuids,
+    transaction,
+  }) {
+    return await AdmissionRJModel.count({
+      where: {
+        faskesUuid,
+        jadwalDokterUuid: {
+          [Op.in]: jadwalDokterUuids,
+        },
+        tanggalDaftar: {
+          [Op.gte]: moment().startOf("day").unix(),
+          [Op.lte]: moment().endOf("day").unix(),
+        },
+        deletedAt: null,
+      },
+      transaction,
+    });
+  }
+  
   static async findOneByNoIdentity({ faskesUuid, noIdentity }) {
     return AdmissionRJModel.findOne({
       raw: true,

@@ -11,6 +11,7 @@ export class LokasiSeeder {
     const location_types = ["site", "branch", "center"];
     const class_codes = ["A", "B", "C", "D"];
     const class_names = ["Primary", "Secondary", "Tertiary"];
+    const pelayanan_types = ["RJ", "RI", "IGD"];
 
     const lokasiData = [];
 
@@ -25,10 +26,10 @@ export class LokasiSeeder {
           phone: `+62 812-34${Math.floor(10000 + Math.random() * 90000)}`,
           email: `lokasi${i + 1}@example.com`,
           url: `https://lokasi${i + 1}.example.com`,
-          status_operasional:
-            status_operasional_list[
-              Math.floor(Math.random() * status_operasional_list.length)
-            ],
+          // status_operasional:
+          //   status_operasional_list[
+          //     Math.floor(Math.random() * status_operasional_list.length)
+          //   ],
           satu_sehat_id: uuidv7(),
           organization_ihs_number: `IHS-${Math.floor(
             10000 + Math.random() * 90000
@@ -42,6 +43,10 @@ export class LokasiSeeder {
           code_antrian_poli: `POLI-${Math.floor(100 + Math.random() * 900)}`,
           is_poli: Math.random() < 0.5,
           status: true,
+          pelayanan:
+            pelayanan_types[Math.floor(Math.random() * pelayanan_types.length)],
+          no_room: Math.floor(100 + Math.random() * 900),
+          kategori_ruangan_uuid: uuidv7(),
           createdAt: moment().unix(),
           updatedAt: moment().unix(),
           deletedAt: null,
