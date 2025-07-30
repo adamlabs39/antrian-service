@@ -250,18 +250,18 @@ export class JadwalDokterService {
        */
 
       if (validated.deleted && validated.deleted.length > 0) {
-        const existingAppointments =
-          await AppointmentClient.countByJadwalDokterUuids({
+        const [existingAppointments, existingAdmissions] = await Promise.all([
+          AppointmentClient.countByJadwalDokterUuids({
             faskesUuid,
             jadwalDokterUuids: validated.deleted,
-          });
-
-        const existingAdmissions =
-          await AdmissionRJRepository.countByJadwalDokterUuidsForToday({
+          }),
+          AdmissionRJRepository.countByJadwalDokterUuidsForToday({
             faskesUuid,
             jadwalDokterUuids: validated.deleted,
             transaction: tx,
-          });
+          }),
+        ]);
+
         if (existingAppointments > 0 || existingAdmissions > 0) {
           throw new ConflictException(
             "Gagal mengupdate karena ada jadwal yang akan dihapus tetapi sudah memiliki booking pasien."
@@ -354,42 +354,23 @@ export class JadwalDokterService {
         (j) => j.jadwal_dokter_uuid
       );
 
-      const existingAppointments =
-        await AppointmentClient.countByJadwalDokterUuids({
+      const [existingAppointments, existingAdmissions] = await Promise.all([
+        AppointmentClient.countByJadwalDokterUuids({
           faskesUuid,
           jadwalDokterUuids,
-        });
+        }),
+        AdmissionRJRepository.countByJadwalDokterUuidsForToday({
+          faskesUuid,
+          jadwalDokterUuids,
+          transaction: tx,
+        }),
+      ]);
 
-        const existingAdmissions =
-          await AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-            faskesUuid,
-            jadwalDokterUuids,
-            transaction: tx,
-          });
-
-          if (existingAppointments > 0 || existingAdmissions > 0) {
-            throw new ConflictException(
-              "Gagal menghapus karena sudah ada pasien yang terdaftar di jadwal ini."
-            );
-          }
-
-      // const [existingAppointments, existingAdmissions] = await Promise.all([
-      //   AppointmentRepository.countByJadwalDokterUuids({
-      //     faskesUuid,
-      //     jadwalDokterUuids,
-      //     transaction: tx,
-      //   }),
-      //   AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-      //     faskesUuid,
-      //     jadwalDokterUuids,
-      //     transaction: tx,
-      //   }),
-      // ]);
-      // if (existingAppointments > 0 || existingAdmissions > 0) {
-      //   throw new ConflictException(
-      //     "Gagal menghapus karena sudah ada pasien yang booking di jadwal ini."
-      //   );
-      // }
+      if (existingAppointments > 0 || existingAdmissions > 0) {
+        throw new ConflictException(
+          "Gagal menghapus karena sudah ada pasien yang terdaftar di jadwal ini."
+        );
+      }
 
       await JadwalDokterRepository.deleteAllByDoctorAndLocation({
         faskesUuid,
