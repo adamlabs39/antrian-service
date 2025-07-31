@@ -133,6 +133,10 @@ export class JadwalDokterService {
         );
       }
 
+      validated.jadwal.forEach((jadwal) => {
+        jadwal.kuota = jadwal.kuota_jkn + jadwal.kuota_non_jkn;
+      });
+
       //create jadwal dokter
       const data = await JadwalDokterRepository.create({
         faskesUuid,
@@ -244,6 +248,35 @@ export class JadwalDokterService {
           "Jadwal dokter untuk poliklinik tersebut tidak ditemukan, silakan create terlebih dahulu."
         );
       }
+      
+     if (validated.updated && validated.updated.length > 0) {
+       validated.updated.forEach((jadwalToUpdate) => {
+         const oldJadwal = jadwalDokter.jadwal_dokter.find(
+           (j) => j.jadwal_dokter_uuid === jadwalToUpdate.jadwal_dokter_uuid
+         );
+         if (oldJadwal) {
+           const oldKuotaJkn = parseInt(oldJadwal.kuota_jkn, 10);
+           const oldKuotaNonJkn = parseInt(oldJadwal.kuota_non_jkn, 10);
+
+           const newKuotaJkn =
+             jadwalToUpdate.kuota_jkn !== undefined
+               ? parseInt(jadwalToUpdate.kuota_jkn, 10)
+               : oldKuotaJkn;
+
+           const newKuotaNonJkn =
+             jadwalToUpdate.kuota_non_jkn !== undefined
+               ? parseInt(jadwalToUpdate.kuota_non_jkn, 10)
+               : oldKuotaNonJkn;
+
+           jadwalToUpdate.kuota = newKuotaJkn + newKuotaNonJkn;
+         }
+       });
+     }
+
+
+     // Tambahkan console.log DI LUAR DAN SETELAH forEach
+     console.log("Data FINAL yang akan diupdate:", validated.updated);
+      
 
       /**
        *Do there exist booking? If yes, then we cannot update schedule that has delete

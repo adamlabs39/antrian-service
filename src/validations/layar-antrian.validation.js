@@ -5,14 +5,11 @@ import { BadRequestException } from "../exceptions/bad-request.exception.js";
 
 export class LayarAntrianSchema {
   static FILTER_QUERY = z.object({
-    page: z.number().optional(),
-    page_size: z.number().optional(),
+    page: z.coerce.number().optional(),
+    page_size: z.coerce.number().optional(),
     aktif: CommonSchema.TRUE_FALSE_UNDEFINED_STRING.optional(),
-    tipe_layar: z
-      .string()
-      .transform((val) => (val ? TipeLayar.toInt(val) : undefined))
-      .optional(),
-    nama: z.string().optional(),
+    tipe_layar: z.coerce.number().optional(),
+    nama_layar: z.string().optional(),
   });
 
   static LAYAR_ANTRIAN_PARAM = z.object({
