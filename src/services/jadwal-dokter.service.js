@@ -248,6 +248,28 @@ export class JadwalDokterService {
           "Jadwal dokter untuk poliklinik tersebut tidak ditemukan, silakan create terlebih dahulu."
         );
       }
+
+       const jadwalDokterUuids = jadwalDokter.jadwal_dokter.map(
+         (j) => j.jadwal_dokter_uuid
+       );
+
+       const [existingAppointments, existingAdmissions] = await Promise.all([
+         AppointmentClient.countByJadwalDokterUuids({
+           faskesUuid,
+           jadwalDokterUuids,
+         }),
+         AdmissionRJRepository.countByJadwalDokterUuidsForToday({
+           faskesUuid,
+           jadwalDokterUuids,
+           transaction: tx,
+         }),
+       ]);
+
+       if (existingAppointments > 0 || existingAdmissions > 0) {
+         throw new ConflictException(
+           "Jadwal tidak dapat diubah karena sudah ada pasien yang terdaftar."
+         );
+       }
       
      if (validated.updated && validated.updated.length > 0) {
        validated.updated.forEach((jadwalToUpdate) => {
@@ -273,9 +295,6 @@ export class JadwalDokterService {
        });
      }
 
-
-     // Tambahkan console.log DI LUAR DAN SETELAH forEach
-     console.log("Data FINAL yang akan diupdate:", validated.updated);
       
 
       /**
@@ -401,7 +420,7 @@ export class JadwalDokterService {
 
       if (existingAppointments > 0 || existingAdmissions > 0) {
         throw new ConflictException(
-          "Gagal menghapus karena sudah ada pasien yang terdaftar di jadwal ini."
+          "Jadwal tidak dapat dihapus karena sudah ada pasien yang terdaftar."
         );
       }
 
