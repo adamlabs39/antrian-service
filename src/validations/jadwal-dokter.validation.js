@@ -12,6 +12,7 @@ export class JadwalDokterSchema {
   static FILTER_QUERY = z.object({
     dokter: z
       .string()
+      .trim()
       .min(1, {
         message: "Nama dokter tidak boleh kosong",
       })
@@ -21,6 +22,7 @@ export class JadwalDokterSchema {
       .optional(),
     poli: z
       .string()
+      .trim()
       .min(1, {
         message: "Nama poliklinik tidak boleh kosong",
       })
@@ -53,12 +55,12 @@ export class JadwalDokterSchema {
     .object({
       day: z
         .number({
-          message:
-            "Invalid day value. Must be a number. (1: Senin, 2: Selasa, 3: Rabu, 4: Kamis, 5: Jumat, 6: Sabtu, 7: Minggu)",
+          required_error: "Hari wajib diisi.",
+          invalid_type_error: "Hari harus berupa angka.",
         })
         .int()
-        .min(1)
-        .max(7)
+        .min(1, { message: "Angka hari minimal adalah 1 (Senin)." })
+        .max(7, { message: "Angka hari maksimal adalah 7 (Minggu)." })
         .transform((val) => {
           const days = [
             "Senin",
@@ -88,7 +90,9 @@ export class JadwalDokterSchema {
       dokter_uuid: z.string().uuid({
         message: "dokter_uuid harus berupa UUID.",
       }),
-      jadwal: z.array(JadwalDokterSchema.JADWAL_DETAIL),
+      jadwal: z.array(JadwalDokterSchema.JADWAL_DETAIL).min(1, {
+        message: "Jadwal tidak boleh kosong",
+      }),
     })
     .strict();
 

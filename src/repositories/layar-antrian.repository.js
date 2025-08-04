@@ -23,12 +23,7 @@ export class LayarAntrianRepository {
           nama_layar: {
             [Op.iLike]: `%${filters.nama_layar}%`,
           },
-        },
-        {
-          judul: {
-            [Op.iLike]: `%${filters.nama_layar}%`,
-          },
-        },
+        }
       ];
     }
 

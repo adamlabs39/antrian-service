@@ -5,11 +5,11 @@ import { BadRequestException } from "../exceptions/bad-request.exception.js";
 
 export class LayarAntrianSchema {
   static FILTER_QUERY = z.object({
-    page: z.coerce.number().optional(),
-    page_size: z.coerce.number().optional(),
+    page: z.coerce.number().int().positive().optional(),
+    page_size: z.coerce.number().int().positive().optional(),
     aktif: CommonSchema.TRUE_FALSE_UNDEFINED_STRING.optional(),
-    tipe_layar: z.coerce.number().optional(),
-    nama_layar: z.string().optional(),
+    tipe_layar: z.coerce.number().int().positive().optional(),
+    nama_layar: z.string().trim().min(1).optional(),
   });
 
   static LAYAR_ANTRIAN_PARAM = z.object({
@@ -18,7 +18,11 @@ export class LayarAntrianSchema {
 
   static MANDATORY = z.object({
     nama_layar: z
-      .string()
+      .string({
+        required_error: "Nama layar wajib diisi.",
+        invalid_type_error: "Nama layar harus berupa teks.",
+      })
+      .trim()
       .min(1, {
         message: "Nama layar tidak boleh kosong",
       })
@@ -26,7 +30,10 @@ export class LayarAntrianSchema {
         message: "Nama layar tidak bisa terlalu panjang!",
       }),
     tipe_layar: z
-      .number()
+      .number({
+        required_error: "Tipe layar wajib diisi.",
+        invalid_type_error: "Tipe layar harus berupa angka.",
+      })
       .int({
         message: "Tipe layar tidak boleh kosong",
       })
@@ -37,19 +44,27 @@ export class LayarAntrianSchema {
         message: "Tipe layar tidak boleh lebih dari 5",
       }),
     judul: z
-      .string()
+      .string({
+        required_error: "Judul wajib diisi.",
+        invalid_type_error: "Judul harus berupa teks.",
+      })
+      .trim()
       .min(1, {
         message: "Judul layar tidak boleh kosong",
       })
       .max(255, {
         message: "Judul layar tidak boleh terlalu panjang!",
       }),
-    is_admisi: z.boolean(),
-    is_poli: z.boolean(),
-    is_farmasi: z.boolean(),
+    is_admisi: z.boolean().default(false),
+    is_poli: z.boolean().default(false),
+    is_farmasi: z.boolean().default(false),
     flash_text: z.array(z.string()).nullable().optional(),
     media: z
       .string()
+      .trim()
+      .url({
+        message: "Media harus berupa URL yang valid",
+      })
       .min(1, {
         message: "Media tidak boleh kosong",
       })
@@ -64,7 +79,7 @@ export class LayarAntrianSchema {
 
   static CREATE = LayarAntrianSchema.MANDATORY.refine((val) => {
     if (!val.is_admisi && !val.is_poli && !val.is_farmasi) {
-      throw new BadRequestException("Minimal salah satu harus dipilih");
+      throw new BadRequestException("Minimal harus memilih satu lokasi");
     }
 
     if (val.is_poli && !val.poli_uuids) {
@@ -80,7 +95,17 @@ export class LayarAntrianSchema {
     return true;
   });
 
-  static UPDATE = LayarAntrianSchema.MANDATORY.partial();
+  static UPDATE = LayarAntrianSchema.MANDATORY.partial().refine((val) => {
+    if (
+      val.is_poli === true &&
+      (!val.poli_uuids || val.poli_uuids.length === 0)
+    ) {
+      throw new BadRequestException(
+        "Jika jenis diubah menjadi poli, daftar poliklinik (poli_uuids) wajib diisi minimal 1."
+      );
+    }
+    return true;
+  });
 
   static DELETE_PARAM = LayarAntrianSchema.UPDATE_PARAM;
 }
