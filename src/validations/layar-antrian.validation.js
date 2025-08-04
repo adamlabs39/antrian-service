@@ -79,7 +79,7 @@ export class LayarAntrianSchema {
 
   static CREATE = LayarAntrianSchema.MANDATORY.refine((val) => {
     if (!val.is_admisi && !val.is_poli && !val.is_farmasi) {
-      throw new BadRequestException("Minimal harus memilih satu lokasi");
+      throw new BadRequestException("Minimal harus memilih satu jenis layar");
     }
 
     if (val.is_poli && !val.poli_uuids) {

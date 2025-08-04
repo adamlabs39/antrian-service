@@ -40,17 +40,6 @@ export class JadwalDokterSchema {
     location_uuid: CommonSchema.UUID_PARAM,
   });
 
-  /**
-   * e.g.
-   * {
-            "day" : 1,
-            "start_time" : "09.00",
-            "end_time" : "12.000",
-            "durasi_pelayanan" : "20 menit",
-            "kuota_jkn" : 5,
-            "kuota_non_jkn" : 5
-        },
-    */
   static JADWAL_DETAIL = z
     .object({
       day: z
@@ -76,8 +65,24 @@ export class JadwalDokterSchema {
       start_time: CommonSchema.TIME,
       end_time: CommonSchema.TIME,
       durasi_pelayanan: z.number().int().positive(),
-      kuota_jkn: z.number().int().positive(),
-      kuota_non_jkn: z.number().int().positive(),
+      kuota_jkn: z
+        .number({
+          required_error: "Kuota JKN wajib diisi.",
+          invalid_type_error: "Kuota JKN harus berupa angka.",
+        })
+        .int()
+        .nonnegative({
+          message: "Kuota JKN harus lebih dari 0",
+        }),
+      kuota_non_jkn: z
+        .number({
+          required_error: "Kuota Non-JKN wajib diisi.",
+          invalid_type_error: "Kuota Non-JKN harus berupa angka.",
+        })
+        .int()
+        .nonnegative({
+          message: "Kuota Non-JKN harus lebih dari 0",
+        }),
       aktif: z.boolean(),
     })
     .strict();
