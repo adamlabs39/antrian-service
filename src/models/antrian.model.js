@@ -50,6 +50,10 @@ AntrianModel.init(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    kodeFarmasi: {
+      type: DataTypes.STRING(255),
+      allowNull: true, // Will be generated dynamically
+    },
     createdAt: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -70,6 +74,23 @@ AntrianModel.init(
     tableName: "antrian",
     underscored: true,
     timestamps: false,
-    hooks: hookModel,
+    hooks: {
+      ...hookModel,
+      async beforeCreate(instance) {
+        if (instance.pelayanan === "farmasi" && instance.jenisResep) {
+          const count = await AntrianModel.count({
+            where: {
+              pelayanan: "farmasi",
+              createdAt: {
+                [Op.gte]: moment().startOf("day").unix(),
+                [Op.lt]: moment().endOf("day").unix(),
+              },
+            },
+          });
+
+          instance.kodeFarmasi = `${instance.jenisResep}-${count + 1}`;
+        }
+      },
+    },
   }
 );
