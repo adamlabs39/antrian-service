@@ -59,24 +59,25 @@ export class LayarAntrianService {
 
       const expectedPayload = FormatterService.toCamelCase(validated);
 
-      const created = await LayarAntrianRepository.create({
-        faskesUuid,
-        layarAntrian: expectedPayload,
-        transaction: tx,
-      });
-
+      
       const existingPolikliniks =
-        await PoliklinikRepository.findAllByPoliklinikUUIDs({
-          faskesUuid,
-          poliklinikUuids: validated.poli_uuids,
-        });
-
+      await PoliklinikRepository.findAllByPoliklinikUUIDs({
+        faskesUuid,
+        poliklinikUuids: validated.poli_uuids,
+      });
+      
       if (existingPolikliniks.length !== validated.poli_uuids.length) {
         throw new NotFoundException(
           "Terdapat poliklinik yang tidak ditemukan. Request dibatalkan."
         );
       }
-
+      
+      const created = await LayarAntrianRepository.create({
+        faskesUuid,
+        layarAntrian: expectedPayload,
+        transaction: tx,
+      });
+      
       if (validated.is_poli) {
         await LayarAntrianPoliRepository.bulkCreate({
           faskesUuid,

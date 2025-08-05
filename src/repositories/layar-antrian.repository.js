@@ -17,18 +17,13 @@ export class LayarAntrianRepository {
       deletedAt: null,
     };
 
-    if (filters.nama) {
+    if (filters.nama_layar) {
       whereClause[Op.or] = [
         {
           nama_layar: {
-            [Op.iLike]: `%${filters.nama}%`,
+            [Op.iLike]: `%${filters.nama_layar}%`,
           },
-        },
-        {
-          judul: {
-            [Op.iLike]: `%${filters.nama}%`,
-          },
-        },
+        }
       ];
     }
 

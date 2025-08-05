@@ -14,41 +14,8 @@ import AntrianModel from "../models/antrian.model.js";
 import { InternalServerErrorException } from "../exceptions/internal-server-error.exception.js";
 
 export class JadwalDokterRepository {
-  /**
-   *
-   */
-  static async findAll({ faskesUuid, filters, page, pageSize }) {
-    const whereClause = {
-      faskes_uuid: faskesUuid,
-      is_doctor: true,
-      deletedAt: null,
-    };
-
-    const limit = pageSize;
-    const offset = (page - 1) * pageSize;
-
-    if (filters.dokter) {
-      whereClause["$pegawai.name$"] = {
-        [Op.iLike]: `%${filters.dokter}%`,
-      };
-    }
-
-    /**
-     *
-     */
-    if (filters.poli) {
-      whereClause["$jadwal_dokter.lokasi.name$"] = {
-        [Op.iLike]: `%${filters.poli}%`,
-      };
-    }
-
-    if (filters.aktif !== undefined) {
-      whereClause["$jadwal_dokter.status$"] = filters.aktif;
-    }
-
-    const { count, rows: result } = await PractitionerModel.findAndCountAll({
-      limit,
-      offset,
+  static _buildCommonQueryOptions(){
+    return {
       attributes: [
         // Get the uuid - group by this
         "uuid",
@@ -75,10 +42,7 @@ export class JadwalDokterRepository {
         [Sequelize.col("jadwal_dokter.lokasi.uuid"), "lokasi_uuid"],
 
         // Get the name - dont group by this
-        [
-          Sequelize.fn("MAX", Sequelize.col("pegawai.name")),
-          "pegawai_name",
-        ],
+        [Sequelize.fn("MAX", Sequelize.col("pegawai.name")), "pegawai_name"],
 
         // Get the location name - dont group by this
         [
@@ -159,6 +123,44 @@ export class JadwalDokterRepository {
           },
         },
       ],
+    };
+  }
+
+  static async findAll({ faskesUuid, filters, page, pageSize }) {
+    const whereClause = {
+      faskes_uuid: faskesUuid,
+      is_doctor: true,
+      deletedAt: null,
+    };
+
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
+
+    if (filters.dokter) {
+      whereClause["$pegawai.name$"] = {
+        [Op.iLike]: `%${filters.dokter}%`,
+      };
+    }
+
+    /**
+     *
+     */
+    if (filters.poli) {
+      whereClause["$jadwal_dokter.lokasi.name$"] = {
+        [Op.iLike]: `%${filters.poli}%`,
+      };
+    }
+
+    if (filters.aktif !== undefined) {
+      whereClause["$jadwal_dokter.status$"] = filters.aktif;
+    }
+
+    const commonOptions = this._buildCommonQueryOptions();
+
+    const { count, rows: result } = await PractitionerModel.findAndCountAll({
+      ...commonOptions,
+      limit,
+      offset,
       where: whereClause,
       group: ["PractitionerModel.uuid", "jadwal_dokter.lokasi.uuid"],
       raw: true,
@@ -211,110 +213,9 @@ export class JadwalDokterRepository {
     poliUuid,
     transaction,
   }) {
+    const commonOptions = this._buildCommonQueryOptions();
     const row = await PractitionerModel.findOne({
-      attributes: [
-        // Get the uuid - group by this
-        "uuid",
-
-        "code_antrian_dokter",
-
-        // Get the location name - dont group by this
-        [
-          Sequelize.fn("MAX", Sequelize.col("jadwal_dokter.lokasi.name")),
-          "lokasi_name",
-        ],
-
-        // Get the location uuid - group by this
-        [Sequelize.col("jadwal_dokter.lokasi.uuid"), "lokasi_uuid"],
-        [
-          Sequelize.col("jadwal_dokter.lokasi.code_antrian_poli"),
-          "code_antrian_poli",
-        ],
-
-        // Get the name - dont group by this
-        [
-          Sequelize.fn("MAX", Sequelize.col("pegawai.name")),
-          "pegawai_name",
-        ],
-
-        // Get the location name - dont group by this
-        [
-          Sequelize.fn("BOOL_OR", Sequelize.col("jadwal_dokter.status")),
-          "status",
-        ],
-
-        [
-          Sequelize.fn("array_agg", Sequelize.col("jadwal_dokter.uuid")),
-          "jadwal_dokter_ids",
-        ],
-        [
-          Sequelize.literal(
-            "array_agg(TO_CHAR(jadwal_dokter.start_time, 'HH24:MI'))"
-          ),
-          "jadwal_dokter_start_times",
-        ],
-        [
-          Sequelize.literal(
-            "array_agg(TO_CHAR(jadwal_dokter.end_time, 'HH24:MI'))"
-          ),
-          "jadwal_dokter_end_times",
-        ],
-        [
-          Sequelize.fn("array_agg", Sequelize.col("jadwal_dokter.day")),
-          "jadwal_dokter_days",
-        ],
-        [
-          Sequelize.fn("array_agg", Sequelize.col("jadwal_dokter.kuota")),
-          "jadwal_dokter_kuotas",
-        ],
-        [
-          Sequelize.fn("array_agg", Sequelize.col("jadwal_dokter.kuota_jkn")),
-          "jadwal_dokter_kuotajkns",
-        ],
-        [
-          Sequelize.fn(
-            "array_agg",
-            Sequelize.col("jadwal_dokter.kuota_non_jkn")
-          ),
-          "jadwal_dokter_kuotanonjkns",
-        ],
-        [
-          Sequelize.fn(
-            "array_agg",
-            Sequelize.col("jadwal_dokter.durasi_pelayanan")
-          ),
-          "jadwal_dokter_durasi_pelayanans",
-        ],
-        [
-          Sequelize.fn("array_agg", Sequelize.col("jadwal_dokter.status")),
-          "jadwal_dokter_statuses",
-        ],
-      ],
-      include: [
-        {
-          model: PegawaiModel,
-          as: "pegawai",
-          attributes: [],
-        },
-        {
-          model: JadwalDokterModel,
-          as: "jadwal_dokter",
-          attributes: [],
-          required: true,
-          include: {
-            model: LokasiModel,
-            as: "lokasi",
-            attributes: [],
-            where: {
-              is_poli: true,
-              deletedAt: null,
-            },
-          },
-          where: {
-            deletedAt: null,
-          },
-        },
-      ],
+      ...commonOptions,
       where: {
         faskes_uuid: faskesUuid,
         is_doctor: true,
@@ -363,7 +264,7 @@ export class JadwalDokterRepository {
       day: jadwal.day,
       start_time: jadwal.start_time,
       end_time: jadwal.end_time,
-      kuota: jadwal.kuota_jkn + jadwal.kuota_non_jkn,
+      kuota: jadwal.kuota,
       kuotaNonJkn: jadwal.kuota_non_jkn,
       kuotaJkn: jadwal.kuota_jkn,
       durasiPelayanan: jadwal.durasi_pelayanan,
@@ -411,6 +312,7 @@ export class JadwalDokterRepository {
       start_time: "startTime",
       end_time: "endTime",
       durasiPelayanan: "durasiPelayanan",
+      kuota: "kuota",
       kuotaJkn: "kuotaJkn",
       kuotaNonJkn: "kuotaNonJkn",
       codeAntrianPoli: "codeAntrianPoli",
@@ -503,30 +405,6 @@ export class JadwalDokterRepository {
         transaction,
       }
     );
-  }
-
-  static async findAllByLocationToday({ faskesUuid, poliUuid }) {
-    // Find exactly at today
-    const today = moment().format("dddd").toLowerCase();
-
-    // To bahasa indonesia
-    const hariApa = ToIndoDay.fromEng("saturday");
-
-    const whereClause = {
-      faskes_uuid: faskesUuid,
-      lokasi_uuid: poliUuid,
-      day: hariApa,
-      deletedAt: null,
-    };
-
-    const result = JadwalDokterModel.findAll({
-      where: whereClause,
-      raw: true,
-      nest: true,
-      subQuery: false,
-    });
-
-    return result;
   }
 
   static async getKodeBookingsAPMTodayByUuids({

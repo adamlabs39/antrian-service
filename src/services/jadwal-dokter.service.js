@@ -133,6 +133,10 @@ export class JadwalDokterService {
         );
       }
 
+      validated.jadwal.forEach((jadwal) => {
+        jadwal.kuota = jadwal.kuota_jkn + jadwal.kuota_non_jkn;
+      });
+
       //create jadwal dokter
       const data = await JadwalDokterRepository.create({
         faskesUuid,
@@ -245,29 +249,73 @@ export class JadwalDokterService {
         );
       }
 
+      const existingSchedules = jadwalDokter.jadwal_dokter;
+      const uuidsToDelete = validated.deleted || [];
+
+      // Hitung jumlah jadwal yang akan tersisa setelah dihapus
+      const remainingSchedulesCount =
+        existingSchedules.length - uuidsToDelete.length;
+
+      // Jika user mencoba menghapus semua jadwal yang tersisa, tolak permintaan.
+      if (existingSchedules.length > 0 && remainingSchedulesCount === 0) {
+        throw new BadRequestException(
+          "Tidak bisa menghapus jadwal terakhir. Gunakan endpoint DELETE untuk menghapus seluruh set jadwal dokter di poliklinik ini."
+        );
+      }
+
+       const jadwalDokterUuids = jadwalDokter.jadwal_dokter.map(
+         (j) => j.jadwal_dokter_uuid
+       );
+
+       const [existingAppointments, existingAdmissions] = await Promise.all([
+         AppointmentClient.countByJadwalDokterUuids({
+           faskesUuid,
+           jadwalDokterUuids,
+         }),
+         AdmissionRJRepository.countByJadwalDokterUuidsForToday({
+           faskesUuid,
+           jadwalDokterUuids,
+           transaction: tx,
+         }),
+       ]);
+
+       if (existingAppointments > 0 || existingAdmissions > 0) {
+         throw new ConflictException(
+           "Jadwal tidak dapat diubah karena sudah ada pasien yang terdaftar."
+         );
+       }
+      
+     if (validated.updated && validated.updated.length > 0) {
+       validated.updated.forEach((jadwalToUpdate) => {
+         const oldJadwal = jadwalDokter.jadwal_dokter.find(
+           (j) => j.jadwal_dokter_uuid === jadwalToUpdate.jadwal_dokter_uuid
+         );
+         if (oldJadwal) {
+           const oldKuotaJkn = parseInt(oldJadwal.kuota_jkn, 10);
+           const oldKuotaNonJkn = parseInt(oldJadwal.kuota_non_jkn, 10);
+
+           const newKuotaJkn =
+             jadwalToUpdate.kuota_jkn !== undefined
+               ? parseInt(jadwalToUpdate.kuota_jkn, 10)
+               : oldKuotaJkn;
+
+           const newKuotaNonJkn =
+             jadwalToUpdate.kuota_non_jkn !== undefined
+               ? parseInt(jadwalToUpdate.kuota_non_jkn, 10)
+               : oldKuotaNonJkn;
+
+           jadwalToUpdate.kuota = newKuotaJkn + newKuotaNonJkn;
+         }
+       });
+     }
+
+      
+
       /**
        *Do there exist booking? If yes, then we cannot update schedule that has delete
        */
 
-      if (validated.deleted && validated.deleted.length > 0) {
-        const [existingAppointments, existingAdmissions] = await Promise.all([
-          AppointmentClient.countByJadwalDokterUuids({
-            faskesUuid,
-            jadwalDokterUuids: validated.deleted,
-          }),
-          AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-            faskesUuid,
-            jadwalDokterUuids: validated.deleted,
-            transaction: tx,
-          }),
-        ]);
-
-        if (existingAppointments > 0 || existingAdmissions > 0) {
-          throw new ConflictException(
-            "Gagal mengupdate karena ada jadwal yang akan dihapus tetapi sudah memiliki booking pasien."
-          );
-        }
-      }
+      
 
       const camelCasedBody = FormatterService.toCamelCase(validated);
       validated.dokterUuid = dokterUuid;
@@ -368,7 +416,7 @@ export class JadwalDokterService {
 
       if (existingAppointments > 0 || existingAdmissions > 0) {
         throw new ConflictException(
-          "Gagal menghapus karena sudah ada pasien yang terdaftar di jadwal ini."
+          "Jadwal tidak dapat dihapus karena sudah ada pasien yang terdaftar."
         );
       }
 
