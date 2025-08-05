@@ -2,54 +2,57 @@ import { Op, Sequelize } from "sequelize";
 import AdmissionRJModel from "../models/admission-rj.model.js";
 import AntrianModel from "../models/antrian.model.js";
 import PencatatTaskIdModel from "../models/pencatat-task-id.model.js";
+import moment from "moment";
 
 export class AntrianRepository {
-  static async findAll({ faskesUuid, filterQuery }) {
+  static async findAll({ faskesUuid, filters, page, pageSize, tipe }) {
     const whereClause = {
       faskesUuid,
+      pelayanan: tipe, 
       deletedAt: null,
     };
-  }
 
-  static async findAllAdmisi({ faskesUuid, filterQuery }) {
-    const whereClause = {
-      faskesUuid,
-      deletedAt: null,
-      statusPanggilan: [1, 2, 3, 4],
-    };
-
-    if (filterQuery.nama) {
+    // Filter dinamis berdasarkan nama pasien
+    if (filters.nama) {
       whereClause["$AdmissionRJ.name$"] = {
-        [Op.iLike]: `%${filterQuery.nama}%`,
+        [Op.iLike]: `%${filters.nama}%`,
       };
     }
 
-    if (filterQuery.batas_tanggal_awal || filterQuery.batas_tanggal_akhir) {
+    // Filter dinamis berdasarkan rentang tanggal
+    if (filters.batas_tanggal_awal || filters.batas_tanggal_akhir) {
       whereClause["$AdmissionRJ.tanggal_daftar$"] = {
-        ...(filterQuery.batas_tanggal_awal && {
-          [Op.gte]: Math.floor(
-            new Date(filterQuery.batas_tanggal_awal).getTime() / 1000
-          ),
+        ...(filters.batas_tanggal_awal && {
+          [Op.gte]: moment(filters.batas_tanggal_awal).startOf("day").unix(),
         }),
-        ...(filterQuery.batas_tanggal_akhir && {
-          [Op.lte]: Math.floor(
-            new Date(filterQuery.batas_tanggal_akhir).getTime() / 1000
-          ),
+        ...(filters.batas_tanggal_akhir && {
+          [Op.lte]: moment(filters.batas_tanggal_akhir).endOf("day").unix(),
         }),
       };
     }
 
-    if (filterQuery.status) {
-      if (filterQuery.status === "antri") {
-        whereClause["$AdmissionRJ.PencatatTaskIds.task_id$"] = 1;
-      } else if (filterQuery.status === "proses") {
-        whereClause["$AdmissionRJ.PencatatTaskIds.task_id$"] = 2;
-      } else if (filterQuery.status === "selesai") {
-        whereClause["$AdmissionRJ.PencatatTaskIds.task_id$"] = 3;
+    // Filter dinamis berdasarkan status
+    if (filters.status) {
+      const statusMap = {
+        panggil: 1,
+        lewati: 2,
+        proses: 3,
+        selesai:4,
+        verifikasi_obat: 5,
+        penyerahan_obat: 6
+      };
+      if (statusMap[filters.status]) {
+        whereClause["$AdmissionRJ.PencatatTaskIds.task_id$"] =
+          statusMap[filters.status];
       }
     }
 
-    const data = await AntrianModel.findAll({
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
+
+    const { count, rows } = await AntrianModel.findAndCountAll({
+      limit,
+      offset,
       where: whereClause,
       raw: true,
       nest: true,
@@ -59,27 +62,29 @@ export class AntrianRepository {
         [Sequelize.col("AdmissionRJ.tanggal_daftar"), "waktuDaftar"],
         [
           Sequelize.col("AdmissionRJ.PencatatTaskIds.created_at"),
-          "waktuKunjung",
+          "waktuPanggil",
         ],
         [Sequelize.col("AdmissionRJ.kode_booking"), "kodeBooking"],
         [Sequelize.col("AdmissionRJ.PencatatTaskIds.task_id"), "taskId"],
         [Sequelize.col("AdmissionRJ.no_antrian_admisi"), "noAntrianAdmisi"],
+        [Sequelize.col("AdmissionRJ.no_antrian_poli"), "noAntrianPoli"],
         [Sequelize.col("AdmissionRJ.name"), "namaPasien"],
         [Sequelize.col("AdmissionRJ.no_rm"), "noRm"],
         ["jenis_pasien", "jenisPasien"],
       ],
       include: [
         {
-          model: AdmissionRJModel,
+          model: AdmissionRJModel,  
           required: true,
+          attributes: [], // Atribut tidak perlu diambil, hanya untuk JOIN
           include: [
             {
               model: PencatatTaskIdModel,
               required: false,
+              attributes: [],
               where: {
                 deletedAt: null,
                 faskesUuid,
-                taskId: [1, 2, 3],
               },
             },
           ],
@@ -91,38 +96,30 @@ export class AntrianRepository {
       ],
     });
 
-    const readableData = data.map((item) => {
+    const readableData = rows.map((item) => {
       return {
         antrianUuid: item.antrianUuid,
         waktuDaftar: item.waktuDaftar,
-        waktuKunjung: item.waktuKunjung,
+        waktuPanggil: item.waktuPanggil,
         kodeBooking: item.kodeBooking,
-        status: ["Antri", "Proses", "Selesai"][item.taskId - 1],
-        noAntrianAdmisi: item.noAntrianadmisi,
+        status: ["panggil", "lewati", "proses", "selesai", "verifikasi_obat", "penyerahan_obat"][item.taskId - 1] || "unknown",
+        noAntrianAdmisi: item.noAntrianAdmisi,
+        noAntrianPoli: item.noAntrianPoli || null,
         namaPasien: item.namaPasien,
         noRm: item.noRm,
-        jenisPasien: item.jenisPasien === "JKN" ? "BPJS" : "Tunai",
+        jenisPasien: item.jenisPasien === "JKN" ? "NON JKN" : item.jenisPasien,
       };
     });
 
     return {
-      pagination: null,
+      pagination: { total: count, page, pageSize },
       data: readableData,
     };
   }
 
   static async generateNoUrutRegistrasi({ faskesUuid }) {
-    // Logicnya adalah menghitung berapa banyak antrian yang sudah ada hari ini
-
-    const today = new Date();
-    const startOfDay = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-
-    const startOfDayUnix = Math.floor(startOfDay.getTime() / 1000);
-    const endOfDayUnix = startOfDayUnix + 86400;
+    const startOfDayUnix = moment().startOf("day").unix();
+    const endOfDayUnix = moment().endOf("day").unix();
 
     const count = await AntrianModel.count({
       where: {

@@ -5,4 +5,6 @@ export const dataAntrianRouter = express.Router();
 
 dataAntrianRouter.get("/admisi", DataAntrianController.findAllAdmisi);
 
+dataAntrianRouter.get("/poli", DataAntrianController.findAllPoli);
 
+dataAntrianRouter.get("/farmasi", DataAntrianController.findAllFarmasi);
