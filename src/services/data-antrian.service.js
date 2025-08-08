@@ -60,15 +60,20 @@ export class DataAntrianService {
         );
       }
 
-      const antrianSaatIni = rawatJalanToday.filter(
-        (rj) => rj.jadwal_dokter_uuid === jadwalHariIni.uuid
-      ).length;
+    const antrianSaatIni = rawatJalanToday.filter(
+      (rj) => rj.jadwal_dokter_uuid === jadwalHariIni.uuid
+    ).length;
 
-      if (antrianSaatIni >= jadwalHariIni.kuota) {
-        throw new ConflictException(
-          "Kuota antrian untuk jadwal ini sudah penuh."
-        );
-      }
+    // Cek kuota (logika ini sudah benar)
+    if (antrianSaatIni >= jadwalHariIni.kuota) {
+      throw new ConflictException(
+        "Kuota antrian untuk jadwal ini sudah penuh."
+      );
+    }
+
+     const noUrutPoli = antrianSaatIni + 1;
+
+     const noUrutAdmisi = rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
     }
     
 
