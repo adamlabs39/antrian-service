@@ -70,6 +70,7 @@ export class DataAntrianService {
         );
       }
     }
+    
 
     // Hitung dan generate semua nomor yang dibutuhkan
     const noUrutAdmisi =
