@@ -1,98 +1,128 @@
+import { CodeGenerator } from "../helpers/code-generator.js";
+import { AdmisiClient } from "../clients/admisi.client.js";
+import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js"; // 1. Impor repository jadwal
 import { NotFoundException } from "../exceptions/not-found.exception.js";
+import { ConflictException } from "../exceptions/conflict.exception.js";
 import { AntrianRepository } from "../repositories/antrian.repository.js";
-import { DataAntrianSchema } from "../validations/data-antrian.validation.js";
-import ZodValidator from "../validations/zod.validation.js";
+import { BadRequestException } from "../exceptions/bad-request.exception.js";
+import { uuidv7 } from "uuidv7";
 
 export class DataAntrianService {
-  static async findAll({ faskesUuid, filters: filterQuery }) {
-    const validatedFilter = ZodValidator.validate(
-      DataAntrianSchema.FILTER_QUERY,
-      filterQuery
-    );
 
-    const { pagination, data } = await AntrianRepository.findAll({
-      faskesUuid,
-      filterQuery: validatedFilter,
-    });
 
-    if (data.length === 0) {
-      throw new NotFoundException("Data tidak ditemukan");
+  static async processRegistration({ faskesUuid, body, token }) {
+    const { rawat_jalan_uuid } = body;
+    if (!rawat_jalan_uuid) {
+      throw new BadRequestException("rawat_jalan_uuid wajib diisi.");
     }
 
-    return { pagination, data };
-  }
-
-  static async findAllAdmisi({ faskesUuid, filters: filterQuery }) {
-    const validatedFilter = ZodValidator.validate(
-      DataAntrianSchema.FILTER_QUERY,
-      filterQuery
+    const pendaftaran = await AdmisiClient.getRawatJalanDetail(
+      rawat_jalan_uuid,
+      token
     );
 
-    let { page, page_size: pageSize, ...filters } = validatedFilter;
-    page = page || 1;
-    pageSize = pageSize || 10;
-
-    const { pagination, data } = await AntrianRepository.findAll({
-      faskesUuid,
-      filterQuery: filters,
-      pageSize,
-      tipe: "admisi",
-    });
-    if (data.length === 0) {
-      throw new NotFoundException("Data antrian admisi tidak ditemukan");
+    if (!pendaftaran) {
+      throw new NotFoundException(
+        "Data pendaftaran tidak ditemukan di layanan Admisi."
+      );
     }
-    return { pagination, data };
-  }
 
-  static async findAllPoli({ faskesUuid, filters: filterQuery }) {
-    const queries = ZodValidator.validate(
-      DataAntrianSchema.FILTER_QUERY,
-      filterQuery
+    let jadwalHariIni;
+
+    if (!pendaftaran.practitioner_uuid || !pendaftaran.lokasi_uuid) {
+      throw new BadRequestException(
+        "Data pendaftaran tidak lengkap, dokter atau poliklinik belum ditentukan."
+      );
+    }
+    // if (!pendaftaran.practitioner || !pendaftaran.polyclinic) {
+    //   throw new BadRequestException(
+    //     "Data pendaftaran tidak lengkap, dokter atau poliklinik belum ditentukan."
+    //   );
+    // }
+
+    const rawatJalanToday = await AdmisiClient.getRawatJalanToday(
+      faskesUuid,
+      token
     );
 
-    let { page, page_size: pageSize, ...filters } = queries;
-    page = page || 1;
-    pageSize = pageSize || 10;
+    // Cek kuota jika ini adalah pendaftaran ke poli
+    if (pendaftaran.jadwal_dokter_uuid) {
+       jadwalHariIni =
+        await JadwalDokterRepository.findTodayScheduleByDoctorAndLocation({
+          faskesUuid,
+          dokterUuid: pendaftaran.practitioner_uuid,
+          poliUuid: pendaftaran.lokasi_uuid,
+        });
 
-    const { pagination, data } = await AntrianRepository.findAll({
-      // Diubah ke AntrianRepository
-      faskesUuid,
-      filters,
-      page,
-      pageSize,
-      tipe: "poli",
-    });
+      if (!jadwalHariIni) {
+        throw new NotFoundException(
+          "Tidak ada jadwal aktif untuk dokter di poliklinik ini hari ini."
+        );
+      }
 
-    if (data.length === 0) {
-      throw new NotFoundException("Data antrian poliklinik tidak ditemukan");
+      const antrianSaatIni = rawatJalanToday.filter(
+        (rj) => rj.jadwal_dokter_uuid === jadwalHariIni.uuid
+      ).length;
+
+      if (antrianSaatIni >= jadwalHariIni.kuota) {
+        throw new ConflictException(
+          "Kuota antrian untuk jadwal ini sudah penuh."
+        );
+      }
     }
 
-    return { pagination, data };
-  }
+    // Hitung dan generate semua nomor yang dibutuhkan
+    const noUrutAdmisi =
+      rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
+    const noUrutPoli =
+      rawatJalanToday.filter(
+        (rj) =>
+          rj.no_antrian_poli &&
+          rj.polyclinic.uuid === pendaftaran.lokasi_uuid
+      ).length + 1;
 
-  static async findAllFarmasi({ faskesUuid, filters: filterQuery }) {
-    const queries = ZodValidator.validate(
-      DataAntrianSchema.FILTER_QUERY,
-      filterQuery
+    const noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
+    const noAntrianPoli = CodeGenerator.generateNoAntrianPoli(
+      jadwalHariIni.codeAntrianPoli,
+      jadwalHariIni.codeAntrianDokter,
+      noUrutPoli
+    );
+    const kodeBooking = CodeGenerator.generateKodeBooking();
+
+    const paymentMethodMap = {
+      1: "TUNAI",
+      2: "ASURANSI",
+    };
+
+    const generatedCodes = {
+      no_antrian_admisi: noAntrianAdmisi,
+      no_antrian_poli: noAntrianPoli,
+      kode_booking: kodeBooking,
+      patient_data: pendaftaran.patient,
+      payment_method: paymentMethodMap[pendaftaran.payment_method],
+      jadwal_dokter_uuid: pendaftaran.jadwal_dokter_uuid,
+      complaint: pendaftaran.complaint,
+      note: pendaftaran.note,
+    };
+
+    // Update data di layanan Admisi dengan nomor yang baru
+    await AdmisiClient.updateRawatJalan(
+      rawat_jalan_uuid,
+      generatedCodes,
+      token
     );
 
-    let { page, page_size: pageSize, ...filters } = queries;
-    page = page || 1;
-    pageSize = pageSize || 10;
+    // 6. Simpan catatan antrian ke database lokal untuk monitoring
+    // await AntrianRepository.create({
+    //   uuid: uuidv7(),
+    //   faskesUuid,
+    //   rawatJalanUuid: rawat_jalan_uuid,
+    //   patientUuid: pendaftaran.patient_uuid,
+    //   jadwalDokterUuid: pendaftaran.jadwal_dokter_uuid,
+    //   pelayanan: "poli", // Atau "admisi", tergantung dari tipe pendaftaran
+    //   statusPanggilan: 1, // Status awal: Menunggu
+    // });
 
-    const { pagination, data } = await AntrianRepository.findAll({
-      // Diubah ke AntrianRepository
-      faskesUuid,
-      filters,
-      page,
-      pageSize,
-      tipe: "farmasi",
-    });
-
-    if (data.length === 0) {
-      throw new NotFoundException("Data antrian farmasi tidak ditemukan");
-    }
-
-    return { pagination, data };
+    return generatedCodes;
   }
 }

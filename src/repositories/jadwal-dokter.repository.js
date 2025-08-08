@@ -14,7 +14,7 @@ import AntrianModel from "../models/antrian.model.js";
 import { InternalServerErrorException } from "../exceptions/internal-server-error.exception.js";
 
 export class JadwalDokterRepository {
-  static _buildCommonQueryOptions(){
+  static _buildCommonQueryOptions() {
     return {
       attributes: [
         // Get the uuid - group by this
@@ -167,7 +167,7 @@ export class JadwalDokterRepository {
       nest: true,
       subQuery: false,
     });
-    console.log(result)
+    console.log(result);
 
     const ret = result.map((row) => ({
       doctor: {
@@ -254,6 +254,27 @@ export class JadwalDokterRepository {
         })),
       }
     );
+  }
+
+  static async findTodayScheduleByDoctorAndLocation({
+    faskesUuid,
+    dokterUuid,
+    poliUuid,
+    transaction,
+  }) {
+    const todayInIndonesian = ToIndoDay.fromEng(moment().format("dddd"));
+
+    return await JadwalDokterModel.findOne({
+      where: {
+        faskesUuid,
+        practitionerUuid: dokterUuid,
+        lokasiUuid: poliUuid,
+        day: todayInIndonesian,
+        deletedAt: null,
+        status: true, 
+      },
+      transaction,
+    });
   }
 
   static async create({ faskesUuid, jadwalDokter }) {

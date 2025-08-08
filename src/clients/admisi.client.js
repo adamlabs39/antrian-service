@@ -1,0 +1,89 @@
+import axios from "axios";
+import moment from "moment";
+
+// URL endpoint dari layanan Admisi
+const ADMISI_API_URL =
+  "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
+
+export class AdmisiClient {
+  /**
+   * Mengambil semua data rawat jalan untuk hari ini
+   * @param {string} faskesUuid - UUID faskes dari token
+   * @param {string} token - Token JWT admin yang sedang login
+   * @returns {Promise<Array>} - Daftar data rawat jalan
+   */
+  static async getRawatJalanToday(faskesUuid, token) {
+    try {
+      const startDate = moment().startOf("day").unix();
+      const endDate = moment().endOf("day").unix();
+
+      const response = await axios.get(`${ADMISI_API_URL}/rawat-jalan`, {
+        headers: {
+          Authorization: token, // Meneruskan token admin
+        },
+        params: {
+          faskesUuid: faskesUuid, // Sesuaikan jika API Admisi butuh ini di params
+          start_date: startDate,
+          end_date: endDate,
+        },
+      });
+
+      return response.data.payload || [];
+    } catch (error) {
+      console.error("Error saat memanggil layanan Admisi:", error.message);
+      throw new Error("Gagal terhubung ke layanan Admisi.");
+    }
+  }
+
+  static async getRawatJalanDetail(rawatJalanUuid, token) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
+
+      const response = await axios.get(endpoint, {
+        headers: {
+          Authorization: token,
+        },
+      });
+
+      return response.data.payload || null;
+    } catch (error) {
+      console.error("Error saat mengambil detail rawat jalan:", error.message);
+      throw new Error(
+        "Gagal mengambil detail pendaftaran dari layanan Admisi."
+      );
+    }
+  }
+
+  static async updateRawatJalan(rawatJalanUuid, codes, token) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
+
+      // debug
+      console.log("========================================");
+      console.log("MENGIRIM UPDATE KE LAYANAN ADMISI");
+      console.log("Endpoint Tujuan:", endpoint);
+      console.log("Body/Payload yang Dikirim:", JSON.stringify(codes, null, 2));
+      console.log("========================================");
+
+      const response = await axios.put(endpoint, codes, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      // debug
+      if (error.response) {
+        // Menampilkan body error yang dikirim oleh layanan Admisi
+        console.error(
+          "Error Response from Admisi Service:",
+          JSON.stringify(error.response.data, null, 2)
+        );
+      } else {
+        console.error("Error saat memanggil layanan Admisi:", error.message);
+      }
+
+      throw new Error("Gagal update nomor antrian di layanan Admisi.");
+    }
+  }
+}

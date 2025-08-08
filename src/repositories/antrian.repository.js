@@ -8,7 +8,7 @@ export class AntrianRepository {
   static async findAll({ faskesUuid, filters, page, pageSize, tipe }) {
     const whereClause = {
       faskesUuid,
-      pelayanan: tipe, 
+      pelayanan: tipe,
       deletedAt: null,
     };
 
@@ -37,9 +37,9 @@ export class AntrianRepository {
         panggil: 1,
         lewati: 2,
         proses: 3,
-        selesai:4,
+        selesai: 4,
         verifikasi_obat: 5,
-        penyerahan_obat: 6
+        penyerahan_obat: 6,
       };
       if (statusMap[filters.status]) {
         whereClause["$AdmissionRJ.PencatatTaskIds.task_id$"] =
@@ -74,7 +74,7 @@ export class AntrianRepository {
       ],
       include: [
         {
-          model: AdmissionRJModel,  
+          model: AdmissionRJModel,
           required: true,
           attributes: [], // Atribut tidak perlu diambil, hanya untuk JOIN
           include: [
@@ -102,7 +102,15 @@ export class AntrianRepository {
         waktuDaftar: item.waktuDaftar,
         waktuPanggil: item.waktuPanggil,
         kodeBooking: item.kodeBooking,
-        status: ["panggil", "lewati", "proses", "selesai", "verifikasi_obat", "penyerahan_obat"][item.taskId - 1] || "unknown",
+        status:
+          [
+            "panggil",
+            "lewati",
+            "proses",
+            "selesai",
+            "verifikasi_obat",
+            "penyerahan_obat",
+          ][item.taskId - 1] || "unknown",
         noAntrianAdmisi: item.noAntrianAdmisi,
         noAntrianPoli: item.noAntrianPoli || null,
         namaPasien: item.namaPasien,
@@ -115,6 +123,50 @@ export class AntrianRepository {
       pagination: { total: count, page, pageSize },
       data: readableData,
     };
+  }
+
+  static async create(dataToCreate, { transaction }) {
+    return await AntrianModel.create(dataToCreate, { transaction });
+  }
+
+  static async bulkCreate(dataToCreate, { transaction }) {
+    return await AntrianModel.bulkCreate(dataToCreate, { transaction });
+  }
+
+  static async countTodayByJadwal({
+    faskesUuid,
+    jadwalDokterUuid,
+    transaction,
+  }) {
+    const count = await AntrianModel.count({
+      where: {
+        faskesUuid,
+        jadwalDokterUuid,
+        createdAt: {
+          [Op.gte]: moment().startOf("day").unix(),
+          [Op.lte]: moment().endOf("day").unix(),
+        },
+        deletedAt: null,
+      },
+      transaction,
+    });
+    return count;
+  }
+
+  static async generateNoUrut({ faskesUuid, tipe, transaction }) {
+    const count = await AntrianModel.count({
+      where: {
+        faskesUuid,
+        pelayanan: tipe,
+        createdAt: {
+          [Op.gte]: moment().startOf("day").unix(),
+          [Op.lte]: moment().endOf("day").unix(),
+        },
+      },
+      transaction,
+    });
+
+    return count + 1;
   }
 
   static async generateNoUrutRegistrasi({ faskesUuid }) {

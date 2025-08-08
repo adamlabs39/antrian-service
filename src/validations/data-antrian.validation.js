@@ -25,23 +25,34 @@ export class DataAntrianSchema {
 
   static CREATE = z
     .object({
-      tipeAntrian: z.enum(["admisi", "poli", "farmasi"], {
-        required_error: "Tipe antrian wajib diisi.",
+      // tipeAntrian: z.enum(["admisi", "poli", "farmasi"], {
+      //   required_error: "Tipe antrian wajib diisi.",
+      // }),
+      pasien_baru: z.boolean({
+        required_error: "Status pasien baru wajib diisi.",
       }),
-      lokasiUuid: CommonSchema.UUID_PARAM.optional(), // Wajib ada jika tipeAntrian = 'poli'
-      pasienUuid: CommonSchema.UUID_PARAM,
-      admissionUuid: CommonSchema.UUID_PARAM,
+      patient_uuid: CommonSchema.UUID_PARAM,
+      jenis_pasien: z.string({
+        required_error: "Jenis pasien wajib diisi.",
+      }),
+      dokter_uuid: CommonSchema.UUID_PARAM.optional(),
+      // admissionUuid: CommonSchema.UUID_PARAM.optional(),
+      lokasi_uuid: CommonSchema.UUID_PARAM.optional(), // Wajib ada jika tipeAntrian = 'poli'
+      // admission_uuid: CommonSchema.UUID_PARAM,
     })
     .refine(
       (data) => {
-        if (data.tipeAntrian === "poli" && !data.lokasiUuid) {
+        if (
+          data.pasien_baru === false &&
+          (!data.dokter_uuid || !data.lokasi_uuid)
+        ) {
           return false;
         }
         return true;
       },
       {
-        message: "lokasiUuid wajib diisi untuk antrian poli.",
-        path: ["lokasiUuid"],
+        message: "Dokter dan Lokasi wajib diisi untuk pasien lama.",
+        path: ["dokterUuid", "lokasiUuid"],
       }
     );
 
