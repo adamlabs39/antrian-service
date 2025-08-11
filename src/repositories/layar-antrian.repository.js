@@ -27,8 +27,8 @@ export class LayarAntrianRepository {
       ];
     }
 
-    if (filters.status !== undefined) {
-      whereClause.status = filters.status;
+    if (filters.aktif !== undefined) {
+      whereClause.status = filters.aktif;
     }
 
     if (filters.tipe_layar) {
@@ -179,7 +179,7 @@ export class LayarAntrianRepository {
     return await LayarAntrianModel.create(
       {
         ...layarAntrian,
-        status: layarAntrian.status,
+        status: layarAntrian.aktif,
         faskesUuid,
         createdAt: moment().unix(),
         updatedAt: moment().unix(),
@@ -192,7 +192,7 @@ export class LayarAntrianRepository {
     return await LayarAntrianModel.update(
       {
         ...layarAntrian,
-        status: layarAntrian.status,
+        status: layarAntrian.aktif,
         updatedAt: moment().unix(),
       },
       {

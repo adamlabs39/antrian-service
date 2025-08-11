@@ -161,7 +161,19 @@ export class JadwalDokterService {
 
       validated.jadwal.forEach((jadwal) => {
         jadwal.kuota = jadwal.kuota_jkn + jadwal.kuota_non_jkn;
+     
+        if (jadwal.kuota > 0) {
+          const totalMenit =
+            TimeConverter.toMinutes(jadwal.end_time) -
+            TimeConverter.toMinutes(jadwal.start_time);
+          jadwal.durasi_pelayanan = Math.floor(totalMenit / jadwal.kuota);
+        } else {
+          jadwal.durasi_pelayanan = 0;
+        }
+
       });
+
+      
 
       //create jadwal dokter
       const data = await JadwalDokterRepository.create({
@@ -365,13 +377,35 @@ export class JadwalDokterService {
                 : oldKuotaNonJkn;
 
             jadwalToUpdate.kuota = newKuotaJkn + newKuotaNonJkn;
+
+            if(jadwalToUpdate.kuota > 0){
+              const startTime = jadwalToUpdate.start_time || oldJadwal.start_time;
+              const endTime = jadwalToUpdate.end_time || oldJadwal.end_time;
+
+              const totalMenit = TimeConverter.toMinutes(endTime) - TimeConverter.toMinutes(startTime);
+              jadwalToUpdate.durasi_pelayanan = Math.floor(totalMenit / jadwalToUpdate.kuota);
+            }else{
+              jadwalToUpdate.durasi_pelayanan = 0;
+            }
           }
         });
       }
 
-      /**
-       *Do there exist booking? If yes, then we cannot update schedule that has delete
-       */
+      //durasi otomatis pada update
+      if (validated.added && validated.added.length > 0) {
+        validated.added.forEach((jadwal) => {
+          jadwal.kuota = jadwal.kuota_jkn + jadwal.kuota_non_jkn;
+
+          if (jadwal.kuota > 0) {
+            const totalMenit =
+              TimeConverter.toMinutes(jadwal.end_time) -
+              TimeConverter.toMinutes(jadwal.start_time);
+            jadwal.durasi_pelayanan = Math.floor(totalMenit / jadwal.kuota);
+          } else {
+            jadwal.durasi_pelayanan = 0;
+          }
+        });
+      }
 
       const camelCasedBody = FormatterService.toCamelCase(validated);
       validated.dokterUuid = dokterUuid;

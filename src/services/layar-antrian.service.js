@@ -123,7 +123,7 @@ export class LayarAntrianService {
 
       const draftAfterUpdate = {
         ...existingLayarAntrian,
-        status: existingLayarAntrian.status,
+        aktif: existingLayarAntrian.status,
         poli_uuids: existingLayarAntrian.lokasi.map((lokasi) => lokasi.uuid),
         ...layarAntrian,
       };
@@ -164,9 +164,10 @@ export class LayarAntrianService {
         params
       );
 
-      const existing = await LayarAntrianRepository.pureFindOne({
+      const existing = await LayarAntrianRepository.findOne({
         faskesUuid,
         uuid,
+        transaction: tx,
       });
 
       if (!existing) {
@@ -176,11 +177,13 @@ export class LayarAntrianService {
       await LayarAntrianRepository.delete({
         faskesUuid,
         uuid,
+        transaction: tx,
       });
 
       await LayarAntrianPoliRepository.bulkDelete({
         faskesUuid,
         layarAntrianUuid: uuid,
+        transaction: tx,
       });
     });
   }
