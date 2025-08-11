@@ -7,7 +7,7 @@ export class LayarAntrianSchema {
   static FILTER_QUERY = z.object({
     page: z.coerce.number().int().positive().optional(),
     page_size: z.coerce.number().int().positive().optional(),
-    aktif: CommonSchema.TRUE_FALSE_UNDEFINED_STRING.optional(),
+    status: CommonSchema.TRUE_FALSE_UNDEFINED_STRING.optional(),
     tipe_layar: z.coerce.number().int().positive().optional(),
     nama_layar: z.string().trim().min(1).optional(),
   });
@@ -73,7 +73,7 @@ export class LayarAntrianSchema {
       })
       .nullable()
       .optional(),
-    aktif: z.boolean(),
+    status: z.boolean(),
     poli_uuids: z.array(CommonSchema.UUID_PARAM).nullable().optional(),
   });
 

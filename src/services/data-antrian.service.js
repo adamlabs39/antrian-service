@@ -45,7 +45,7 @@ export class DataAntrianService {
       token
     );
 
-    // Cek kuota jika ini adalah pendaftaran ke poli
+    // Cek jadwal pendaftaran ke poli
     if (pendaftaran.jadwal_dokter_uuid) {
        jadwalHariIni =
         await JadwalDokterRepository.findTodayScheduleByDoctorAndLocation({
@@ -64,16 +64,16 @@ export class DataAntrianService {
       (rj) => rj.jadwal_dokter_uuid === jadwalHariIni.uuid
     ).length;
 
-    // Cek kuota (logika ini sudah benar)
+    // Cek kuota 
     if (antrianSaatIni >= jadwalHariIni.kuota) {
       throw new ConflictException(
         "Kuota antrian untuk jadwal ini sudah penuh."
       );
     }
 
-     const noUrutPoli = antrianSaatIni + 1;
+    //  const noUrutPoli = antrianSaatIni + 1;
 
-     const noUrutAdmisi = rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
+    //  const noUrutAdmisi = rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
     }
     
 

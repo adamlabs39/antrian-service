@@ -123,7 +123,7 @@ export class LayarAntrianService {
 
       const draftAfterUpdate = {
         ...existingLayarAntrian,
-        aktif: existingLayarAntrian.status,
+        status: existingLayarAntrian.status,
         poli_uuids: existingLayarAntrian.lokasi.map((lokasi) => lokasi.uuid),
         ...layarAntrian,
       };

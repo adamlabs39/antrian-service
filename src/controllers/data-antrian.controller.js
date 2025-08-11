@@ -72,66 +72,26 @@ export class DataAntrianController {
 
   static async processRegistration(req, res, next) {
     try {
-      // Mengambil faskesUuid dari token yang sudah divalidasi
       const { faskesUuid } = req.author;
 
-      // Mengambil token asli dari header untuk diteruskan ke service lain
       const token = req.headers.authorization;
 
-      // Memanggil service untuk melakukan semua pekerjaan
       await DataAntrianService.processRegistration({
         faskesUuid,
         token,
         body: req.body,
       });
 
-      // Mengirim respons sukses kembali ke layanan yang memicu
       res
         .status(200)
         .json({
-          message: "Proses antrian berhasil dipicu dan data telah diupdate.",
+          message: "Proses antrian berhasil dibuat.",
         });
     } catch (err) {
       next(err);
     }
   }
 
-  // static async generateCodes(req, res, next) {
-  //   try {
-  //     const { faskesUuid } = req.author;
-  //     // Ambil token asli dari header untuk diteruskan
-  //     const token = req.headers.authorization;
-
-  //     const generatedCodes = await DataAntrianService.generateCodes({
-  //       faskesUuid,
-  //       requestData: req.body,
-  //       token, // Teruskan token
-  //     });
-
-  //     res.status(200).json({
-  //       message: "Kode berhasil di-generate",
-  //       payload: generatedCodes,
-  //     });
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // }
-
-  // static async create(req, res, next) {
-  //   try {
-  //     const { faskesUuid } = req.author;
-  //     const data = await DataAntrianService.create({
-  //       faskesUuid,
-  //       antrianData: req.body,
-  //     });
-  //     res.status(201).json({
-  //       message: "Nomor antrian berhasil dibuat.",
-  //       payload: data,
-  //     });
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // }
 }
 
 

@@ -6,12 +6,7 @@ const ADMISI_API_URL =
   "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
 
 export class AdmisiClient {
-  /**
-   * Mengambil semua data rawat jalan untuk hari ini
-   * @param {string} faskesUuid - UUID faskes dari token
-   * @param {string} token - Token JWT admin yang sedang login
-   * @returns {Promise<Array>} - Daftar data rawat jalan
-   */
+
   static async getRawatJalanToday(faskesUuid, token) {
     try {
       const startDate = moment().startOf("day").unix();
@@ -19,10 +14,10 @@ export class AdmisiClient {
 
       const response = await axios.get(`${ADMISI_API_URL}/rawat-jalan`, {
         headers: {
-          Authorization: token, // Meneruskan token admin
+          Authorization: token, 
         },
         params: {
-          faskesUuid: faskesUuid, // Sesuaikan jika API Admisi butuh ini di params
+          faskesUuid: faskesUuid, 
           start_date: startDate,
           end_date: endDate,
         },
@@ -74,7 +69,6 @@ export class AdmisiClient {
     } catch (error) {
       // debug
       if (error.response) {
-        // Menampilkan body error yang dikirim oleh layanan Admisi
         console.error(
           "Error Response from Admisi Service:",
           JSON.stringify(error.response.data, null, 2)
