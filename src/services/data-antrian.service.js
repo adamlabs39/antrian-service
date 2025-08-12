@@ -4,6 +4,9 @@ import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
+import { RawatJalanModel } from "@adameds/model-sdk/pelayanan";
+import { Op } from "sequelize";
+import moment from "moment";
 
 export class DataAntrianService {
   static async processRegistration({ faskesUuid, body, token }) {
@@ -12,7 +15,6 @@ export class DataAntrianService {
       throw new BadRequestException("rawat_jalan_uuid wajib diisi.");
     }
 
-    // 1. Ambil semua data yang dibutuhkan secara bersamaan untuk efisiensi
     const [pendaftaran, rawatJalanToday] = await Promise.all([
       AdmisiClient.getRawatJalanDetail(rawat_jalan_uuid, token),
       AdmisiClient.getRawatJalanToday(faskesUuid, token),
@@ -32,12 +34,10 @@ export class DataAntrianService {
       );
     }
 
-    // 2. Deklarasikan variabel di sini agar bisa diakses di seluruh fungsi
     let jadwalHariIni;
     let noUrutPoli = null;
     let noAntrianPoli = null;
 
-    // Cek jadwal pendaftaran ke poli
     if (pendaftaran.jadwal_dokter_uuid) {
       jadwalHariIni = await JadwalDokterRepository.findScheduleByUuid(
         pendaftaran.jadwal_dokter_uuid
@@ -51,10 +51,22 @@ export class DataAntrianService {
         );
       }
 
-      const antrianSaatIni = rawatJalanToday.filter(
-        (rj) => rj.schedule && rj.schedule.uuid === jadwalHariIni.uuid
-      ).length;
+     const startOfDayUnix = moment().startOf("day").unix();
+     const endOfDayUnix = moment().endOf("day").unix();
 
+     const antrianSaatIni = await RawatJalanModel.count({
+       where: {
+         jadwal_dokter_uuid: jadwalHariIni.uuid,
+         created_at: {
+           [Op.gte]: startOfDayUnix,
+           [Op.lte]: endOfDayUnix,
+         },
+         no_antrian_poli: { [Op.ne]: null },
+       },
+     });
+
+
+      console.log("Jadwal Hari Ini:", jadwalHariIni);
       console.log("Antrian Saat Ini:", antrianSaatIni);
 
       // Cek kuota
@@ -66,15 +78,13 @@ export class DataAntrianService {
 
       noUrutPoli = antrianSaatIni + 1;
 
-      // Generate nomor antrian poli di sini
+      // Generate nomor antrian poli
       noAntrianPoli = CodeGenerator.generateNoAntrianPoli(
         jadwalHariIni.codeAntrianPoli,
         jadwalHariIni.codeAntrianDokter,
         noUrutPoli
       );
     }
-
-    // Hitung dan generate semua nomor yang
 
     const noUrutAdmisi =
       rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
@@ -107,7 +117,7 @@ export class DataAntrianService {
       token
     );
 
-    // 6. Simpan catatan antrian ke database lokal untuk monitoring
+    // Menyimpan catatan antrian ke database lokal untuk monitoring
     // await AntrianRepository.create({
     //   uuid: uuidv7(),
     //   faskesUuid,

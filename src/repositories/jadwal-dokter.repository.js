@@ -262,9 +262,9 @@ export class JadwalDokterRepository {
       where: {
         uuid,
         deletedAt: null,
-        status: true, // Pastikan hanya mencari jadwal yang aktif
+        status: true, 
       },
-      raw: true, // Tambahkan ini agar hasilnya objek biasa
+      raw: true, 
     });
   }
 
