@@ -2,11 +2,9 @@ import axios from "axios";
 import moment from "moment";
 
 // URL endpoint dari layanan Admisi
-const ADMISI_API_URL =
-  "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
+const ADMISI_API_URL = "http:192.168.1.77:8083/api/v3/admisi";
 
 export class AdmisiClient {
-
   static async getRawatJalanToday(faskesUuid, token) {
     try {
       const startDate = moment().startOf("day").unix();
@@ -14,10 +12,10 @@ export class AdmisiClient {
 
       const response = await axios.get(`${ADMISI_API_URL}/rawat-jalan`, {
         headers: {
-          Authorization: token, 
+          Authorization: token,
         },
         params: {
-          faskesUuid: faskesUuid, 
+          faskesUuid: faskesUuid,
           start_date: startDate,
           end_date: endDate,
         },
@@ -53,7 +51,7 @@ export class AdmisiClient {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
 
-      // debug
+      //debug
       console.log("========================================");
       console.log("MENGIRIM UPDATE KE LAYANAN ADMISI");
       console.log("Endpoint Tujuan:", endpoint);

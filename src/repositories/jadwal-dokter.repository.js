@@ -12,6 +12,7 @@ import { ToIndoDay } from "../helpers/to-indo-day.js";
 import AdmissionRJModel from "../models/admission-rj.model.js";
 import AntrianModel from "../models/antrian.model.js";
 import { InternalServerErrorException } from "../exceptions/internal-server-error.exception.js";
+import { RawatJalanModel } from "@adameds/model-sdk/pelayanan";
 
 export class JadwalDokterRepository {
   static _buildCommonQueryOptions() {
@@ -256,6 +257,17 @@ export class JadwalDokterRepository {
     );
   }
 
+  static async findScheduleByUuid(uuid) {
+    return await JadwalDokterModel.findOne({
+      where: {
+        uuid,
+        deletedAt: null,
+        status: true, // Pastikan hanya mencari jadwal yang aktif
+      },
+      raw: true, // Tambahkan ini agar hasilnya objek biasa
+    });
+  }
+
   static async findTodayScheduleByDoctorAndLocation({
     faskesUuid,
     dokterUuid,
@@ -264,6 +276,7 @@ export class JadwalDokterRepository {
   }) {
     const todayInIndonesian = ToIndoDay.fromEng(moment().format("dddd"));
 
+    
     return await JadwalDokterModel.findOne({
       where: {
         faskesUuid,
@@ -271,7 +284,7 @@ export class JadwalDokterRepository {
         lokasiUuid: poliUuid,
         day: todayInIndonesian,
         deletedAt: null,
-        status: true, 
+        status: true,
       },
       transaction,
     });
@@ -445,8 +458,8 @@ export class JadwalDokterRepository {
       subQuery: false,
       include: [
         {
-          model: AdmissionRJModel,
-          as: "admission_rj",
+          model: RawatJalanModel,
+          as: "rawat_jalan",
           required: true,
           where: {
             deletedAt: null,
@@ -469,10 +482,10 @@ export class JadwalDokterRepository {
     for (const res of result) {
       console.log(res);
       if (formatted[res.uuid]) {
-        if (res.admission_rj.antrian.jenisPasien == "JKN") {
-          formatted[res.uuid]["jkn"].add(res.admission_rj.kodeBooking);
-        } else if (res.admission_rj.antrian.jenisPasien == "NON JKN") {
-          formatted[res.uuid]["nonJkn"].add(res.admission_rj.kodeBooking);
+        if (res.rawat_jalan.antrian.jenisPasien == "JKN") {
+          formatted[res.uuid]["jkn"].add(res.rawat_jalan.kodeBooking);
+        } else if (res.rawat_jalan.antrian.jenisPasien == "NON JKN") {
+          formatted[res.uuid]["nonJkn"].add(res.rawat_jalan.kodeBooking);
         } else {
           throw new InternalServerErrorException("Unknown jenis pasien");
         }
@@ -482,10 +495,10 @@ export class JadwalDokterRepository {
           nonJkn: new Set(),
         };
 
-        if (res.admission_rj.antrian.jenisPasien == "JKN") {
-          formatted[res.uuid]["jkn"].add(res.admission_rj.kodeBooking);
-        } else if (res.admission_rj.antrian.jenisPasien == "NON JKN") {
-          formatted[res.uuid]["nonJkn"].add(res.admission_rj.kodeBooking);
+        if (res.rawat_jalan.antrian.jenisPasien == "JKN") {
+          formatted[res.uuid]["jkn"].add(res.rawat_jalan.kodeBooking);
+        } else if (res.rawat_jalan.antrian.jenisPasien == "NON JKN") {
+          formatted[res.uuid]["nonJkn"].add(res.rawat_jalan.kodeBooking);
         } else {
           throw new InternalServerErrorException("Unknown jenis pasien");
         }

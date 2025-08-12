@@ -3,56 +3,47 @@ import { AdmisiClient } from "../clients/admisi.client.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js"; // 1. Impor repository jadwal
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
-import { AntrianRepository } from "../repositories/antrian.repository.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
-import { uuidv7 } from "uuidv7";
 
 export class DataAntrianService {
-
-
   static async processRegistration({ faskesUuid, body, token }) {
     const { rawat_jalan_uuid } = body;
     if (!rawat_jalan_uuid) {
       throw new BadRequestException("rawat_jalan_uuid wajib diisi.");
     }
 
-    const pendaftaran = await AdmisiClient.getRawatJalanDetail(
-      rawat_jalan_uuid,
-      token
-    );
+    // 1. Ambil semua data yang dibutuhkan secara bersamaan untuk efisiensi
+    const [pendaftaran, rawatJalanToday] = await Promise.all([
+      AdmisiClient.getRawatJalanDetail(rawat_jalan_uuid, token),
+      AdmisiClient.getRawatJalanToday(faskesUuid, token),
+    ]);
+
+    console.log("Pendaftaran:", pendaftaran);
+    console.log("Rawat Jalan Hari Ini:", rawatJalanToday);
 
     if (!pendaftaran) {
       throw new NotFoundException(
         "Data pendaftaran tidak ditemukan di layanan Admisi."
       );
     }
-
-    let jadwalHariIni;
-
     if (!pendaftaran.practitioner_uuid || !pendaftaran.lokasi_uuid) {
       throw new BadRequestException(
         "Data pendaftaran tidak lengkap, dokter atau poliklinik belum ditentukan."
       );
     }
-    // if (!pendaftaran.practitioner || !pendaftaran.polyclinic) {
-    //   throw new BadRequestException(
-    //     "Data pendaftaran tidak lengkap, dokter atau poliklinik belum ditentukan."
-    //   );
-    // }
 
-    const rawatJalanToday = await AdmisiClient.getRawatJalanToday(
-      faskesUuid,
-      token
-    );
+    // 2. Deklarasikan variabel di sini agar bisa diakses di seluruh fungsi
+    let jadwalHariIni;
+    let noUrutPoli = null;
+    let noAntrianPoli = null;
 
     // Cek jadwal pendaftaran ke poli
     if (pendaftaran.jadwal_dokter_uuid) {
-       jadwalHariIni =
-        await JadwalDokterRepository.findTodayScheduleByDoctorAndLocation({
-          faskesUuid,
-          dokterUuid: pendaftaran.practitioner_uuid,
-          poliUuid: pendaftaran.lokasi_uuid,
-        });
+      jadwalHariIni = await JadwalDokterRepository.findScheduleByUuid(
+        pendaftaran.jadwal_dokter_uuid
+      );
+
+      console.log("Jadwal Hari Ini:", jadwalHariIni);
 
       if (!jadwalHariIni) {
         throw new NotFoundException(
@@ -60,40 +51,38 @@ export class DataAntrianService {
         );
       }
 
-    const antrianSaatIni = rawatJalanToday.filter(
-      (rj) => rj.jadwal_dokter_uuid === jadwalHariIni.uuid
-    ).length;
+      const antrianSaatIni = rawatJalanToday.filter(
+        (rj) => rj.schedule && rj.schedule.uuid === jadwalHariIni.uuid
+      ).length;
 
-    // Cek kuota 
-    if (antrianSaatIni >= jadwalHariIni.kuota) {
-      throw new ConflictException(
-        "Kuota antrian untuk jadwal ini sudah penuh."
+      console.log("Antrian Saat Ini:", antrianSaatIni);
+
+      // Cek kuota
+      if (antrianSaatIni >= jadwalHariIni.kuota) {
+        throw new ConflictException(
+          "Kuota antrian untuk jadwal ini sudah penuh."
+        );
+      }
+
+      noUrutPoli = antrianSaatIni + 1;
+
+      // Generate nomor antrian poli di sini
+      noAntrianPoli = CodeGenerator.generateNoAntrianPoli(
+        jadwalHariIni.codeAntrianPoli,
+        jadwalHariIni.codeAntrianDokter,
+        noUrutPoli
       );
     }
 
-    //  const noUrutPoli = antrianSaatIni + 1;
+    // Hitung dan generate semua nomor yang
 
-    //  const noUrutAdmisi = rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
-    }
-    
-
-    // Hitung dan generate semua nomor yang dibutuhkan
     const noUrutAdmisi =
       rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
-    const noUrutPoli =
-      rawatJalanToday.filter(
-        (rj) =>
-          rj.no_antrian_poli &&
-          rj.polyclinic.uuid === pendaftaran.lokasi_uuid
-      ).length + 1;
-
     const noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
-    const noAntrianPoli = CodeGenerator.generateNoAntrianPoli(
-      jadwalHariIni.codeAntrianPoli,
-      jadwalHariIni.codeAntrianDokter,
-      noUrutPoli
-    );
     const kodeBooking = CodeGenerator.generateKodeBooking();
+
+    console.log("Nomor Antrian Poli:", noAntrianPoli);
+    console.log("Nomor Antrian Admisi:", noAntrianAdmisi);
 
     const paymentMethodMap = {
       1: "TUNAI",
