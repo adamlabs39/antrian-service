@@ -3,7 +3,7 @@
  * Sesuai dengan kebutuhan aplikasi
  */
 export class CodeGenerator {
-  static kodeBooking() {
+  static generateKodeBooking() {
     let result = "";
     result += CodeGenerator.randomDigit() + CodeGenerator.randomDigit();
     result += CodeGenerator.randomAlphabet() + CodeGenerator.randomAlphabet();
@@ -12,104 +12,14 @@ export class CodeGenerator {
     return result;
   }
 
-  static noRm() {
-    let result = "";
-    for (let i = 0; i < 6; i++) {
-      if (Math.random() < 0.5) {
-        result += CodeGenerator.randomDigit();
-      } else {
-        result += CodeGenerator.randomAlphabet();
-      }
-
-      if (i % 2 == 1 && i != 5) {
-        result += "-";
-      }
-    }
-
-    return result;
+  static generateNoAntrianAdmisi(nomorUrut) {
+    return String(nomorUrut).padStart(3, "0");
   }
 
-  static noReg(noUrut) {
-    if (noUrut > 9999) {
-      throw new Error("No Urut melebihi batas");
-    } else if (noUrut < 0) {
-      throw new Error("No Urut tidak boleh negatif");
-    }
 
-    let result = "REG";
-
-    // 2 Digit angka tahun
-    result += new Date().getFullYear().toString().slice(-2);
-
-    // 2 Digit bulan
-    const month = new Date().getMonth() + 1;
-
-    if (month < 10) {
-      result += "0" + month;
-    } else {
-      result += month;
-    }
-
-    // 2 Digit tanggal
-    const date = new Date().getDate();
-
-    if (date < 10) {
-      result += "0" + date;
-    } else {
-      result += date;
-    }
-
-    // 4 Digit nomor urut
-    if (noUrut < 10) {
-      result += "000" + noUrut;
-    } else if (noUrut < 100) {
-      result += "00" + noUrut;
-    } else if (noUrut < 1000) {
-      result += "0" + noUrut;
-    } else {
-      result += noUrut;
-    }
-
-    return result;
-  }
-
-  static noAntrianAdmisi(noUrut) {
-    let result = "A";
-    // Jadikan 3 digit
-    if (noUrut < 10) {
-      result += "00" + noUrut;
-    } else if (noUrut < 100) {
-      result += "0" + noUrut;
-    } else {
-      result += noUrut;
-    }
-
-    return result;
-  }
-
-  static noAntrianPoli(kodePoli, kodeDokter, noUrut) {
-    // kode poli must be 2 characters
-    if (kodePoli.length != 2) {
-      throw new Error("Kode Poli harus 2 karakter");
-    }
-
-    let result = kodePoli;
-
-    // kode dokter must be two digits
-    if (kodeDokter < 10) {
-      result += "0" + kodeDokter;
-    } else {
-      result += kodeDokter;
-    }
-
-    // no urut must be 2 digits
-    if (noUrut < 10) {
-      result += "0" + noUrut;
-    } else {
-      result += noUrut;
-    }
-
-    return result;
+  static generateNoAntrianPoli(kodePoli, kodeDokter, nomorUrut) {
+    const paddedNomor = String(nomorUrut).padStart(3, "0");
+    return `${kodePoli}-${kodeDokter}-${paddedNomor}`;
   }
 
   // return string

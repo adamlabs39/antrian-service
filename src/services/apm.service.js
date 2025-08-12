@@ -11,7 +11,8 @@ import { sequelize } from "../configurations/db.js";
 import { CodeGenerator } from "../helpers/code-generator.js";
 import { AdmissionRJRepository } from "../repositories/admission-rj.repository.js";
 
-export class APMService {
+export class 
+APMService {
   static async getDataByIdentity({ faskesUuid, query, params }) {
     const { identity } = ZodValidator.validate(
       APMSchema.GET_BY_IDENTITY_PARAM,

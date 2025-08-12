@@ -164,9 +164,10 @@ export class LayarAntrianService {
         params
       );
 
-      const existing = await LayarAntrianRepository.pureFindOne({
+      const existing = await LayarAntrianRepository.findOne({
         faskesUuid,
         uuid,
+        transaction: tx,
       });
 
       if (!existing) {
@@ -176,11 +177,13 @@ export class LayarAntrianService {
       await LayarAntrianRepository.delete({
         faskesUuid,
         uuid,
+        transaction: tx,
       });
 
       await LayarAntrianPoliRepository.bulkDelete({
         faskesUuid,
         layarAntrianUuid: uuid,
+        transaction: tx,
       });
     });
   }

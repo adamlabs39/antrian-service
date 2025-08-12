@@ -43,6 +43,10 @@ AdmissionRJModel.init(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
+    noAntrianFarmasi: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
     name: {
       type: DataTypes.STRING(255),
       allowNull: false,

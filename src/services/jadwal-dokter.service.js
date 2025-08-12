@@ -10,6 +10,7 @@ import ZodValidator from "../validations/zod.validation.js";
 import { FormatterService } from "./formatter.service.js";
 import { TransactionService } from "./transaction.service.js";
 import { AppointmentClient } from "../clients/appointment.client.js";
+import { TimeConverter } from "../helpers/time-converter.helper.js";
 
 export class JadwalDokterService {
   /**
@@ -120,22 +121,59 @@ export class JadwalDokterService {
       validated.code_antrian_poli = poli.code_antrian_poli;
 
       //verifikasi apakah jadwal dokter sudah ada
-      const jadwal_dokter =
+      const existingJadwalSet =
         await JadwalDokterRepository.findAllByDoctorAndLocation({
           faskesUuid,
           dokterUuid: validated.dokter_uuid,
           poliUuid: validated.poliklinik_uuid,
+          transaction: tx,
         });
 
-      if (jadwal_dokter) {
-        throw new ConflictException(
-          "Jadwal dokter untuk poliklinik tersebut sudah ada. Tolong Edit atau Hapus jadwal yang sudah ada."
-        );
+      const newJadwalList = validated.jadwal;
+
+      if (existingJadwalSet) {
+        for (const newJadwal of newJadwalList) {
+          for (const existingJadwal of existingJadwalSet.jadwal_dokter) {
+            if (newJadwal.day === existingJadwal.day) {
+              const newStartTime = TimeConverter.toMinutes(
+                newJadwal.start_time
+              );
+              const newEndTime = TimeConverter.toMinutes(newJadwal.end_time);
+              const existingStartTime = TimeConverter.toMinutes(
+                existingJadwal.start_time
+              );
+              const existingEndTime = TimeConverter.toMinutes(
+                existingJadwal.end_time
+              );
+
+              if (
+                newStartTime < existingEndTime &&
+                existingStartTime < newEndTime
+              ) {
+                throw new ConflictException(
+                  `Jadwal untuk hari ${newJadwal.day} berbenturan.`
+                );
+              }
+            }
+          }
+        }
       }
 
       validated.jadwal.forEach((jadwal) => {
         jadwal.kuota = jadwal.kuota_jkn + jadwal.kuota_non_jkn;
+     
+        if (jadwal.kuota > 0) {
+          const totalMenit =
+            TimeConverter.toMinutes(jadwal.end_time) -
+            TimeConverter.toMinutes(jadwal.start_time);
+          jadwal.durasi_pelayanan = Math.floor(totalMenit / jadwal.kuota);
+        } else {
+          jadwal.durasi_pelayanan = 0;
+        }
+
       });
+
+      
 
       //create jadwal dokter
       const data = await JadwalDokterRepository.create({
@@ -263,59 +301,111 @@ export class JadwalDokterService {
         );
       }
 
-       const jadwalDokterUuids = jadwalDokter.jadwal_dokter.map(
-         (j) => j.jadwal_dokter_uuid
-       );
+      const jadwalDokterUuids = jadwalDokter.jadwal_dokter.map(
+        (j) => j.jadwal_dokter_uuid
+      );
 
-       const [existingAppointments, existingAdmissions] = await Promise.all([
-         AppointmentClient.countByJadwalDokterUuids({
-           faskesUuid,
-           jadwalDokterUuids,
-         }),
-         AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-           faskesUuid,
-           jadwalDokterUuids,
-           transaction: tx,
-         }),
-       ]);
+      const [existingAppointments, existingAdmissions] = await Promise.all([
+        AppointmentClient.countByJadwalDokterUuids({
+          faskesUuid,
+          jadwalDokterUuids,
+        }),
+        AdmissionRJRepository.countByJadwalDokterUuidsForToday({
+          faskesUuid,
+          jadwalDokterUuids,
+          transaction: tx,
+        }),
+      ]);
 
-       if (existingAppointments > 0 || existingAdmissions > 0) {
-         throw new ConflictException(
-           "Jadwal tidak dapat diubah karena sudah ada pasien yang terdaftar."
-         );
-       }
-      
-     if (validated.updated && validated.updated.length > 0) {
-       validated.updated.forEach((jadwalToUpdate) => {
-         const oldJadwal = jadwalDokter.jadwal_dokter.find(
-           (j) => j.jadwal_dokter_uuid === jadwalToUpdate.jadwal_dokter_uuid
-         );
-         if (oldJadwal) {
-           const oldKuotaJkn = parseInt(oldJadwal.kuota_jkn, 10);
-           const oldKuotaNonJkn = parseInt(oldJadwal.kuota_non_jkn, 10);
+      if (existingAppointments > 0 || existingAdmissions > 0) {
+        throw new ConflictException(
+          "Jadwal tidak dapat diubah karena sudah ada pasien yang terdaftar."
+        );
+      }
 
-           const newKuotaJkn =
-             jadwalToUpdate.kuota_jkn !== undefined
-               ? parseInt(jadwalToUpdate.kuota_jkn, 10)
-               : oldKuotaJkn;
+      if (validated.added && validated.added.length > 0) {
+        const allCurrentSchedules = [
+          ...existingSchedules,
+          ...(validated.updated || []),
+        ];
 
-           const newKuotaNonJkn =
-             jadwalToUpdate.kuota_non_jkn !== undefined
-               ? parseInt(jadwalToUpdate.kuota_non_jkn, 10)
-               : oldKuotaNonJkn;
+        for (const newJadwal of validated.added) {
+          for (const currentJadwal of allCurrentSchedules) {
+            // Jika harinya sama, periksa tumpang tindih waktu
+            if (newJadwal.day === currentJadwal.day) {
+              const newStartTime = TimeConverter.toMinutes(
+                newJadwal.start_time
+              );
+              const newEndTime = TimeConverter.toMinutes(newJadwal.end_time);
+              const currentStartTime = TimeConverter.toMinutes(
+                currentJadwal.start_time
+              );
+              const currentEndTime = TimeConverter.toMinutes(
+                currentJadwal.end_time
+              );
 
-           jadwalToUpdate.kuota = newKuotaJkn + newKuotaNonJkn;
-         }
-       });
-     }
+              if (
+                newStartTime < currentEndTime &&
+                currentStartTime < newEndTime
+              ) {
+                throw new ConflictException(
+                  `Jadwal baru untuk hari ${newJadwal.day} berbenturan dengan jadwal yang sudah ada.`
+                );
+              }
+            }
+          }
+        }
+      }
 
-      
+      if (validated.updated && validated.updated.length > 0) {
+        validated.updated.forEach((jadwalToUpdate) => {
+          const oldJadwal = jadwalDokter.jadwal_dokter.find(
+            (j) => j.jadwal_dokter_uuid === jadwalToUpdate.jadwal_dokter_uuid
+          );
+          if (oldJadwal) {
+            const oldKuotaJkn = parseInt(oldJadwal.kuota_jkn, 10);
+            const oldKuotaNonJkn = parseInt(oldJadwal.kuota_non_jkn, 10);
 
-      /**
-       *Do there exist booking? If yes, then we cannot update schedule that has delete
-       */
+            const newKuotaJkn =
+              jadwalToUpdate.kuota_jkn !== undefined
+                ? parseInt(jadwalToUpdate.kuota_jkn, 10)
+                : oldKuotaJkn;
 
-      
+            const newKuotaNonJkn =
+              jadwalToUpdate.kuota_non_jkn !== undefined
+                ? parseInt(jadwalToUpdate.kuota_non_jkn, 10)
+                : oldKuotaNonJkn;
+
+            jadwalToUpdate.kuota = newKuotaJkn + newKuotaNonJkn;
+
+            if(jadwalToUpdate.kuota > 0){
+              const startTime = jadwalToUpdate.start_time || oldJadwal.start_time;
+              const endTime = jadwalToUpdate.end_time || oldJadwal.end_time;
+
+              const totalMenit = TimeConverter.toMinutes(endTime) - TimeConverter.toMinutes(startTime);
+              jadwalToUpdate.durasi_pelayanan = Math.floor(totalMenit / jadwalToUpdate.kuota);
+            }else{
+              jadwalToUpdate.durasi_pelayanan = 0;
+            }
+          }
+        });
+      }
+
+      //durasi otomatis pada update
+      if (validated.added && validated.added.length > 0) {
+        validated.added.forEach((jadwal) => {
+          jadwal.kuota = jadwal.kuota_jkn + jadwal.kuota_non_jkn;
+
+          if (jadwal.kuota > 0) {
+            const totalMenit =
+              TimeConverter.toMinutes(jadwal.end_time) -
+              TimeConverter.toMinutes(jadwal.start_time);
+            jadwal.durasi_pelayanan = Math.floor(totalMenit / jadwal.kuota);
+          } else {
+            jadwal.durasi_pelayanan = 0;
+          }
+        });
+      }
 
       const camelCasedBody = FormatterService.toCamelCase(validated);
       validated.dokterUuid = dokterUuid;

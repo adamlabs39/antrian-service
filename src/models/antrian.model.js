@@ -24,7 +24,7 @@ AntrianModel.init(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    admissionRjUuid: {
+    rawatJalanUuid: {
       type: DataTypes.STRING(255),
       allowNull: true,
     },
