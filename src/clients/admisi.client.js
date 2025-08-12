@@ -51,13 +51,6 @@ export class AdmisiClient {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
 
-      //debug
-      console.log("========================================");
-      console.log("MENGIRIM UPDATE KE LAYANAN ADMISI");
-      console.log("Endpoint Tujuan:", endpoint);
-      console.log("Body/Payload yang Dikirim:", JSON.stringify(codes, null, 2));
-      console.log("========================================");
-
       const response = await axios.put(endpoint, codes, {
         headers: {
           Authorization: token,

@@ -1,12 +1,11 @@
 import { CodeGenerator } from "../helpers/code-generator.js";
 import { AdmisiClient } from "../clients/admisi.client.js";
-import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js"; // 1. Impor repository jadwal
+import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js"; 
+import { AntrianRepository } from "../repositories/antrian.repository.js"; 
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
-import { RawatJalanModel } from "@adameds/model-sdk/pelayanan";
-import { Op } from "sequelize";
-import moment from "moment";
+
 
 export class DataAntrianService {
   static async processRegistration({ faskesUuid, body, token }) {
@@ -19,9 +18,6 @@ export class DataAntrianService {
       AdmisiClient.getRawatJalanDetail(rawat_jalan_uuid, token),
       AdmisiClient.getRawatJalanToday(faskesUuid, token),
     ]);
-
-    console.log("Pendaftaran:", pendaftaran);
-    console.log("Rawat Jalan Hari Ini:", rawatJalanToday);
 
     if (!pendaftaran) {
       throw new NotFoundException(
@@ -51,23 +47,10 @@ export class DataAntrianService {
         );
       }
 
-     const startOfDayUnix = moment().startOf("day").unix();
-     const endOfDayUnix = moment().endOf("day").unix();
-
-     const antrianSaatIni = await RawatJalanModel.count({
-       where: {
-         jadwal_dokter_uuid: jadwalHariIni.uuid,
-         created_at: {
-           [Op.gte]: startOfDayUnix,
-           [Op.lte]: endOfDayUnix,
-         },
-         no_antrian_poli: { [Op.ne]: null },
-       },
-     });
-
-
-      console.log("Jadwal Hari Ini:", jadwalHariIni);
-      console.log("Antrian Saat Ini:", antrianSaatIni);
+      const antrianSaatIni = await AntrianRepository.countTodayByJadwal({
+        faskesUuid,
+        jadwalDokterUuid: jadwalHariIni.uuid,
+      });
 
       // Cek kuota
       if (antrianSaatIni >= jadwalHariIni.kuota) {
@@ -90,9 +73,6 @@ export class DataAntrianService {
       rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
     const noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
     const kodeBooking = CodeGenerator.generateKodeBooking();
-
-    console.log("Nomor Antrian Poli:", noAntrianPoli);
-    console.log("Nomor Antrian Admisi:", noAntrianAdmisi);
 
     const paymentMethodMap = {
       1: "TUNAI",
