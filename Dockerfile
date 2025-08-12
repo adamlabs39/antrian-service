@@ -1,5 +1,5 @@
 FROM node:19.5.0-alpine
-LABEL application=api antrian
+LABEL application="api antrian"
 WORKDIR /antrian
 
 # Application config
