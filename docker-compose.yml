@@ -1,0 +1,19 @@
+services:
+  api-antrian:
+    container_name: api-adameds-antrian
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: adameds/antrian:dev
+    ports:
+      - 7001:7001
+    restart: always
+    environment:
+      INFISICAL_TOKEN: ${INFISICAL_TOKEN}
+      APPLICATION_HOST: ${APPLICATION_HOST}
+      APPLICATION_PORT: ${APPLICATION_PORT}
+    networks:
+      - antrian-bridge
+networks:
+  antrian-bridge:
+    driver: bridge
