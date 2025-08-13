@@ -16,10 +16,17 @@ export class CodeGenerator {
     return String(nomorUrut).padStart(3, "0");
   }
 
-
   static generateNoAntrianPoli(kodePoli, kodeDokter, nomorUrut) {
     const paddedNomor = String(nomorUrut).padStart(3, "0");
     return `${kodePoli}-${kodeDokter}-${paddedNomor}`;
+  }
+
+  static generateNoAntrianFarmasi(jenisResep, nomorUrut) {
+    const prefix = jenisResep === "racikan" ? "R" : "NR";
+
+    const paddedNomor = String(nomorUrut).padStart(3, "0");
+
+    return `${prefix}${paddedNomor}`;
   }
 
   // return string

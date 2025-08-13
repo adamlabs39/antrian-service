@@ -2,103 +2,89 @@ import { APMService } from "../services/apm.service.js";
 import { FormatterService } from "../services/formatter.service.js";
 
 export class APMController {
-  static async getDataByIdentity(req, res, next) {
+  static async checkPatientStatus(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      const data = await APMService.getDataByIdentity({
-        faskesUuid,
-        query: req.query,
-        params: req.params,
+      const token = req.headers.authorization;
+
+      // Meneruskan permintaan ke service
+      const result = await APMService.checkPatientStatus({
+        // faskesUuid,
+        body: req.body,
+        token,
       });
 
-      res.status(200).json({
-        message: "Data berhasil ditampilkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
+      res.status(200).json(result);
     } catch (err) {
       next(err);
     }
   }
 
-  static async register(req, res, next) {
+  static async registerPatient(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      const data = await APMService.register({
-        faskesUuid,
-        data: req.body,
-      });
+      const token = req.headers.authorization;
 
-      res.status(201).json({
-        message: "Data berhasil ditambahkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async checkIn(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      await APMService.checkIn({
-        faskesUuid,
-        params: req.params,
-      });
-
-      req.pa;
-
-      res.status(200).json({
-        message: "Data berhasil diupdate",
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async getByBookingCode(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const data = await APMService.getByBookingCode({
-        faskesUuid,
-        params: req.params,
-      });
-
-      res.status(200).json({
-        message: "Data berhasil ditampilkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async getAvailableSchedule(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const data = await APMService.getAvailableSchedule({
-        faskesUuid,
-        params: req.params,
-      });
-
-      res.status(200).json({
-        message: "Data berhasil ditampilkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async registerJknAPM(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const data = await APMService.registerJknAPM({
+      // Meneruskan semua data pendaftaran ke service
+      const result = await APMService.registerPatient({
         faskesUuid,
         body: req.body,
+        token,
       });
 
-      res.status(201).json({
-        message: "Data berhasil ditambahkan",
+      res.status(201).json(result); // Kirim kembali respons dari service
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getAvailablePoliklinik(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const data = await APMService.getAvailablePoliklinik({ faskesUuid });
+
+      res.status(200).json({
+        message: "Data poliklinik berhasil ditampilkan",
+        payload: FormatterService.toSnakeCase(data),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Mengambil daftar dokter yang tersedia di poliklinik tertentu.
+   */
+  static async getAvailableDokter(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const data = await APMService.getAvailableDokter({
+        faskesUuid,
+        params: req.params, // Mengirim poli_uuid
+      });
+
+      res.status(200).json({
+        message: "Data dokter berhasil ditampilkan",
+        payload: FormatterService.toSnakeCase(data),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Mengambil detail jadwal untuk dokter dan poli tertentu.
+   */
+  static async getJadwalDetail(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const data = await APMService.getJadwalDetail({
+        faskesUuid,
+        params: req.params, // Mengirim dokter_uuid dan poli_uuid
+      });
+
+      res.status(200).json({
+        message: "Data jadwal berhasil ditampilkan",
         payload: FormatterService.toSnakeCase(data),
       });
     } catch (err) {

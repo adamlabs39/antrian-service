@@ -1,10 +1,59 @@
 import axios from "axios";
 import moment from "moment";
+import { NotFoundException } from "../exceptions/not-found.exception.js";
+import { BadRequestException } from "../exceptions/bad-request.exception.js";
 
 // URL endpoint dari layanan Admisi
-const ADMISI_API_URL = "http:192.168.1.77:8083/api/v3/admisi";
+const ADMISI_API_URL =
+  "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
 
 export class AdmisiClient {
+  static async checkPatient(body, token) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/patient/check-patient`;
+      const response = await axios.post(endpoint, body, {
+        headers: { Authorization: token },
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status === 404) {
+          throw new NotFoundException(
+            "Pasien tidak ditemukan di layanan Admisi."
+          );
+        }
+      }
+      // Jika error lain, lemparkan error umum
+      console.error(
+        "Error saat mengecek pasien di layanan Admisi:",
+        error.message
+      );
+      throw new Error("Gagal terhubung ke layanan Admisi untuk cek pasien.");
+    }
+  }
+
+  static async createRawatJalan(body, token) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan`;
+      const response = await axios.post(endpoint, body, {
+        headers: { Authorization: token },
+      });
+      return response.data.payload;
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        const errorMessage =
+          error.response.data?.errors?.[0]?.message ||
+          "Data pendaftaran tidak valid.";
+        throw new BadRequestException(errorMessage);
+      }
+      console.error(
+        "Error saat membuat rawat jalan di layanan Admisi:",
+        error.message
+      );
+      throw new Error("Gagal membuat data pendaftaran di layanan Admisi.");
+    }
+  }
+
   static async getRawatJalanToday(faskesUuid, token) {
     try {
       const startDate = moment().startOf("day").unix();
@@ -58,17 +107,25 @@ export class AdmisiClient {
       });
       return response.data;
     } catch (error) {
-      // debug
       if (error.response) {
-        console.error(
-          "Error Response from Admisi Service:",
-          JSON.stringify(error.response.data, null, 2)
-        );
-      } else {
-        console.error("Error saat memanggil layanan Admisi:", error.message);
+        // Tangani error 400 (Bad Request) dan 404 (Not Found) secara spesifik
+        if (error.response.status === 400) {
+          const errorMessage =
+            error.response.data?.errors?.[0]?.message ||
+            "Data untuk update tidak valid.";
+          throw new BadRequestException(errorMessage);
+        }
+        if (error.response.status === 404) {
+          throw new NotFoundException(
+            "Data rawat jalan yang akan diupdate tidak ditemukan."
+          );
+        }
       }
-
-      throw new Error("Gagal update nomor antrian di layanan Admisi.");
+      console.error(
+        "Error saat mengupdate rawat jalan di layanan Admisi:",
+        error.message
+      );
+      throw new Error("Gagal mengupdate nomor antrian di layanan Admisi.");
     }
   }
 }
