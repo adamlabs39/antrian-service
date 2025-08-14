@@ -34,7 +34,7 @@ export class AdmisiClient {
 
   static async createRawatJalan(body, token) {
     try {
-      const endpoint = `${ADMISI_API_URL}/rawat-jalan`;
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/apm`;
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
@@ -51,6 +51,26 @@ export class AdmisiClient {
         error.message
       );
       throw new Error("Gagal membuat data pendaftaran di layanan Admisi.");
+    }
+  }
+
+  static async checkInByBookingCode(kodeBooking, token) {
+    try {
+      // Asumsi endpoint di Admisi adalah seperti ini, konfirmasi dengan mentor Anda
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/check-in`;
+
+      const response = await axios.post(
+        endpoint,
+        { kode_booking: kodeBooking }, // Mengirim kode booking di dalam body
+        {
+          headers: { Authorization: token },
+        }
+      );
+
+      return response.data.payload;
+    } catch (error) {
+      console.error("Error saat check-in di layanan Admisi:", error.message);
+      throw new Error("Gagal melakukan check-in di layanan Admisi.");
     }
   }
 

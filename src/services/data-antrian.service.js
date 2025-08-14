@@ -1,11 +1,10 @@
 import { CodeGenerator } from "../helpers/code-generator.js";
 import { AdmisiClient } from "../clients/admisi.client.js";
-import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js"; 
-import { AntrianRepository } from "../repositories/antrian.repository.js"; 
+import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
+import { AntrianRepository } from "../repositories/antrian.repository.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
-
 
 export class DataAntrianService {
   static async processRegistration({ faskesUuid, body, token }) {
@@ -18,6 +17,8 @@ export class DataAntrianService {
       AdmisiClient.getRawatJalanDetail(rawat_jalan_uuid, token),
       AdmisiClient.getRawatJalanToday(faskesUuid, token),
     ]);
+
+    console.log("Pendaftaran:", pendaftaran);
 
     if (!pendaftaran) {
       throw new NotFoundException(
@@ -33,6 +34,8 @@ export class DataAntrianService {
     let jadwalHariIni;
     let noUrutPoli = null;
     let noAntrianPoli = null;
+
+    const isPasienBaru = !pendaftaran.patient?.no_rm;
 
     if (pendaftaran.jadwal_dokter_uuid) {
       jadwalHariIni = await JadwalDokterRepository.findScheduleByUuid(
@@ -69,10 +72,38 @@ export class DataAntrianService {
       );
     }
 
-    const noUrutAdmisi =
-      rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
-    const noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
+    let noAntrianAdmisi = null;
+    if (isPasienBaru) {
+      // Pasien baru dapat nomor admisi
+      const noUrutAdmisi =
+        rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
+      noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
+    }
     const kodeBooking = CodeGenerator.generateKodeBooking();
+
+    //  ==== GENERATE NO ANTRIAN FARMASI DUMMY  =====
+    let noAntrianFarmasi = null;
+
+    if (pendaftaran.statusRJ === 1) {
+      const now = new Date();
+      const startOfDay = Math.floor(
+        new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() /
+          1000
+      );
+      const endOfDay = startOfDay + 86400 - 1;
+
+      const farmasiCountToday = await AntrianRepository.countTodayFarmasi({
+        faskesUuid,
+        startDate: startOfDay,
+        endDate: endOfDay,
+      });
+
+      const jenisResep = "racikan"; // ini bisa nanti diambil dari data resep
+      noAntrianFarmasi = CodeGenerator.generateNoAntrianFarmasi(
+        jenisResep,
+        farmasiCountToday + 1
+      );
+    }
 
     const paymentMethodMap = {
       1: "TUNAI",
@@ -80,7 +111,7 @@ export class DataAntrianService {
     };
 
     const generatedCodes = {
-      no_antrian_admisi: noAntrianAdmisi,
+      // no_antrian_admisi: noAntrianAdmisi,
       no_antrian_poli: noAntrianPoli,
       kode_booking: kodeBooking,
       patient_data: pendaftaran.patient,
@@ -89,6 +120,14 @@ export class DataAntrianService {
       complaint: pendaftaran.complaint,
       note: pendaftaran.note,
     };
+
+    if (isPasienBaru) {
+      generatedCodes.no_antrian_admisi = noAntrianAdmisi;
+    }
+
+    if (noAntrianFarmasi) {
+      generatedCodes.no_antrian_farmasi = noAntrianFarmasi;
+    }
 
     // Update data di layanan Admisi dengan nomor yang baru
     await AdmisiClient.updateRawatJalan(

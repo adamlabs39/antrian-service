@@ -38,6 +38,26 @@ export class APMController {
     }
   }
 
+  static async checkIn(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const token = req.headers.authorization;
+
+      const result = await APMService.checkIn({
+        faskesUuid,
+        body: req.body, // Berisi kode_booking
+        token,
+      });
+
+      res.status(200).json({
+        message: "Check-in berhasil",
+        payload: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getAvailablePoliklinik(req, res, next) {
     try {
       const { faskesUuid } = req.author;

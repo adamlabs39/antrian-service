@@ -31,6 +31,26 @@ export class APMService {
     return pendaftaranLengkap;
   }
 
+  static async checkIn({ faskesUuid, body, token }) {
+    const { kode_booking } = body;
+
+    // 1. Memicu check-in di layanan Admisi
+    const pendaftaran = await AdmisiClient.checkInByBookingCode(kode_booking, token);
+
+    // 2. Memicu proses pembuatan nomor antrian
+    await DataAntrianService.processRegistration({
+        faskesUuid,
+        body: { rawat_jalan_uuid: pendaftaran.uuid },
+        token
+    });
+
+    // 3. Ambil kembali data yang sudah lengkap dengan nomor antrian
+    const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(pendaftaran.uuid, token);
+
+    return pendaftaranLengkap;
+  }
+
+
   /**
    * Mengambil detail booking dari layanan Admisi untuk di-print.
    */
