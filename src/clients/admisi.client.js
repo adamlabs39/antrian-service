@@ -4,7 +4,7 @@ import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 
 // URL endpoint dari layanan Admisi
-const ADMISI_API_URL = "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
+const ADMISI_API_URL = "http://192.168.1.77:8083/api/v3/admisi";
 
 export class AdmisiClient {
   static async checkPatient(body, token) {

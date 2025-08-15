@@ -10,7 +10,10 @@ import { AdmisiClient } from "../clients/admisi.client.js";
 // import { DataMasterClient } from "../clients/datamaster.client.js";
 
 export class APMService {
- 
+  // static async checkPatientStatus({body, token }) {
+  //   return await AdmisiClient.checkPatient(body, token);
+  // }
+
   static async registerPatient({ faskesUuid, body, token }) {
     const checkBody = {
       faskes_uuid: faskesUuid,
@@ -23,13 +26,11 @@ export class APMService {
     console.log("Check Patient Result:", checkResult);
 
     const isPasienBaru = checkResult === false;
-    console.log("Is Pasien Baru:", isPasienBaru);
 
     const registrationBodyWithFlag = {
       ...body, 
       is_pasien_baru: isPasienBaru, 
     };
-    console.log("Registration Body with Flag:", registrationBodyWithFlag);
 
     const pendaftaran = await AdmisiClient.createRawatJalan(registrationBodyWithFlag, token);
 
