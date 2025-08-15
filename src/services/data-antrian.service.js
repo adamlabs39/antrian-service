@@ -8,10 +8,15 @@ import { BadRequestException } from "../exceptions/bad-request.exception.js";
 
 export class DataAntrianService {
   static async processRegistration({ faskesUuid, body, token }) {
-    const { rawat_jalan_uuid } = body;
+    const { rawat_jalan_uuid, is_pasien_baru: isPasienBaru } = body;
     if (!rawat_jalan_uuid) {
       throw new BadRequestException("rawat_jalan_uuid wajib diisi.");
     }
+
+    console.log(
+      `Processing registration for rawat_jalan_uuid: ${rawat_jalan_uuid}`
+    );
+    console.log(`Flag 'isPasienBaru' diterima dari Admisi: ${isPasienBaru}`);
 
     console.log(" registration for rawat_jalan_uuid:", rawat_jalan_uuid);
     const [pendaftaran, rawatJalanToday] = await Promise.all([
@@ -37,7 +42,6 @@ export class DataAntrianService {
     let noUrutPoli = null;
     let noAntrianPoli = null;
 
-    const isPasienBaru = !pendaftaran.patient?.no_rm;
     console.log("Is Pasien Baru:", isPasienBaru);
 
     if (pendaftaran.jadwal_dokter_uuid) {
@@ -126,7 +130,7 @@ export class DataAntrianService {
       jadwal_dokter_uuid: pendaftaran.jadwal_dokter_uuid,
       complaint: pendaftaran.complaint || "",
       note: pendaftaran.note || "",
-      platform: "APM"|| "",
+      platform: "APM" || "",
     };
 
     if (isPasienBaru) {

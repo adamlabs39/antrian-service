@@ -13,20 +13,16 @@ export class AdmisiClient {
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
-      return response.data;
+      //pasien lama
+      return true
     } catch (error) {
-      if (error.response) {
-        if (error.response.status === 404) {
-          throw new NotFoundException(
-            "Pasien tidak ditemukan di layanan Admisi."
-          );
-        }
+      if (
+        error.response?.data?.errors?.[0]?.type === "Tidak ditemukan" ||
+        error.response?.status === 404
+      ) {
+        return false; // pasien baru
       }
-      console.error(
-        "Error saat mengecek pasien di layanan Admisi:",
-        error.message
-      );
-      throw new Error("Gagal terhubung ke layanan Admisi untuk cek pasien.");
+      throw error;
     }
   }
 

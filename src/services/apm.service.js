@@ -10,46 +10,60 @@ import { AdmisiClient } from "../clients/admisi.client.js";
 // import { DataMasterClient } from "../clients/datamaster.client.js";
 
 export class APMService {
-  static async checkPatientStatus({body, token }) {
-    return await AdmisiClient.checkPatient(body, token);
-  }
+  // static async checkPatientStatus({body, token }) {
+  //   return await AdmisiClient.checkPatient(body, token);
+  // }
 
   static async registerPatient({ faskesUuid, body, token }) {
-    const pendaftaran = await AdmisiClient.createRawatJalan(body, token);
+    const checkBody = {
+      faskes_uuid: faskesUuid,
+      no_identity: body.patient_data?.no_identity,
+    };
 
-    // const pendaftaranLengkap = await DataAntrianService.processRegistration({
-    //   faskesUuid,
-    //   body: { rawat_jalan_uuid: pendaftaran.uuid },
-    //   token,
-    // });
+    console.log("Check Patient Body:", checkBody);
 
-    // const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(
-    //   pendaftaran.uuid,
-    //   token
-    // );
+    const checkResult = await AdmisiClient.checkPatient(checkBody, token);
+    console.log("Check Patient Result:", checkResult);
 
-    return pendaftaran;
+    const isPasienBaru = checkResult === false;
+
+    const registrationBodyWithFlag = {
+      ...body, 
+      is_pasien_baru: isPasienBaru, 
+    };
+
+    const pendaftaran = await AdmisiClient.createRawatJalan(registrationBodyWithFlag, token);
+
+    return {
+      ...pendaftaran,
+      is_pasien_baru: isPasienBaru, // flag ini dibawa ke backend antrian
+    };
   }
 
   static async checkIn({ faskesUuid, body, token }) {
     const { kode_booking } = body;
 
     // 1. Memicu check-in di layanan Admisi
-    const pendaftaran = await AdmisiClient.checkInByBookingCode(kode_booking, token);
+    const pendaftaran = await AdmisiClient.checkInByBookingCode(
+      kode_booking,
+      token
+    );
 
     // 2. Memicu proses pembuatan nomor antrian
     await DataAntrianService.processRegistration({
-        faskesUuid,
-        body: { rawat_jalan_uuid: pendaftaran.uuid },
-        token
+      faskesUuid,
+      body: { rawat_jalan_uuid: pendaftaran.uuid },
+      token,
     });
 
     // 3. Ambil kembali data yang sudah lengkap dengan nomor antrian
-    const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(pendaftaran.uuid, token);
+    const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(
+      pendaftaran.uuid,
+      token
+    );
 
     return pendaftaranLengkap;
   }
-
 
   /**
    * Mengambil detail booking dari layanan Admisi untuk di-print.
