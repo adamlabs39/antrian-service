@@ -42,7 +42,6 @@ export class DataAntrianService {
     let noUrutPoli = null;
     let noAntrianPoli = null;
 
-    console.log("Is Pasien Baru:", isPasienBaru);
 
     if (pendaftaran.jadwal_dokter_uuid) {
       jadwalHariIni = await JadwalDokterRepository.findScheduleByUuid(
