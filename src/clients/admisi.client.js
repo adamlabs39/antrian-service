@@ -4,13 +4,12 @@ import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 
 // URL endpoint dari layanan Admisi
-const ADMISI_API_URL =
-  "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
+const ADMISI_API_URL = "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
 
 export class AdmisiClient {
   static async checkPatient(body, token) {
     try {
-      const endpoint = `${ADMISI_API_URL}/patient/check-patient`;
+      const endpoint = `${ADMISI_API_URL}/patient/check-patient/apm`;
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
@@ -23,7 +22,6 @@ export class AdmisiClient {
           );
         }
       }
-      // Jika error lain, lemparkan error umum
       console.error(
         "Error saat mengecek pasien di layanan Admisi:",
         error.message
@@ -54,26 +52,6 @@ export class AdmisiClient {
     }
   }
 
-  static async checkInByBookingCode(kodeBooking, token) {
-    try {
-      // Asumsi endpoint di Admisi adalah seperti ini, konfirmasi dengan mentor Anda
-      const endpoint = `${ADMISI_API_URL}/rawat-jalan/check-in`;
-
-      const response = await axios.post(
-        endpoint,
-        { kode_booking: kodeBooking }, // Mengirim kode booking di dalam body
-        {
-          headers: { Authorization: token },
-        }
-      );
-
-      return response.data.payload;
-    } catch (error) {
-      console.error("Error saat check-in di layanan Admisi:", error.message);
-      throw new Error("Gagal melakukan check-in di layanan Admisi.");
-    }
-  }
-
   static async getRawatJalanToday(faskesUuid, token) {
     try {
       const startDate = moment().startOf("day").unix();
@@ -100,13 +78,13 @@ export class AdmisiClient {
   static async getRawatJalanDetail(rawatJalanUuid, token) {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
-
+      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.get(endpoint, {
         headers: {
           Authorization: token,
         },
       });
-
+      console.log("Response dari layanan Admisi (DETAIL):", response.data);
       return response.data.payload || null;
     } catch (error) {
       console.error("Error saat mengambil detail rawat jalan:", error.message);
@@ -119,12 +97,18 @@ export class AdmisiClient {
   static async updateRawatJalan(rawatJalanUuid, codes, token) {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
+      console.log("Memanggil endpoint update:", endpoint);
 
       const response = await axios.put(endpoint, codes, {
         headers: {
           Authorization: token,
         },
+        validateStatus: () => true,
       });
+      console.log("Response update:", response.data);
+      console.log("TESSSS");
+      // console.log("response update: ", response);
+      console.log("Response dari layanan Admisi:", response.data);
       return response.data;
     } catch (error) {
       if (error.response) {

@@ -17,18 +17,18 @@ export class APMService {
   static async registerPatient({ faskesUuid, body, token }) {
     const pendaftaran = await AdmisiClient.createRawatJalan(body, token);
 
-    await DataAntrianService.processRegistration({
-      faskesUuid,
-      body: { rawat_jalan_uuid: pendaftaran.uuid },
-      token,
-    });
+    // const pendaftaranLengkap = await DataAntrianService.processRegistration({
+    //   faskesUuid,
+    //   body: { rawat_jalan_uuid: pendaftaran.uuid },
+    //   token,
+    // });
 
-    const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(
-      pendaftaran.uuid,
-      token
-    );
+    // const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(
+    //   pendaftaran.uuid,
+    //   token
+    // );
 
-    return pendaftaranLengkap;
+    return pendaftaran;
   }
 
   static async checkIn({ faskesUuid, body, token }) {
