@@ -1,161 +1,120 @@
 import { compareSync } from "bcrypt";
-import { PatientRepository } from "../repositories/patient.repository.js";
-import { APMSchema } from "../validations/apm.validation.js";
-import ZodValidator from "../validations/zod.validation.js";
-import { NotFoundException } from "../exceptions/not-found.exception.js";
+// import { PatientRepository } from "../repositories/patient.repository.js";
+// import { APMSchema } from "../validations/apm.validation.js";
+// import ZodValidator from "../validations/zod.validation.js";
+// import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
-// import { AppointmentRepository } from "../repositories/appointment.repository.js";
-import { AntrianRepository } from "../repositories/antrian.repository.js";
-import { Sequelize } from "sequelize";
-import { sequelize } from "../configurations/db.js";
-import { CodeGenerator } from "../helpers/code-generator.js";
-import { AdmissionRJRepository } from "../repositories/admission-rj.repository.js";
+// import { AntrianRepository } from "../repositories/antrian.repository.js";
+import { DataAntrianService } from "./data-antrian.service.js";
+import { AdmisiClient } from "../clients/admisi.client.js";
+// import { DataMasterClient } from "../clients/datamaster.client.js";
 
-export class 
-APMService {
-  static async getDataByIdentity({ faskesUuid, query, params }) {
-    const { identity } = ZodValidator.validate(
-      APMSchema.GET_BY_IDENTITY_PARAM,
-      params
-    );
-
-    const { bpjs: includeBPJS } = ZodValidator.validate(
-      APMSchema.GET_BY_IDENTITY_QUERY,
-      query
-    );
-
-    const data = await PatientRepository.findDetailByIdentity({
-      faskesUuid,
-      identity,
-    });
-
-    if (!data) {
-      throw new NotFoundException("Data tidak ditemukan");
-    }
-
-    const formattedData = {
-      noIdentitas: data.noIdentity,
-      nama: data.name,
-      noRm: data.noRm,
-      tanggalLahir: new Date(data.birth_detail.birthDate).getTime() / 1000,
-      jenisKelamin: data.gender,
+export class APMService {
+ 
+  static async registerPatient({ faskesUuid, body, token }) {
+    const checkBody = {
+      faskes_uuid: faskesUuid,
+      no_identity: body.patient_data?.no_identity,
     };
 
-    if (includeBPJS) {
-      formattedData.bpjs = "BPJS MASIH DUMMY";
-    }
+    console.log("Check Patient Body:", checkBody);
 
-    return formattedData;
+    const checkResult = await AdmisiClient.checkPatient(checkBody, token);
+    console.log("Check Patient Result:", checkResult);
+
+    const isPasienBaru = checkResult === false;
+    console.log("Is Pasien Baru:", isPasienBaru);
+
+    const registrationBodyWithFlag = {
+      ...body, 
+      is_pasien_baru: isPasienBaru, 
+    };
+    console.log("Registration Body with Flag:", registrationBodyWithFlag);
+
+    const pendaftaran = await AdmisiClient.createRawatJalan(registrationBodyWithFlag, token);
+
+    return {
+      ...pendaftaran,
+      is_pasien_baru: isPasienBaru, // flag ini dibawa ke backend antrian
+    };
   }
 
-  static async getAvailableSchedule({ faskesUuid, params }) {
-    const { poli_uuid: poliUuid } = ZodValidator.validate(
-      APMSchema.POLI_UUID_PARAM,
-      params
+  static async checkIn({ faskesUuid, body, token }) {
+    const { kode_booking } = body;
+
+    // 1. Memicu check-in di layanan Admisi
+    const pendaftaran = await AdmisiClient.checkInByBookingCode(
+      kode_booking,
+      token
     );
 
-    // inside this still not correct
-    const jadwalDokter = await JadwalDokterRepository.findAllByLocationToday({
+    // 2. Memicu proses pembuatan nomor antrian
+    await DataAntrianService.processRegistration({
       faskesUuid,
-      poliUuid,
+      body: { rawat_jalan_uuid: pendaftaran.uuid },
+      token,
     });
 
-    const jadwalDokterUuids = jadwalDokter.map((jadwal) => jadwal.uuid);
+    // 3. Ambil kembali data yang sudah lengkap dengan nomor antrian
+    const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(
+      pendaftaran.uuid,
+      token
+    );
 
-    const listKodeBookingByAPM =
-      await JadwalDokterRepository.getKodeBookingsAPMTodayByUuids({
-        faskesUuid,
-        jadwalDokterUuids,
-      });
-
-    // const listKodeBookingByMobile =
-    //   await AppointmentRepository.getKodeBookingsMobileTodayByUuids({
-    //     faskesUuid,
-    //     jadwalDokterUuids,
-    //   });
-
-    const kodeBookingGroupedByJadwal = {};
-
-    // for each key in listKodeBookingByAPM, add the value to kodeBookingGroupedByJadwal
-    for (const key in listKodeBookingByAPM) {
-      kodeBookingGroupedByJadwal[key] = {};
-
-      kodeBookingGroupedByJadwal[key]["jkn"] = new Set(
-        listKodeBookingByAPM[key]["jkn"]
-      );
-      kodeBookingGroupedByJadwal[key]["nonJkn"] = new Set(
-        listKodeBookingByAPM[key]["nonJkn"]
-      );
-    }
-
-    // for each key in listKodeBookingByMobile, add the value to kodeBookingGroupedByJadwal if the key exists otherwise create a new key
-    for (const key in listKodeBookingByMobile) {
-      if (!kodeBookingGroupedByJadwal[key]) {
-        kodeBookingGroupedByJadwal[key]["jkn"] = new Set();
-        kodeBookingGroupedByJadwal[key]["nonJkn"] = new Set();
-      }
-
-      for (const kodeBooking of listKodeBookingByMobile[key]) {
-        kodeBookingGroupedByJadwal[key]["nonJkn"].add(kodeBooking);
-      }
-    }
-
-    // convert Set to Array
-    for (const key in kodeBookingGroupedByJadwal) {
-      kodeBookingGroupedByJadwal[key]["jkn"] = Array.from(
-        kodeBookingGroupedByJadwal[key]["jkn"]
-      );
-      kodeBookingGroupedByJadwal[key]["nonJkn"] = Array.from(
-        kodeBookingGroupedByJadwal[key]["nonJkn"]
-      );
-    }
-
-    for (const eachJadwalDokter of jadwalDokter) {
-      eachJadwalDokter["sisa_kuota_jkn"] = eachJadwalDokter.kuotaJkn;
-      eachJadwalDokter["sisa_kuota_non_jkn"] = eachJadwalDokter.kuotaNonJkn;
-      if (kodeBookingGroupedByJadwal[eachJadwalDokter.uuid]) {
-        eachJadwalDokter["sisa_kuota_jkn"] -=
-          kodeBookingGroupedByJadwal[eachJadwalDokter.uuid]["jkn"].length;
-        kodeBookingGroupedByJadwal[eachJadwalDokter.uuid]["jkn"];
-        eachJadwalDokter["sisa_kuota_non_jkn"] -=
-          kodeBookingGroupedByJadwal[eachJadwalDokter.uuid]["nonJkn"].length;
-      }
-    }
-
-    return jadwalDokter;
+    return pendaftaranLengkap;
   }
 
-  static async registerJknAPM({ faskesUuid, body }) {
-    const result = await sequelize.transaction(async (t) => {
-      console.log("body ", body);
-      // const validated = ZodValidator.validate(
-      //   APMSchema.CREATE_APPOINTMENT_BODY,
-      //   body
-      // );
+  /**
+   * Mengambil detail booking dari layanan Admisi untuk di-print.
+   */
+  static async getBookingDetail({ faskesUuid, params, token }) {
+    const { kode_booking } = params;
+    // Meneruskan permintaan pencarian booking ke layanan Admisi
+    return await AdmisiClient.findRawatJalanByBookingCode(kode_booking, token);
+  }
 
-      // Check if the patient is already registered
-      const patient = await PatientRepository.findDetailByIdentity({
+  static async getAvailableSchedule({ faskesUuid, params, token }) {
+    const { poli_uuid: poliUuid } = params;
+
+    // 1. Ambil semua jadwal aktif hari ini dari database lokal
+    const jadwalDokterHariIni =
+      await JadwalDokterRepository.findAllByLocationToday({
         faskesUuid,
-        identity: validated.no_identitas,
-        transaction: t,
+        poliUuid,
       });
 
-      let noRm;
-      if (!patient) {
-        noRm = AdmissionRJRepository.generateNoRm();
-      } else {
-        noRm = patient.noRm;
-      }
+    if (jadwalDokterHariIni.length === 0) {
+      return [];
+    }
 
-      const noBooking = AdmissionRJRepository.generateKodeBooking({
-        faskesUuid,
-      });
+    // 2. Ambil semua data pendaftaran hari ini dari layanan Admisi
+    const pendaftaranHariIni = await AdmisiClient.getRawatJalanToday(
+      faskesUuid,
+      token
+    );
 
-      const noRegistrasi = AntrianRepository.generateNoUrutRegistrasi({
-        faskesUuid,
-      });
+    // 3. Hitung sisa kuota untuk setiap jadwal
+    const jadwalDenganSisaKuota = jadwalDokterHariIni.map((jadwal) => {
+      // Hitung berapa banyak pendaftaran yang sudah menggunakan jadwal ini
+      const pendaftarSaatIni = pendaftaranHariIni.filter(
+        (rj) => rj.schedule && rj.schedule.uuid === jadwal.uuid
+      ).length;
 
-      return patient;
+      // Hitung sisa kuota
+      const sisaKuota = jadwal.kuota - pendaftarSaatIni;
+
+      return {
+        ...jadwal,
+        sisa_kuota: sisaKuota > 0 ? sisaKuota : 0, // Pastikan tidak negatif
+      };
     });
+
+    return jadwalDenganSisaKuota;
   }
+
+  // static async getAvailablePoliklinik({ faskesUuid, token }) {
+  //   const poliklinik = await DataMasterClient.getAktifPoli(token);
+
+  //   return poliklinik;
+  // }
 }

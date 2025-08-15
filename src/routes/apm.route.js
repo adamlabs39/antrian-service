@@ -3,13 +3,27 @@ import { APMController } from "../controllers/apm.controller.js";
 
 export const APMRouter = express.Router();
 
-APMRouter.get("/data-pasien/:identity", APMController.getDataByIdentity);
 
-// APMRouter.get("/data-pasien/jkn/:no_bpjs", APMController.getDataByJKN);
+/**
+ * Mengambil daftar semua poliklinik yang tersedia untuk pendaftaran.
+ * APM akan memanggil ini di langkah pertama pemilihan poli.
+ */
+// APMRouter.get("/poliklinik", APMController.getAvailablePoliklinik);
 
-APMRouter.get(
-  "/jadwal-tersedia/:poli_uuid",
-  APMController.getAvailableSchedule
-);
+/**
+ * Mengambil daftar dokter yang tersedia di poliklinik tertentu.
+ * APM akan memanggil ini setelah pasien memilih poli.
+ */
+// APMRouter.get("/dokter/:poli_uuid", APMController.getAvailableDokter);
 
-APMRouter.post("/register/jkn", APMController.registerJknAPM);
+/**
+ * Mengambil detail jadwal (hari dan jam) untuk dokter dan poli tertentu.
+ * APM akan memanggil ini setelah pasien memilih dokter.
+ */
+// APMRouter.get("/jadwal/:dokter_uuid/:poli_uuid", APMController.getJadwalDetail);
+
+APMRouter.post("/check-patient", APMController.checkPatientStatus);
+
+APMRouter.post("/register", APMController.registerPatient);
+
+APMRouter.post("/check-in", APMController.checkIn);

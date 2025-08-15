@@ -59,13 +59,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // use authorization middleware SDK
-app.use(authorizationSdk([]));
+app.use(authorizationSdk([
+  `${BASE_URL}/mobile`
+]));
 
 // use API KEY for communication between API
-app.use(apiKeyMiddleware([
-  // url have api key
-  `${BASE_URL}/mobile/jadwal-dokter`
-]))
+app.use(
+  apiKeyMiddleware([
+    // url have api key
+    `${BASE_URL}/mobile`,
+  ])
+);
 
 // Use the routes and error handler middleware.
 app.use(BASE_URL, router);

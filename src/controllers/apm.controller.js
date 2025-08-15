@@ -2,103 +2,73 @@ import { APMService } from "../services/apm.service.js";
 import { FormatterService } from "../services/formatter.service.js";
 
 export class APMController {
-  static async getDataByIdentity(req, res, next) {
+  static async checkPatientStatus(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      const data = await APMService.getDataByIdentity({
+      const token = req.headers.authorization;
+
+      // Meneruskan permintaan ke service
+      const result = await APMService.checkPatientStatus({
+        // faskesUuid,
+        body: req.body,
+        token,
+      });
+
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async registerPatient(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const token = req.headers.authorization;
+
+      // Meneruskan semua data pendaftaran ke service
+      const result = await APMService.registerPatient({
         faskesUuid,
-        query: req.query,
-        params: req.params,
+        body: req.body,
+        token,
+      });
+
+      res.status(201).json(result); // Kirim kembali respons dari service
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async checkIn(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const token = req.headers.authorization;
+
+      const result = await APMService.checkIn({
+        faskesUuid,
+        body: req.body, // Berisi kode_booking
+        token,
       });
 
       res.status(200).json({
-        message: "Data berhasil ditampilkan",
-        payload: FormatterService.toSnakeCase(data),
+        message: "Check-in berhasil",
+        payload: result,
       });
     } catch (err) {
       next(err);
     }
   }
 
-  static async register(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const data = await APMService.register({
-        faskesUuid,
-        data: req.body,
-      });
-
-      res.status(201).json({
-        message: "Data berhasil ditambahkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async checkIn(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      await APMService.checkIn({
-        faskesUuid,
-        params: req.params,
-      });
-
-      req.pa;
-
-      res.status(200).json({
-        message: "Data berhasil diupdate",
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async getByBookingCode(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const data = await APMService.getByBookingCode({
-        faskesUuid,
-        params: req.params,
-      });
-
-      res.status(200).json({
-        message: "Data berhasil ditampilkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
 
   static async getAvailableSchedule(req, res, next) {
     try {
       const { faskesUuid } = req.author;
       const data = await APMService.getAvailableSchedule({
         faskesUuid,
-        params: req.params,
+        params: req.params, 
       });
 
       res.status(200).json({
-        message: "Data berhasil ditampilkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async registerJknAPM(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const data = await APMService.registerJknAPM({
-        faskesUuid,
-        body: req.body,
-      });
-
-      res.status(201).json({
-        message: "Data berhasil ditambahkan",
+        message: "Data jadwal berhasil ditampilkan",
         payload: FormatterService.toSnakeCase(data),
       });
     } catch (err) {
