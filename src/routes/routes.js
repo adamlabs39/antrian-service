@@ -3,12 +3,12 @@ import { jadwalDokterRouter } from "./jadwal-dokter.route.js";
 import { layarAntrianRouter } from "./layar-antrian.route.js";
 import { dataAntrianRouter } from "./data-antrian.route.js";
 import { APMRouter } from "./apm.route.js";
+import { jadwalDokterMobileRouter } from "./mobile-jadwal-dokter.route.js";
 // import { tokenRouter } from "./token-helper.route.js";
 
 export const router = express.Router();
 
 router.get("/health", (req, res) => res.status(200).json({ message: "OK" }));
-
 /**
  * Api Konfigurasi Jadwal Dokter
  * @ref ./jadwal-dokter.route.js
@@ -18,7 +18,8 @@ router.use("/jadwal-dokter", jadwalDokterRouter);
 /**
  * Api Key Version
  */
-router.use("/mobile/jadwal-dokter", jadwalDokterRouter);
+router.use("/mobile/jadwal-dokter", jadwalDokterMobileRouter);
+
 
 /**
  * Api Konfigurasi Layar Antrian

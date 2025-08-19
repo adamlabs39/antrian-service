@@ -58,18 +58,19 @@ app.use(express.json());
 // use the express.urlencoded() middleware to parse the URL-encoded data.
 app.use(express.urlencoded({ extended: true }));
 
-// use authorization middleware SDK
-app.use(authorizationSdk([
-  `${BASE_URL}/mobile`
-]));
+app.use(apiKeyMiddleware([`${BASE_URL}/mobile`]));
 
-// use API KEY for communication between API
 app.use(
-  apiKeyMiddleware([
-    // url have api key
-    `${BASE_URL}/mobile`,
+  authorizationSdk([
+    // `${BASE_URL}/jadwal-dokter`,
+    // `${BASE_URL}/layar-antrian`,
+    // `${BASE_URL}/data-antrian`,
+    // `${BASE_URL}/apm`,
+    `${BASE_URL}/mobile/jadwal-dokter`,
   ])
 );
+
+console.error();
 
 // Use the routes and error handler middleware.
 app.use(BASE_URL, router);

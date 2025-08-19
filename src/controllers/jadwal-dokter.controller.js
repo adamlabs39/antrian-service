@@ -16,6 +16,7 @@ export class JadwalDokterController {
   static async findAll(req, res, next) {
     try {
       const { faskesUuid } = req.author;
+      console.log("req author", req.author);
 
       // We are calling the findAll method from JadwalDokterService
       // and passing the faskesUuid and filterBy from req.query
@@ -25,7 +26,11 @@ export class JadwalDokterController {
         filterBy: req.query,
       });
 
-      res.status(200).json(generateSuccessMessage("Data berhasil ditampilkan", data, pagination));
+      res
+        .status(200)
+        .json(
+          generateSuccessMessage("Data berhasil ditampilkan", data, pagination)
+        );
     } catch (err) {
       next(err);
     }
@@ -34,22 +39,22 @@ export class JadwalDokterController {
   /**
    * find all for API-KEY version
    */
-  static async findAllWithAPIKey(req, res, next){
-    try{
-      const  faskesUuid = req.headers['faskes-uuid'];
+  // static async findAllWithAPIKey(req, res, next){
+  //   try{
+  //     const  faskesUuid = req.headers['faskes-uuid'];
 
-      const { pagination, data } = await JadwalDokterService.findAll({
-        faskesUuid:faskesUuid,
-        filterBy: req.query,
-      });
+  //     const { pagination, data } = await JadwalDokterService.findAll({
+  //       faskesUuid:faskesUuid,
+  //       filterBy: req.query,
+  //     });
 
-      res.status(200).json(generateSuccessMessage("Data berhasil ditampilkan", data, pagination));
+  //     res.status(200).json(generateSuccessMessage("Data berhasil ditampilkan", data, pagination));
 
-    } catch(error){
-      next(error)
-    }
+  //   } catch(error){
+  //     next(error)
+  //   }
 
-  }
+  // }
 
   static async findAllByDoctorAndLocation(req, res, next) {
     try {
@@ -59,7 +64,9 @@ export class JadwalDokterController {
         params: req.params,
       });
 
-      res.status(200).json(generateSuccessMessage("Data berhasil ditampilkan", data));
+      res
+        .status(200)
+        .json(generateSuccessMessage("Data berhasil ditampilkan", data));
     } catch (err) {
       next(err);
     }
@@ -68,6 +75,7 @@ export class JadwalDokterController {
   static async create(req, res, next) {
     try {
       const { faskesUuid } = req.author;
+      console.log("faskesUuid", faskesUuid);
       const data = await JadwalDokterService.create({
         faskesUuid,
         jadwalDokter: req.body,
@@ -113,4 +121,65 @@ export class JadwalDokterController {
       next(err);
     }
   }
+
+  // FOR MOBILE
+
+  static async findAllWithAPIKey(req, res, next) {
+    try {
+      const faskesUuid = req.headers["faskes-uuid"];
+
+      const { pagination, data } = await JadwalDokterService.findAll({
+        faskesUuid: faskesUuid,
+        filterBy: req.query,
+      });
+
+      res
+        .status(200)
+        .json(
+          generateSuccessMessage("Data berhasil ditampilkan", data, pagination)
+        );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // static async recordBooking(req, res, next) {
+  //   try {
+  //     // Ambil data dari body permintaan
+  //     const { jadwal_dokter_uuid, tanggal_pelayanan } = req.body;
+
+  //     await JadwalDokterService.recordBooking({
+  //       jadwalDokterUuid: jadwal_dokter_uuid,
+  //       tanggalPelayanan: tanggal_pelayanan,
+  //     });
+
+  //     res.status(200).json({
+  //       message: "Booking berhasil dicatat dan kuota telah diperbarui.",
+  //     });
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // }
+
+  // static async getAvailableQuota(req, res, next) {
+  //   try {
+  //     const { faskesUuid } = req.author;
+  //     // Ambil parameter dari query string URL
+  //     const { dokter_uuid, poli_uuid, tanggal_pelayanan } = req.query;
+
+  //     const data = await JadwalDokterService.getAvailableQuota({
+  //       faskesUuid,
+  //       dokterUuid: dokter_uuid,
+  //       poliUuid: poli_uuid,
+  //       tanggalPelayanan: tanggal_pelayanan,
+  //     });
+
+  //     res.status(200).json({
+  //       message: "Sisa kuota berhasil ditampilkan",
+  //       payload: data,
+  //     });
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // }
 }
