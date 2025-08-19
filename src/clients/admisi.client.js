@@ -2,9 +2,9 @@ import axios from "axios";
 import moment from "moment";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
-import { ADMISI_API_URL } from "../configurations/env.js";
+// import { ADMISI_API_URL } from "../configurations/env.js";
 
-// const ADMISI_API_URL = "http://192.168.1.77:8083/api/v3/admisi";
+const ADMISI_API_URL = "http://192.168.1.77:8083/api/v3/admisi";
 export class AdmisiClient {
   static async checkPatient(body, token) {
     try {
