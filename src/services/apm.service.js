@@ -31,7 +31,7 @@ export class APMService {
       ...body, 
       is_pasien_baru: isPasienBaru, 
     };
-
+console.log("Registration Body with Flag:", registrationBodyWithFlag);
     const pendaftaran = await AdmisiClient.createRawatJalan(registrationBodyWithFlag, token);
 
     return {
