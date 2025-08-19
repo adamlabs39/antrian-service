@@ -2,9 +2,9 @@ import axios from "axios";
 import moment from "moment";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
-import { ADMISI_API_URL } from "../configurations/env.js";
+// import { ADMISI_API_URL } from "../configurations/env.js";
 
-
+const ADMISI_API_URL = "http://192.168.1.77:8083/api/v3/admisi";
 export class AdmisiClient {
   static async checkPatient(body, token) {
     try {
@@ -27,11 +27,14 @@ export class AdmisiClient {
   }
 
   static async createRawatJalan(body, token) {
+    console.log("Creating rawat jalan with body:", body);
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/apm`;
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
+        validateStatus: () => true,
       });
+      console.log("Response dari layanan Admisi (CREATE):", response.data);
       return response.data.payload;
     } catch (error) {
       if (error.response && error.response.status === 400) {
