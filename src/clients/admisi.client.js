@@ -2,9 +2,8 @@ import axios from "axios";
 import moment from "moment";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
+import { ADMISI_API_URL } from "../configurations/env.js";
 
-// URL endpoint dari layanan Admisi
-const ADMISI_API_URL = "http://192.168.1.77:8083/api/v3/admisi";
 
 export class AdmisiClient {
   static async checkPatient(body, token) {
@@ -14,13 +13,14 @@ export class AdmisiClient {
         headers: { Authorization: token },
       });
       //pasien lama
-      return true
+      return true;
     } catch (error) {
       if (
         error.response?.data?.errors?.[0]?.type === "Tidak ditemukan" ||
         error.response?.status === 404
       ) {
-        return false; // pasien baru
+        // pasien baru
+        return false;
       }
       throw error;
     }

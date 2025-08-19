@@ -13,14 +13,59 @@ import { AppointmentClient } from "../clients/appointment.client.js";
 import { TimeConverter } from "../helpers/time-converter.helper.js";
 
 export class JadwalDokterService {
-  /**
-   * What does this method do?
-   * 1. Validate the filter query
-   * 2. If the page and page_size is not defined, then set it to 1 and 10 respectively
-   * 3. Call the findAll method from JadwalDokterRepository
-   * 4. If the data length is 0, then throw NotFoundException
-   * 5. Return the pagination and data
-   */
+  // static async getAvailableQuota({
+  //   faskesUuid,
+  //   dokterUuid,
+  //   poliUuid,
+  //   tanggalPelayanan,
+  // }) {
+  //   const tanggal = moment(tanggalPelayanan);
+  //   const hari = tanggal.format("dddd"); // Mendapatkan nama hari dalam bahasa Inggris
+
+  //   // 1. Dapatkan jadwal dasar
+  //   const jadwalDasar = await JadwalDokterRepository.findOne({
+  //     /* ... cari berdasarkan dokter, poli, dan hari ... */
+  //   });
+  //   if (!jadwalDasar) {
+  //     return { sisaKuota: 0 };
+  //   }
+
+  //   // 2. Dapatkan laporan harian
+  //   const report = await ReportAntrianRepository.findOrCreateReport({
+  //     jadwalDokter: jadwalDasar,
+  //     tanggalPelayanan: tanggal.format("YYYY-MM-DD"),
+  //   });
+
+  //   // 3. Kembalikan sisa kuota
+  //   return { sisaKuota: report.kuotaSisa };
+  // }
+
+  // static async recordBooking({ jadwalDokterUuid, tanggalPelayanan }) {
+  //   return TransactionService.run(async (tx) => {
+  //     const jadwalDasar = await JadwalDokterRepository.findScheduleByUuid(
+  //       jadwalDokterUuid
+  //     );
+  //     if (!jadwalDasar) throw new NotFoundException("Jadwal tidak ditemukan.");
+
+  //     const report = await ReportAntrianRepository.findOrCreateReport({
+  //       jadwalDokter: jadwalDasar,
+  //       tanggalPelayanan,
+  //       transaction: tx,
+  //     });
+
+  //     if (report.kuotaSisa <= 0) {
+  //       throw new ConflictException("Kuota untuk tanggal ini sudah penuh.");
+  //     }
+
+  //     // Update kuota
+  //     report.kuotaTerpakai += 1;
+  //     report.kuotaSisa -= 1;
+  //     await report.save({ transaction: tx });
+
+  //     return report;
+  //   });
+  // }
+
   static async findAll({ faskesUuid, filterBy: filterQuery }) {
     const queries = ZodValidator.validate(
       JadwalDokterSchema.FILTER_QUERY,
@@ -161,7 +206,7 @@ export class JadwalDokterService {
 
       validated.jadwal.forEach((jadwal) => {
         jadwal.kuota = jadwal.kuota_jkn + jadwal.kuota_non_jkn;
-     
+
         if (jadwal.kuota > 0) {
           const totalMenit =
             TimeConverter.toMinutes(jadwal.end_time) -
@@ -170,10 +215,7 @@ export class JadwalDokterService {
         } else {
           jadwal.durasi_pelayanan = 0;
         }
-
       });
-
-      
 
       //create jadwal dokter
       const data = await JadwalDokterRepository.create({
@@ -378,13 +420,18 @@ export class JadwalDokterService {
 
             jadwalToUpdate.kuota = newKuotaJkn + newKuotaNonJkn;
 
-            if(jadwalToUpdate.kuota > 0){
-              const startTime = jadwalToUpdate.start_time || oldJadwal.start_time;
+            if (jadwalToUpdate.kuota > 0) {
+              const startTime =
+                jadwalToUpdate.start_time || oldJadwal.start_time;
               const endTime = jadwalToUpdate.end_time || oldJadwal.end_time;
 
-              const totalMenit = TimeConverter.toMinutes(endTime) - TimeConverter.toMinutes(startTime);
-              jadwalToUpdate.durasi_pelayanan = Math.floor(totalMenit / jadwalToUpdate.kuota);
-            }else{
+              const totalMenit =
+                TimeConverter.toMinutes(endTime) -
+                TimeConverter.toMinutes(startTime);
+              jadwalToUpdate.durasi_pelayanan = Math.floor(
+                totalMenit / jadwalToUpdate.kuota
+              );
+            } else {
               jadwalToUpdate.durasi_pelayanan = 0;
             }
           }

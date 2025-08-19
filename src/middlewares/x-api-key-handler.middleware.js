@@ -1,50 +1,49 @@
 import "dotenv/config";
-import { UnauthorizedException } from "../exceptions/unauthorized.exception.js";
+import { HttpException } from "../exceptions/http-exception.js";
+import { generateErrorResponse } from "../helpers/generate-message.js";
 
-const VALID_API_KEY = process.env.API_KEY;
 /**
- * 
- * @param {Array} allowedUrls 
- * @returns 
+ * Factory function yang menghasilkan middleware untuk validasi X-API-KEY.
+ * @param {string[]} protectedRoutes - Array berisi path rute yang harus dilindungi.
  */
-export function apiKeyMiddleware(allowedUrls) {
-    return function(req, res, next) {
-        try {
-            if(allowedUrls){
-                if(allowedUrls.includes(req.originalUrl)){
-                    const apiKey = req.headers['x-api-key'];           
-            
-                    if (!apiKey) {
-                        throw new UnauthorizedException(
-                        //     {
-                        //     message: "API key is required",
-                        //     error: [
-                        //         {
-                        //             message: "Silahkan isi API key"
-                        //         }
-                        //     ]
-                        // }
-                    );
-                    }
-                    
-                    if (apiKey !== VALID_API_KEY) {
-                        throw new UnauthorizedException({
-                            message: "API key not valid",
-                            error: [
-                                {
-                                    message: "Silahkan gunakan API key yang valid"
-                                }
-                            ]
-                        });
-                    }
-                    next()
-                }else{                    
-                    next();
-                }
-            }                       
-            
-        } catch (error) {
-            next(error);
-        }
-    };
+export function apiKeyMiddleware(protectedRoutes = []) {
+  return function (request, response, nextFunction) {
+    try {
+      const isProtectedRoute = protectedRoutes.some((route) =>
+        request.path.startsWith(route)
+      );
+
+      if (!isProtectedRoute) {
+        return nextFunction();
+      }
+
+      const apiKey = request.headers["x-api-key"];
+      if (!apiKey) {
+        throw new HttpException(
+          401,
+          generateErrorResponse(
+            "Gagal",
+            "Unauthorized",
+            "X-API-KEY harus dikirimkan"
+          )
+        );
+      }
+
+      // langsung compare dengan env
+      if (apiKey !== process.env.API_KEY_SECRET) {
+        throw new HttpException(
+          401,
+          generateErrorResponse(
+            "Gagal",
+            "Unauthorized",
+            "X-API-KEY tidak valid"
+          )
+        );
+      }
+
+      nextFunction();
+    } catch (error) {
+      nextFunction(error);
+    }
+  };
 }
