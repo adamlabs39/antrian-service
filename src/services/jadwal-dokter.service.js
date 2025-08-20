@@ -19,6 +19,7 @@ export class JadwalDokterService {
 
   //FOR MOBILE START
 static async getAvailableKuota({ faskesUuid, dokterUuid, poliUuid, tanggalPelayanan }) {
+    // Validasi input tanggal
     if (!tanggalPelayanan) {
       throw new BadRequestException("Tanggal pelayanan wajib diisi.");
     }
@@ -67,7 +68,7 @@ static async getAvailableKuota({ faskesUuid, dokterUuid, poliUuid, tanggalPelaya
         throw new BadRequestException("Jadwal dokter dan tanggal pelayanan wajib diisi.");
       }
 
-      const jadwalDasar = await JadwalDokterRepository.findScheduleByUuid(jadwalDokterUuid);
+      const jadwalDasar = await JadwalDokterRepository.findJadwalByUuid(jadwalDokterUuid);
       if (!jadwalDasar) {
         throw new NotFoundException("Jadwal dokter tidak ditemukan.");
       }

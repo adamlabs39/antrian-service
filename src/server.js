@@ -17,13 +17,7 @@ import { normalizeUrl } from "./helpers/url-normalizer.js";
   defineAssociations();
 })();
 
-// try {
-//     await database.authenticate();
-//     await database.sequelize.sync({ force: false });
-//     console.log("Database connected and tables synced.");
-//   } catch (error) {
-//     console.error("Unable to connect to the database:", error);
-//   }
+
 
 // Define the base URL for the API.
 const API_PREFIX = process.env.API_BASE || "api";
@@ -65,22 +59,23 @@ app.use(apiKeyMiddleware([`${BASE_URL}/mobile`]));
 const jwtExemptEndpoints = [
   `${BASE_URL}/mobile/jadwal-dokter`,
   `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
+  `${BASE_URL}/mobile/jadwal-dokter/record-booking`,
 ];
 
-console.log("JWT Exempt Endpoints =", jwtExemptEndpoints);
+// console.log("JWT Exempt Endpoints =", jwtExemptEndpoints);
 
 app.use((req, res, next) => {
   const normalized = normalizeUrl(req.originalUrl);
-  console.log("req.originalUrl=", req.originalUrl);
-  console.log("normalized=", normalized);
+  // console.log("req.originalUrl=", req.originalUrl);
+  // console.log("normalized=", normalized);
 
   const isExempt = jwtExemptEndpoints.includes(normalized);
 
   if (isExempt) {
-    console.log(`Endpoint ${normalized} is exempt from JWT check.`);
+    // console.log(`Endpoint ${normalized} is exempt from JWT check.`);
     return next();
   } else {
-    console.log(`Endpoint ${normalized} requires JWT check.`);
+    // console.log(`Endpoint ${normalized} requires JWT check.`);
     return authorizationSdk([])(req, res, next);
   }
 });

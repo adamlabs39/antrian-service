@@ -257,16 +257,16 @@ export class JadwalDokterRepository {
     );
   }
 
-  static async findScheduleByUuid(uuid) {
-    return await JadwalDokterModel.findOne({
-      where: {
-        uuid,
-        deletedAt: null,
-        status: true,
-      },
-      raw: true,
-    });
-  }
+  // static async findScheduleByUuid(uuid) {
+  //   return await JadwalDokterModel.findOne({
+  //     where: {
+  //       uuid,
+  //       deletedAt: null,
+  //       status: true,
+  //     },
+  //     raw: true,
+  //   });
+  // }
 
   static async findJadwalByUuid(uuid) {
     return await JadwalDokterModel.findOne({
@@ -279,12 +279,19 @@ export class JadwalDokterRepository {
         {
           model: LokasiModel,
           as: "lokasi",
-          attributes: ["code_antrian_poli"],
+          attributes: ["code_antrian_poli", "name"],
         },
         {
           model: PractitionerModel,
           as: "practitioner",
-          attributes: ["code_antrian_dokter"],
+          attributes: ["code_antrian_dokter", "uuid"],
+          include: [
+            {
+              model: PegawaiModel,
+              as: "pegawai",
+              attributes: ["name"],
+            },
+          ],
         },
       ],
     });
