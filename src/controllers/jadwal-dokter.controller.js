@@ -143,43 +143,44 @@ export class JadwalDokterController {
     }
   }
 
-  // static async recordBooking(req, res, next) {
-  //   try {
-  //     // Ambil data dari body permintaan
-  //     const { jadwal_dokter_uuid, tanggal_pelayanan } = req.body;
+  static async getAvailableKuota(req, res, next) {
+    try {
+      const faskesUuid = req.headers["faskes-uuid"];
+      const { dokter_uuid, poli_uuid, tanggal_pelayanan } = req.query;
+      console.log("faskesUuid:", faskesUuid);
+      console.log("dokter_uuid:", dokter_uuid);
+      console.log("poli_uuid:", poli_uuid);
+      console.log("tanggal_pelayanan:", tanggal_pelayanan);
+      const data = await JadwalDokterService.getAvailableKuota({
+        faskesUuid,
+        dokterUuid: dokter_uuid,
+        poliUuid: poli_uuid,
+        tanggalPelayanan: tanggal_pelayanan,
+      });
 
-  //     await JadwalDokterService.recordBooking({
-  //       jadwalDokterUuid: jadwal_dokter_uuid,
-  //       tanggalPelayanan: tanggal_pelayanan,
-  //     });
+      res.status(200).json({
+        message: "Sisa kuota berhasil ditampilkan",
+        payload: data,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 
-  //     res.status(200).json({
-  //       message: "Booking berhasil dicatat dan kuota telah diperbarui.",
-  //     });
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // }
+  static async recordBooking(req, res, next) {
+    try {
+      const { jadwal_dokter_uuid, tanggal_pelayanan } = req.body;
 
-  // static async getAvailableQuota(req, res, next) {
-  //   try {
-  //     const { faskesUuid } = req.author;
-  //     // Ambil parameter dari query string URL
-  //     const { dokter_uuid, poli_uuid, tanggal_pelayanan } = req.query;
+      await JadwalDokterService.recordBooking({
+        jadwalDokterUuid: jadwal_dokter_uuid,
+        tanggalPelayanan: tanggal_pelayanan,
+      });
 
-  //     const data = await JadwalDokterService.getAvailableQuota({
-  //       faskesUuid,
-  //       dokterUuid: dokter_uuid,
-  //       poliUuid: poli_uuid,
-  //       tanggalPelayanan: tanggal_pelayanan,
-  //     });
-
-  //     res.status(200).json({
-  //       message: "Sisa kuota berhasil ditampilkan",
-  //       payload: data,
-  //     });
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // }
+      res.status(200).json({
+        message: "Booking berhasil dicatat dan kuota telah diperbarui.",
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

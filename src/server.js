@@ -9,6 +9,7 @@ import cors from "cors";
 import authorizationSdk from "@adameds/authorization-sdk";
 import { apiKeyMiddleware } from "./middlewares/x-api-key-handler.middleware.js";
 import { defineAssociations } from "./models/associations.js";
+import { normalizeUrl } from "./helpers/url-normalizer.js";
 
 // See if the database is connected.
 (async () => {
@@ -42,6 +43,7 @@ app.use(
       "User-Agent",
       "Content-Length",
       "Authorization",
+      "x-api-key",
     ],
     methods: ["GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"],
   })
@@ -60,15 +62,28 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(apiKeyMiddleware([`${BASE_URL}/mobile`]));
 
-app.use(
-  authorizationSdk([
-    // `${BASE_URL}/jadwal-dokter`,
-    // `${BASE_URL}/layar-antrian`,
-    // `${BASE_URL}/data-antrian`,
-    // `${BASE_URL}/apm`,
-    `${BASE_URL}/mobile/jadwal-dokter`,
-  ])
-);
+const jwtExemptEndpoints = [
+  `${BASE_URL}/mobile/jadwal-dokter`,
+  `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
+];
+
+console.log("JWT Exempt Endpoints =", jwtExemptEndpoints);
+
+app.use((req, res, next) => {
+  const normalized = normalizeUrl(req.originalUrl);
+  console.log("req.originalUrl=", req.originalUrl);
+  console.log("normalized=", normalized);
+
+  const isExempt = jwtExemptEndpoints.includes(normalized);
+
+  if (isExempt) {
+    console.log(`Endpoint ${normalized} is exempt from JWT check.`);
+    return next();
+  } else {
+    console.log(`Endpoint ${normalized} requires JWT check.`);
+    return authorizationSdk([])(req, res, next);
+  }
+});
 
 console.error();
 

@@ -16,8 +16,8 @@ export class ReportAntrianRepository {
       },
       defaults: {
         faskesUuid: jadwalDokter.faskesUuid,
-        practitionerName: jadwalDokter.practitioner.pegawai.name, // Sesuaikan dengan struktur relasi Anda
-        locationName: jadwalDokter.lokasi.name, // Sesuaikan dengan struktur relasi Anda
+        practitionerName: jadwalDokter.practitioner.pegawai.name,
+        locationName: jadwalDokter.lokasi.name,
         kuota: jadwalDokter.kuota,
         kuotaTerpakai: 0,
         kuotaSisa: jadwalDokter.kuota,
