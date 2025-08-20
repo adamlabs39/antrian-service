@@ -16,9 +16,13 @@ import moment from "moment";
 import { ToIndoDay } from "../helpers/to-indo-day.js";
 
 export class JadwalDokterService {
-
   //FOR MOBILE START
-static async getAvailableKuota({ faskesUuid, dokterUuid, poliUuid, tanggalPelayanan }) {
+  static async getAvailableKuota({
+    faskesUuid,
+    dokterUuid,
+    poliUuid,
+    tanggalPelayanan,
+  }) {
     // Validasi input tanggal
     if (!tanggalPelayanan) {
       throw new BadRequestException("Tanggal pelayanan wajib diisi.");
@@ -56,21 +60,40 @@ static async getAvailableKuota({ faskesUuid, dokterUuid, poliUuid, tanggalPelaya
         };
       })
     );
-    
+
     return jadwalDenganKuota;
   }
-
 
   static async recordBooking({ jadwalDokterUuid, tanggalPelayanan }) {
     return TransactionService.run(async (tx) => {
       // Validasi input
       if (!jadwalDokterUuid || !tanggalPelayanan) {
-        throw new BadRequestException("Jadwal dokter dan tanggal pelayanan wajib diisi.");
+        throw new BadRequestException(
+          "Jadwal dokter dan tanggal pelayanan wajib diisi."
+        );
       }
 
-      const jadwalDasar = await JadwalDokterRepository.findJadwalByUuid(jadwalDokterUuid);
+      const jadwalDasar = await JadwalDokterRepository.findJadwalByUuid(
+        jadwalDokterUuid
+      );
       if (!jadwalDasar) {
         throw new NotFoundException("Jadwal dokter tidak ditemukan.");
+      }
+
+      const tanggal = moment(tanggalPelayanan);
+      const hariBooking = ToIndoDay.fromEng(tanggal.format("dddd"));
+
+      if (hariBooking !== jadwalDasar.day) {
+        throw new BadRequestException(
+          `Hari pada tanggal yang dipilih (${hariBooking}) tidak sesuai dengan hari praktik dokter (${jadwalDasar.day}).`
+        );
+      }
+
+      const hariIni = moment().startOf("day");
+      if (tanggal.isBefore(hariIni)) {
+        throw new BadRequestException(
+          "Tidak bisa melakukan booking untuk tanggal yang sudah terlewat."
+        );
       }
 
       // Cari atau buat catatan laporan untuk tanggal ini
@@ -81,7 +104,9 @@ static async getAvailableKuota({ faskesUuid, dokterUuid, poliUuid, tanggalPelaya
       });
 
       if (report.kuotaSisa <= 0) {
-        throw new ConflictException("Kuota untuk jadwal di tanggal ini sudah penuh.");
+        throw new ConflictException(
+          "Kuota untuk jadwal di tanggal ini sudah penuh."
+        );
       }
 
       // Update kuota
@@ -92,7 +117,6 @@ static async getAvailableKuota({ faskesUuid, dokterUuid, poliUuid, tanggalPelaya
       return report;
     });
   }
-
 
   static async findAll({ faskesUuid, filterBy: filterQuery }) {
     const queries = ZodValidator.validate(
@@ -119,7 +143,6 @@ static async getAvailableKuota({ faskesUuid, dokterUuid, poliUuid, tanggalPelaya
   }
 
   //FOR MOBILE END
-
 
   static async findAllByDoctorAndLocation({ faskesUuid, params }) {
     const { doctor_uuid: dokterUuid, location_uuid: poliUuid } =
