@@ -58,13 +58,14 @@ export class AdmisiClient {
 
       const response = await axios.get(`${ADMISI_API_URL}/rawat-jalan`, {
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
         params: {
           faskesUuid: faskesUuid,
           start_date: startDate,
           end_date: endDate,
         },
+        validateStatus: () => true,
       });
 
       return response.data.payload || [];

@@ -257,16 +257,16 @@ export class JadwalDokterRepository {
     );
   }
 
-  // static async findScheduleByUuid(uuid) {
-  //   return await JadwalDokterModel.findOne({
-  //     where: {
-  //       uuid,
-  //       deletedAt: null,
-  //       status: true,
-  //     },
-  //     raw: true,
-  //   });
-  // }
+  static async zfindScheduleByUuid(uuid) {
+    return await JadwalDokterModel.findOne({
+      where: {
+        uuid,
+        deletedAt: null,
+        status: true,
+      },
+      raw: true,
+    });
+  }
 
   static async findJadwalByUuid(uuid) {
     return await JadwalDokterModel.findOne({

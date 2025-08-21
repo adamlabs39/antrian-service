@@ -1,13 +1,6 @@
-import { compareSync } from "bcrypt";
-// import { PatientRepository } from "../repositories/patient.repository.js";
-// import { APMSchema } from "../validations/apm.validation.js";
-// import ZodValidator from "../validations/zod.validation.js";
-// import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
-// import { AntrianRepository } from "../repositories/antrian.repository.js";
 import { DataAntrianService } from "./data-antrian.service.js";
 import { AdmisiClient } from "../clients/admisi.client.js";
-// import { DataMasterClient } from "../clients/datamaster.client.js";
 
 export class APMService {
   // static async checkPatientStatus({body, token }) {
@@ -26,18 +19,43 @@ export class APMService {
     console.log("Check Patient Result:", checkResult);
 
     const isPasienBaru = checkResult === false;
+    console.log("Is Pasien Baru:", isPasienBaru);
 
-    const registrationBodyWithFlag = {
-      ...body, 
-      is_pasien_baru: isPasienBaru, 
-    };
-console.log("Registration Body with Flag:", registrationBodyWithFlag);
-    const pendaftaran = await AdmisiClient.createRawatJalan(registrationBodyWithFlag, token);
+    const generatedCodes = await DataAntrianService.processRegistration({
+      faskesUuid,
+      requestData: body,
+      isPasienBaru,
+      // transaction: tx
+    });
 
-    return {
-      ...pendaftaran,
-      is_pasien_baru: isPasienBaru, // flag ini dibawa ke backend antrian
-    };
+    let finalPayload;
+    if (isPasienBaru) {
+      // Untuk pasien baru
+      finalPayload = {
+        patient_data: {
+          identity: body.patient_data.identity,
+          no_identity: body.patient_data.no_identity,
+        },
+        platform: "APM",
+        jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+        ...generatedCodes,
+      };
+    } else {
+      // Pasien lama
+      finalPayload = {
+        patient_data: checkResult.data, // full data dari admisi
+        platform: "APM",
+        jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+        ...generatedCodes,
+      };
+    }
+
+    const pendaftaran = await AdmisiClient.createRawatJalan(
+      finalPayload,
+      token
+    );
+
+    return pendaftaran;
   }
 
   static async checkIn({ faskesUuid, body, token }) {
