@@ -4,7 +4,7 @@ import { layarAntrianRouter } from "./layar-antrian.route.js";
 import { dataAntrianRouter } from "./data-antrian.route.js";
 import { APMRouter } from "./apm.route.js";
 import { jadwalDokterMobileRouter } from "./mobile-jadwal-dokter.route.js";
-import { dataAntrianMobileRouter } from "./mobile-data-antrian.route.js";
+import { APMMobileRouter } from "./mobile-apm.route.js";
 // import { tokenRouter } from "./token-helper.route.js";
 
 export const router = express.Router();
@@ -22,4 +22,4 @@ router.use("/apm", APMRouter);
 //FOR MOBILE
 router.use("/mobile/jadwal-dokter", jadwalDokterMobileRouter);
 
-router.use("/mobile/data-antrian", dataAntrianMobileRouter);
+router.use("/mobile/apm", APMMobileRouter);

@@ -4,7 +4,8 @@ import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 // import { ADMISI_API_URL } from "../configurations/env.js";
 
-const ADMISI_API_URL = "http://192.168.1.77:8083/api/v3/admisi";
+const ADMISI_API_URL =
+  "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
 export class AdmisiClient {
   static async checkPatient(body, token) {
     try {
@@ -13,7 +14,7 @@ export class AdmisiClient {
         headers: { Authorization: token },
       });
       //pasien lama
-      return true;
+      return response.data.payload || null;
     } catch (error) {
       if (
         error.response?.data?.errors?.[0]?.type === "Tidak ditemukan" ||
@@ -30,6 +31,7 @@ export class AdmisiClient {
     console.log("Creating rawat jalan with body:", body);
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/apm`;
+      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
         validateStatus: () => true,
@@ -58,7 +60,7 @@ export class AdmisiClient {
 
       const response = await axios.get(`${ADMISI_API_URL}/rawat-jalan`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: token,
         },
         params: {
           faskesUuid: faskesUuid,

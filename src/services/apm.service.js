@@ -7,7 +7,7 @@ export class APMService {
   //   return await AdmisiClient.checkPatient(body, token);
   // }
 
-  static async registerPatient({ faskesUuid, body, token }) {
+  static async registerPatient({ faskesUuid, body, token, platform }) {
     const checkBody = {
       faskes_uuid: faskesUuid,
       no_identity: body.patient_data?.no_identity,
@@ -25,6 +25,7 @@ export class APMService {
       faskesUuid,
       requestData: body,
       isPasienBaru,
+      platform,
       // transaction: tx
     });
 
@@ -36,18 +37,20 @@ export class APMService {
           identity: body.patient_data.identity,
           no_identity: body.patient_data.no_identity,
         },
-        platform: "APM",
+        platform: platform,
         jadwal_dokter_uuid: body.jadwal_dokter_uuid,
         ...generatedCodes,
       };
+      console.log("Final Payload for New Patient:", finalPayload);
     } else {
       // Pasien lama
       finalPayload = {
         patient_data: checkResult.data, // full data dari admisi
-        platform: "APM",
+        platform: platform,
         jadwal_dokter_uuid: body.jadwal_dokter_uuid,
         ...generatedCodes,
       };
+      console.log("Final Payload for Existing Patient:", finalPayload);
     }
 
     const pendaftaran = await AdmisiClient.createRawatJalan(
@@ -58,82 +61,51 @@ export class APMService {
     return pendaftaran;
   }
 
-  static async checkIn({ faskesUuid, body, token }) {
-    const { kode_booking } = body;
+  // FOR MOBILE
 
-    // 1. Memicu check-in di layanan Admisi
-    const pendaftaran = await AdmisiClient.checkInByBookingCode(
-      kode_booking,
-      token
-    );
+  static async registerPatientMobile({ faskesUuid, body, platform }) {
+    const admisiApiKey =
+      "90bc209559363a69d4cc2c77c4dca75b6e1387ecc6b07162b41663a2b19df143";
+    const isPasienBaru = body.patient_data?.no_rm == null;
 
-    // 2. Memicu proses pembuatan nomor antrian
-    await DataAntrianService.processRegistration({
+    const generatedCodes = await DataAntrianService.processRegistration({
       faskesUuid,
-      body: { rawat_jalan_uuid: pendaftaran.uuid },
-      token,
+      requestData: body,
+      isPasienBaru,
+      platform,
+      token: admisiApiKey
+      // transaction: tx
     });
 
-    // 3. Ambil kembali data yang sudah lengkap dengan nomor antrian
-    const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(
-      pendaftaran.uuid,
-      token
-    );
-
-    return pendaftaranLengkap;
-  }
-
-  /**
-   * Mengambil detail booking dari layanan Admisi untuk di-print.
-   */
-  static async getBookingDetail({ faskesUuid, params, token }) {
-    const { kode_booking } = params;
-    // Meneruskan permintaan pencarian booking ke layanan Admisi
-    return await AdmisiClient.findRawatJalanByBookingCode(kode_booking, token);
-  }
-
-  static async getAvailableSchedule({ faskesUuid, params, token }) {
-    const { poli_uuid: poliUuid } = params;
-
-    // 1. Ambil semua jadwal aktif hari ini dari database lokal
-    const jadwalDokterHariIni =
-      await JadwalDokterRepository.findAllByLocationToday({
-        faskesUuid,
-        poliUuid,
-      });
-
-    if (jadwalDokterHariIni.length === 0) {
-      return [];
+    let finalPayload;
+    if (isPasienBaru) {
+      // Untuk pasien baru
+      finalPayload = {
+        patient_data: {
+          identity: body.patient_data.identity,
+          no_identity: body.patient_data.no_identity,
+        },
+        platform: platform,
+        jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+        ...generatedCodes,
+      };
+      console.log("Final Payload for New Patient:", finalPayload);
+    } else {
+      // Pasien lama
+      finalPayload = {
+        no_rm: body.patient_data.no_rm,
+        platform: platform,
+        jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+        ...generatedCodes,
+      };
+      console.log("Final Payload for Existing Patient:", finalPayload);
     }
 
-    // 2. Ambil semua data pendaftaran hari ini dari layanan Admisi
-    const pendaftaranHariIni = await AdmisiClient.getRawatJalanToday(
-      faskesUuid,
-      token
+    const pendaftaran = await AdmisiClient.createRawatJalan(
+      finalPayload,
+      admisiApiKey
     );
 
-    // 3. Hitung sisa kuota untuk setiap jadwal
-    const jadwalDenganSisaKuota = jadwalDokterHariIni.map((jadwal) => {
-      // Hitung berapa banyak pendaftaran yang sudah menggunakan jadwal ini
-      const pendaftarSaatIni = pendaftaranHariIni.filter(
-        (rj) => rj.schedule && rj.schedule.uuid === jadwal.uuid
-      ).length;
-
-      // Hitung sisa kuota
-      const sisaKuota = jadwal.kuota - pendaftarSaatIni;
-
-      return {
-        ...jadwal,
-        sisa_kuota: sisaKuota > 0 ? sisaKuota : 0, // Pastikan tidak negatif
-      };
-    });
-
-    return jadwalDenganSisaKuota;
+    return pendaftaran;
   }
-
-  // static async getAvailablePoliklinik({ faskesUuid, token }) {
-  //   const poliklinik = await DataMasterClient.getAktifPoli(token);
-
-  //   return poliklinik;
-  // }
 }

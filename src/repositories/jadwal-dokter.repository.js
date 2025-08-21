@@ -257,7 +257,7 @@ export class JadwalDokterRepository {
     );
   }
 
-  static async zfindScheduleByUuid(uuid) {
+  static async findScheduleByUuid(uuid) {
     return await JadwalDokterModel.findOne({
       where: {
         uuid,

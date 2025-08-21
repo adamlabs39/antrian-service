@@ -8,4 +8,4 @@ APMRouter.post("/check-patient", APMController.checkPatientStatus);
 
 APMRouter.post("/register", APMController.registerPatient);
 
-APMRouter.post("/check-in", APMController.checkIn);
+// APMRouter.post("/check-in", APMController.checkIn);

@@ -17,8 +17,6 @@ import { normalizeUrl } from "./helpers/url-normalizer.js";
   defineAssociations();
 })();
 
-
-
 // Define the base URL for the API.
 const API_PREFIX = process.env.API_BASE || "api";
 const API_VERSION = process.env.API_VERSION || "v3";
@@ -60,6 +58,7 @@ const jwtExemptEndpoints = [
   `${BASE_URL}/mobile/jadwal-dokter`,
   `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
   `${BASE_URL}/mobile/jadwal-dokter/record-booking`,
+  `${BASE_URL}/mobile/apm/process-registration`,
 ];
 
 // console.log("JWT Exempt Endpoints =", jwtExemptEndpoints);

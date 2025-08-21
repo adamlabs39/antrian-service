@@ -10,9 +10,9 @@ import { ReportAntrianRepository } from "../repositories/report-antrian.reposito
 
 export class DataAntrianService {
   static async processRegistration({ faskesUuid, requestData, isPasienBaru, token }) {
-  // Ambil semua rawat jalan hari ini untuk hitung admisi
   const rawatJalanToday = await AdmisiClient.getRawatJalanToday(faskesUuid, token);
   console.log("is pasien baru (DATA ANTRIAN)", isPasienBaru);
+  console.log("rawatJalanToday", rawatJalanToday.length);
   let noAntrianAdmisi = null;
   let noAntrianPoli = null;
 

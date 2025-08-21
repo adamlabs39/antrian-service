@@ -22,6 +22,7 @@ export class APMController {
 
   static async registerPatient(req, res, next) {
     try {
+      const platform = "APM";
       const { faskesUuid } = req.author;
       const token = req.headers.authorization;
 
@@ -30,6 +31,25 @@ export class APMController {
         faskesUuid,
         body: req.body,
         token,
+        platform,
+      });
+
+      res.status(201).json(result); // Kirim kembali respons dari service
+    } catch (err) {
+      next(err);
+    }
+  }
+  
+  // FOR MOBILE
+  static async registerPatientMobile(req, res, next) {
+    try {
+      const platform = "Mobile";
+       const faskesUuid = req.headers["faskes-uuid"];
+   
+      const result = await APMService.registerPatientMobile({
+        faskesUuid,
+        body: req.body,
+        platform,
       });
 
       res.status(201).json(result); // Kirim kembali respons dari service
@@ -38,41 +58,7 @@ export class APMController {
     }
   }
 
-  static async checkIn(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const token = req.headers.authorization;
-
-      const result = await APMService.checkIn({
-        faskesUuid,
-        body: req.body, // Berisi kode_booking
-        token,
-      });
-
-      res.status(200).json({
-        message: "Check-in berhasil",
-        payload: result,
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
 
 
-  static async getAvailableSchedule(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const data = await APMService.getAvailableSchedule({
-        faskesUuid,
-        params: req.params, 
-      });
 
-      res.status(200).json({
-        message: "Data jadwal berhasil ditampilkan",
-        payload: FormatterService.toSnakeCase(data),
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
 }
