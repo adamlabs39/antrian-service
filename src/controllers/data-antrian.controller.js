@@ -20,55 +20,9 @@ export class DataAntrianController {
     }
   }
 
-  static async findAllAdmisi(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
 
-      const result = await DataAntrianService.findAllAdmisi({
-        faskesUuid,
-        filters: req.query || {},
-      });
 
-      res.status(200).json({
-        message: "Data antrian admisi berhasil ditampilkan",
-        ...result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
 
-  static async findAllPoli(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const result = await DataAntrianService.findAllPoli({
-        faskesUuid,
-        filters: req.query || {},
-      });
-      res.status(200).json({
-        message: "Data antrian poliklinik berhasil ditampilkan",
-        ...result,
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async findAllFarmasi(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const result = await DataAntrianService.findAllFarmasi({
-        faskesUuid,
-        filters: req.query || {},
-      });
-      res.status(200).json({
-        message: "Data antrian farmasi berhasil ditampilkan",
-        ...result,
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
 
   static async processRegistration(req, res, next) {
     try {
@@ -82,16 +36,49 @@ export class DataAntrianController {
         body: req.body,
       });
 
-      res
-        .status(200)
-        .json({
-          message: "Proses antrian berhasil dibuat.",
-        });
+      res.status(200).json({
+        message: "Proses antrian berhasil dibuat.",
+      });
     } catch (err) {
       next(err);
     }
   }
 
+  static async regisAdmisi(req, res, next) {
+    try {
+      // 1. Validasi Input
+      const { rawat_jalan_uuid } = req.body;
+      if (!rawat_jalan_uuid) {
+        throw new BadRequestException(
+          "rawat_jalan_uuid wajib ada di dalam body request."
+        );
+      }
+
+      // 2. Siapkan semua parameter yang dibutuhkan oleh DataAntrianService
+      const serviceParams = {
+        faskesUuid: req.author.faskesUuid,
+        token: req.headers.authorization, 
+        requestData: req.body, 
+
+        // Parameter berikut tidak relevan untuk alur ADMISI, tapi bisa diisi nilai default
+        isPasienBaru: false,
+        tanggalPelayanan: null,
+      };
+
+      // 3. Panggil service untuk memproses dan mendapatkan hasilnya
+      const generatedCodes = await DataAntrianService.processAdmisiRegistration(
+        serviceParams
+      );
+
+      // 4. Kirim kembali nomor yang berhasil di-generate dan di-update
+      res.status(200).json({
+        message: "Nomor antrian berhasil digenerate dan diupdate.",
+        payload: generatedCodes,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 

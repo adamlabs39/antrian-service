@@ -20,19 +20,19 @@ export class DataAntrianService {
     let finalTanggalPelayanan;
     if (platform === "APM") {
       finalTanggalPelayanan = moment().format("YYYY-MM-DD");
-    }else{
-       const tanggalDariRequest =
-         tanggalDariService ||
-         requestData.tanggal_periksa ||
-         moment().format("YYYY-MM-DD");
+    } else {
+      const tanggalDariRequest =
+        tanggalDariService ||
+        requestData.tanggal_periksa ||
+        moment().format("YYYY-MM-DD");
 
-       // Validasi format tanggal
-       if (!moment(tanggalDariRequest, "YYYY-MM-DD", true).isValid()) {
-         throw new BadRequestException(
-           "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
-         );
-       }
-       finalTanggalPelayanan = tanggalDariRequest;
+      // Validasi format tanggal
+      if (!moment(tanggalDariRequest, "YYYY-MM-DD", true).isValid()) {
+        throw new BadRequestException(
+          "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
+        );
+      }
+      finalTanggalPelayanan = tanggalDariRequest;
     }
 
     let rawatJalanToday;
@@ -112,5 +112,77 @@ export class DataAntrianService {
     }
 
     return generatedCodes;
+  }
+
+  static async processAdmisiRegistration({ requestData, token }) {
+    console.log("Menjalankan service khusus untuk platform: ADMISI");
+
+    if (!requestData?.rawat_jalan_uuid) {
+      throw new BadRequestException("rawat_jalan_uuid wajib diisi.");
+    }
+
+    const rawatJalanUuid = requestData.rawat_jalan_uuid;
+    const rawatJalan = await AdmisiClient.getRawatJalanDetail(
+      rawatJalanUuid,
+      token
+    );
+    if (!rawatJalan) {
+      throw new NotFoundException("Data rawat jalan tidak ditemukan.");
+    }
+
+    const jadwalDokter = await JadwalDokterRepository.findJadwalByUuid(
+      rawatJalan.jadwal_dokter_uuid
+    );
+    if (!jadwalDokter) {
+      throw new NotFoundException("Jadwal dokter terkait tidak ditemukan.");
+    }
+
+    const tanggalPelayanan = moment(rawatJalan.tanggal_daftar).format(
+      "YYYY-MM-DD"
+    );
+
+    const report = await ReportAntrianRepository.findOrCreateReport({
+      jadwalDokter: jadwalDokter,
+      tanggalPelayanan,
+    });
+
+    if (report.kuotaTerpakai >= report.kuota) {
+      throw new ConflictException(
+        "Kuota antrian untuk jadwal ini sudah penuh."
+      );
+    }
+
+    await report.update({
+      kuotaTerpakai: report.kuotaTerpakai + 1,
+      kuotaSisa: report.kuota - (report.kuotaTerpakai + 1),
+    });
+
+    const noUrutPoli = report.kuotaTerpakai + 1;
+    const noAntrianPoli = CodeGenerator.generateNoAntrianPoli(
+      jadwalDokter.codeAntrianPoli,
+      jadwalDokter.codeAntrianDokter,
+      noUrutPoli
+    );
+    const kodeBooking = CodeGenerator.generateKodeBooking();
+
+     const paymentMethodMap = {
+       1: "TUNAI",
+       2: "ASURANSI",
+     };
+
+    const codesToUpdate = {
+      no_antrian_poli: noAntrianPoli,
+      kode_booking: kodeBooking,
+      patient_data: rawatJalan.patient,
+      payment_method: paymentMethodMap[rawatJalan.payment_method],
+      jadwal_dokter_uuid: rawatJalan.jadwal_dokter_uuid,
+      complaint: rawatJalan.complaint,
+      note: rawatJalan.note,
+    };
+
+    console.log(`Melakukan UPDATE pada Rawat Jalan UUID: ${rawatJalanUuid}`);
+    await AdmisiClient.updateRawatJalan(rawatJalanUuid, codesToUpdate, token);
+
+    return codesToUpdate;
   }
 }

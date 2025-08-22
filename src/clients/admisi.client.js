@@ -81,10 +81,14 @@ export class AdmisiClient {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
       console.log("Memanggil endpoint:", endpoint);
+      console.log("Token:", token);
+      console.log("Rawat Jalan UUID:", rawatJalanUuid);
+  
       const response = await axios.get(endpoint, {
         headers: {
           Authorization: token,
         },
+        validateStatus: () => true,
       });
       console.log("Response dari layanan Admisi (DETAIL):", response.data);
       return response.data.payload || null;
@@ -191,7 +195,10 @@ export class AdmisiClient {
 
       return response.data.payload || [];
     } catch (error) {
-      console.error("Error saat memanggil layanan Admisi (MOBILE):", error.message);
+      console.error(
+        "Error saat memanggil layanan Admisi (MOBILE):",
+        error.message
+      );
       throw new Error("Gagal terhubung ke layanan Admisi.");
     }
   }
