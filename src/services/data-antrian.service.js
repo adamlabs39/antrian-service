@@ -9,8 +9,9 @@ import moment from "moment";
 import { ReportAntrianRepository } from "../repositories/report-antrian.repository.js";
 
 export class DataAntrianService {
-    static async processRegistration({ faskesUuid, requestData, isPasienBaru, platform, token }) {
-    let rawatJalanToday;
+    static async processRegistration({ faskesUuid, requestData, isPasienBaru, platform, token, tanggalPelayanan}) {
+    
+      let rawatJalanToday;
 
     if (platform === "MOBILE"){
       rawatJalanToday = await AdmisiClient.getRawatJalanTodayMobile(
@@ -39,7 +40,7 @@ export class DataAntrianService {
         throw new NotFoundException("Tidak ada jadwal aktif untuk dokter ini hari ini.");
       }
 
-      const tanggalPelayanan = moment().format("YYYY-MM-DD");
+      // const tanggalPelayanan = moment().format("YYYY-MM-DD");
       const report = await ReportAntrianRepository.findOrCreateReport({
         jadwalDokter: jadwalHariIni,
         tanggalPelayanan,

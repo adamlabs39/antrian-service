@@ -1,6 +1,7 @@
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
 import { DataAntrianService } from "./data-antrian.service.js";
 import { AdmisiClient } from "../clients/admisi.client.js";
+import moment from "moment";
 
 export class APMService {
   // static async checkPatientStatus({body, token }) {
@@ -77,6 +78,21 @@ export class APMService {
     if (!admisiApiKey) {
       throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
     }
+
+     const tanggalPeriksaString =
+       body.tanggal_periksa || moment().format("YYYY-MM-DD");
+
+     // 1. Validasi tanggal di awal. Jika tidak valid, proses berhenti di sini.
+     if (!moment(tanggalPeriksaString, "YYYY-MM-DD", true).isValid()) {
+       throw new BadRequestException(
+         "Format tanggal_periksa tidak valid. Gunakan format YYYY-MM-DD."
+       );
+     }
+
+    //  // 2. Siapkan DUA format tanggal yang dibutuhkan.
+    //  const tanggalUntukAntrian = tanggalPeriksaString; // Format string untuk DataAntrianService
+    //  const tanggalUntukAdmisi = moment(tanggalPeriksaString).unix(); 
+
     console.log(
       "Tipe dari body.patient_data.no_rm:",
       typeof body.patient_data?.no_rm
@@ -88,19 +104,21 @@ export class APMService {
     const isPasienBaru = body.patient_data?.no_rm == null;
     console.log("Is Pasien Baru (Mobile):", isPasienBaru);
 
+    console.log("body mobile:", body);
     const generatedCodes = await DataAntrianService.processRegistration({
       faskesUuid,
       requestData: body,
       isPasienBaru,
       platform,
       token: admisiApiKey,
+      tanggalPelayanan: tanggalPeriksaString
     });
     console.log("Generated Codes:", generatedCodes);
 
     const basePayload = {
-      // faskes_uuid: faskesUuid,
       platform: platform,
       jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+      tanggal_periksa: moment(tanggalPeriksaString).unix(),
       ...generatedCodes,
     };
 
