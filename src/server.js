@@ -59,22 +59,18 @@ const jwtExemptEndpoints = [
   `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
   `${BASE_URL}/mobile/jadwal-dokter/record-booking`,
   `${BASE_URL}/mobile/apm/process-registration`,
+  
 ];
 
 // console.log("JWT Exempt Endpoints =", jwtExemptEndpoints);
 
 app.use((req, res, next) => {
   const normalized = normalizeUrl(req.originalUrl);
-  // console.log("req.originalUrl=", req.originalUrl);
-  // console.log("normalized=", normalized);
-
   const isExempt = jwtExemptEndpoints.includes(normalized);
 
   if (isExempt) {
-    // console.log(`Endpoint ${normalized} is exempt from JWT check.`);
     return next();
   } else {
-    // console.log(`Endpoint ${normalized} requires JWT check.`);
     return authorizationSdk([])(req, res, next);
   }
 });

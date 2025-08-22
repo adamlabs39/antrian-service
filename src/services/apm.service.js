@@ -29,6 +29,12 @@ export class APMService {
       // transaction: tx
     });
 
+    const basePayload = {
+      platform: platform,
+      jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+      ...generatedCodes,
+    };
+
     let finalPayload;
     if (isPasienBaru) {
       // Untuk pasien baru
@@ -37,18 +43,18 @@ export class APMService {
           identity: body.patient_data.identity,
           no_identity: body.patient_data.no_identity,
         },
-        platform: platform,
-        jadwal_dokter_uuid: body.jadwal_dokter_uuid,
-        ...generatedCodes,
+        ...basePayload,
       };
       console.log("Final Payload for New Patient:", finalPayload);
     } else {
       // Pasien lama
       finalPayload = {
-        patient_data: checkResult.data, // full data dari admisi
-        platform: platform,
-        jadwal_dokter_uuid: body.jadwal_dokter_uuid,
-        ...generatedCodes,
+        ...basePayload,
+        patient_data: {
+          uuid: checkResult.uuid,
+          identity: checkResult.identity, // <-- Tambahkan ini
+          no_identity: checkResult.noIdentity, // <-- Tambahkan ini
+        },
       };
       console.log("Final Payload for Existing Patient:", finalPayload);
     }
@@ -66,43 +72,58 @@ export class APMService {
   static async registerPatientMobile({ faskesUuid, body, platform }) {
     const admisiApiKey =
       "90bc209559363a69d4cc2c77c4dca75b6e1387ecc6b07162b41663a2b19df143";
+    console.log("faskesUuid service apm:", faskesUuid);
+    console.log("platform service apm:", platform);
+    if (!admisiApiKey) {
+      throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
+    }
+    console.log(
+      "Tipe dari body.patient_data.no_rm:",
+      typeof body.patient_data?.no_rm
+    );
+    console.log(
+      "Nilai dari body.patient_data.no_rm:",
+      body.patient_data?.no_rm
+    );
     const isPasienBaru = body.patient_data?.no_rm == null;
+    console.log("Is Pasien Baru (Mobile):", isPasienBaru);
 
     const generatedCodes = await DataAntrianService.processRegistration({
       faskesUuid,
       requestData: body,
       isPasienBaru,
       platform,
-      token: admisiApiKey
-      // transaction: tx
+      token: admisiApiKey,
     });
+    console.log("Generated Codes:", generatedCodes);
+
+    const basePayload = {
+      // faskes_uuid: faskesUuid,
+      platform: platform,
+      jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+      ...generatedCodes,
+    };
 
     let finalPayload;
     if (isPasienBaru) {
       // Untuk pasien baru
       finalPayload = {
-        patient_data: {
-          identity: body.patient_data.identity,
-          no_identity: body.patient_data.no_identity,
-        },
-        platform: platform,
-        jadwal_dokter_uuid: body.jadwal_dokter_uuid,
-        ...generatedCodes,
+        ...basePayload,
+        patient_data: body.patient_data,
       };
       console.log("Final Payload for New Patient:", finalPayload);
     } else {
       // Pasien lama
       finalPayload = {
+        ...basePayload,
         no_rm: body.patient_data.no_rm,
-        platform: platform,
-        jadwal_dokter_uuid: body.jadwal_dokter_uuid,
-        ...generatedCodes,
       };
       console.log("Final Payload for Existing Patient:", finalPayload);
     }
 
-    const pendaftaran = await AdmisiClient.createRawatJalan(
+    const pendaftaran = await AdmisiClient.createRawatJalanMobile(
       finalPayload,
+      faskesUuid,
       admisiApiKey
     );
 

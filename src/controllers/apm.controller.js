@@ -43,9 +43,10 @@ export class APMController {
   // FOR MOBILE
   static async registerPatientMobile(req, res, next) {
     try {
-      const platform = "Mobile";
-       const faskesUuid = req.headers["faskes-uuid"];
-   
+      const platform = "MOBILE";
+      const faskesUuid = req.headers["faskes-uuid"];
+      console.log("faskes uuid controller", faskesUuid);
+
       const result = await APMService.registerPatientMobile({
         faskesUuid,
         body: req.body,
