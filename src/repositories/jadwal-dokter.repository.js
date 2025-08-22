@@ -279,12 +279,19 @@ export class JadwalDokterRepository {
         {
           model: LokasiModel,
           as: "lokasi",
-          attributes: ["code_antrian_poli"],
+          attributes: ["code_antrian_poli", "name"],
         },
         {
           model: PractitionerModel,
           as: "practitioner",
-          attributes: ["code_antrian_dokter"],
+          attributes: ["code_antrian_dokter", "uuid"],
+          include: [
+            {
+              model: PegawaiModel,
+              as: "pegawai",
+              attributes: ["name"],
+            },
+          ],
         },
       ],
     });
@@ -462,75 +469,34 @@ export class JadwalDokterRepository {
     );
   }
 
-  static async getKodeBookingsAPMTodayByUuids({
+  // FOR MOBILE
+  static async findAllSchedulesByDay({
     faskesUuid,
-    jadwalDokterUuids,
+    dokterUuid,
+    poliUuid,
+    day,
   }) {
-    const whereClause = {
-      faskes_uuid: faskesUuid,
-      uuid: jadwalDokterUuids,
-      deletedAt: null,
-    };
-
-    const result = await JadwalDokterModel.findAll({
-      where: whereClause,
-      raw: true,
-      nest: true,
-      subQuery: false,
+    return await JadwalDokterModel.findAll({
+      where: {
+        faskesUuid,
+        practitionerUuid: dokterUuid,
+        lokasiUuid: poliUuid,
+        day: day, 
+        status: true,
+        deletedAt: null,
+      },
+     
       include: [
         {
-          model: RawatJalanModel,
-          as: "rawat_jalan",
-          required: true,
-          where: {
-            deletedAt: null,
-            tanggalDaftar: moment().startOf("day").unix(),
-          },
-          include: [
-            {
-              model: AntrianModel,
-              as: "antrian",
-              where: {
-                deletedAt: null,
-              },
-            },
-          ],
+          model: PractitionerModel,
+          as: "practitioner",
+          include: { model: PegawaiModel, as: "pegawai" },
+        },
+        {
+          model: LokasiModel,
+          as: "lokasi",
         },
       ],
     });
-
-    let formatted = {};
-    for (const res of result) {
-      console.log(res);
-      if (formatted[res.uuid]) {
-        if (res.rawat_jalan.antrian.jenisPasien == "JKN") {
-          formatted[res.uuid]["jkn"].add(res.rawat_jalan.kodeBooking);
-        } else if (res.rawat_jalan.antrian.jenisPasien == "NON JKN") {
-          formatted[res.uuid]["nonJkn"].add(res.rawat_jalan.kodeBooking);
-        } else {
-          throw new InternalServerErrorException("Unknown jenis pasien");
-        }
-      } else {
-        formatted[res.uuid] = {
-          jkn: new Set(),
-          nonJkn: new Set(),
-        };
-
-        if (res.rawat_jalan.antrian.jenisPasien == "JKN") {
-          formatted[res.uuid]["jkn"].add(res.rawat_jalan.kodeBooking);
-        } else if (res.rawat_jalan.antrian.jenisPasien == "NON JKN") {
-          formatted[res.uuid]["nonJkn"].add(res.rawat_jalan.kodeBooking);
-        } else {
-          throw new InternalServerErrorException("Unknown jenis pasien");
-        }
-      }
-    }
-
-    for (const key in formatted) {
-      formatted[key]["jkn"] = Array.from(formatted[key]["jkn"]);
-      formatted[key]["nonJkn"] = Array.from(formatted[key]["nonJkn"]);
-    }
-
-    return formatted;
   }
 }

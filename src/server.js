@@ -9,20 +9,13 @@ import cors from "cors";
 import authorizationSdk from "@adameds/authorization-sdk";
 import { apiKeyMiddleware } from "./middlewares/x-api-key-handler.middleware.js";
 import { defineAssociations } from "./models/associations.js";
+import { normalizeUrl } from "./helpers/url-normalizer.js";
 
 // See if the database is connected.
 (async () => {
   await database.authenticate();
   defineAssociations();
 })();
-
-// try {
-//     await database.authenticate();
-//     await database.sequelize.sync({ force: false });
-//     console.log("Database connected and tables synced.");
-//   } catch (error) {
-//     console.error("Unable to connect to the database:", error);
-//   }
 
 // Define the base URL for the API.
 const API_PREFIX = process.env.API_BASE || "api";
@@ -42,6 +35,7 @@ app.use(
       "User-Agent",
       "Content-Length",
       "Authorization",
+      "x-api-key",
     ],
     methods: ["GET", "POST", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"],
   })
@@ -60,15 +54,26 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(apiKeyMiddleware([`${BASE_URL}/mobile`]));
 
-app.use(
-  authorizationSdk([
-    // `${BASE_URL}/jadwal-dokter`,
-    // `${BASE_URL}/layar-antrian`,
-    // `${BASE_URL}/data-antrian`,
-    // `${BASE_URL}/apm`,
-    `${BASE_URL}/mobile/jadwal-dokter`,
-  ])
-);
+const jwtExemptEndpoints = [
+  `${BASE_URL}/mobile/jadwal-dokter`,
+  `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
+  `${BASE_URL}/mobile/jadwal-dokter/record-booking`,
+  `${BASE_URL}/mobile/apm/process-registration`,
+  
+];
+
+// console.log("JWT Exempt Endpoints =", jwtExemptEndpoints);
+
+app.use((req, res, next) => {
+  const normalized = normalizeUrl(req.originalUrl);
+  const isExempt = jwtExemptEndpoints.includes(normalized);
+
+  if (isExempt) {
+    return next();
+  } else {
+    return authorizationSdk([])(req, res, next);
+  }
+});
 
 console.error();
 

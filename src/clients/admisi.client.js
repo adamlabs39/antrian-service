@@ -4,7 +4,7 @@ import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 // import { ADMISI_API_URL } from "../configurations/env.js";
 
-const ADMISI_API_URL = "http://192.168.1.77:8083/api/v3/admisi";
+const ADMISI_API_URL = "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
 export class AdmisiClient {
   static async checkPatient(body, token) {
     try {
@@ -13,7 +13,7 @@ export class AdmisiClient {
         headers: { Authorization: token },
       });
       //pasien lama
-      return true;
+      return response.data.payload || null;
     } catch (error) {
       if (
         error.response?.data?.errors?.[0]?.type === "Tidak ditemukan" ||
@@ -30,6 +30,7 @@ export class AdmisiClient {
     console.log("Creating rawat jalan with body:", body);
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/apm`;
+      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
         validateStatus: () => true,
@@ -65,7 +66,9 @@ export class AdmisiClient {
           start_date: startDate,
           end_date: endDate,
         },
+        validateStatus: () => true,
       });
+      // console.log("Response dari layanan Admisi (GET):", response);
 
       return response.data.payload || [];
     } catch (error) {
@@ -129,6 +132,67 @@ export class AdmisiClient {
         error.message
       );
       throw new Error("Gagal mengupdate nomor antrian di layanan Admisi.");
+    }
+  }
+
+  // FOR MOBILE
+  static async createRawatJalanMobile(body, faskesUuid, admisiApiKey) {
+    console.log("Creating rawat jalan with body:", body);
+    console.log("Admisi API Key:", admisiApiKey);
+    console.log("Faskes UUID ADMISI CLIENT:", faskesUuid);
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile`;
+      console.log("Memanggil endpoint:", endpoint);
+      const response = await axios.post(endpoint, body, {
+        headers: {
+          "x-api-key": admisiApiKey,
+          "faskes-uuid": faskesUuid,
+        },
+        validateStatus: () => true,
+      });
+      console.log(
+        "Response dari layanan Admisi (CREATE MOBILE):",
+        response.data
+      );
+      return response.data.payload;
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        const errorMessage =
+          error.response.data?.errors?.[0]?.message ||
+          "Data pendaftaran tidak valid.";
+        throw new BadRequestException(errorMessage);
+      }
+      console.error(
+        "Error saat membuat rawat jalan di layanan Admisi:",
+        error.message
+      );
+      throw new Error("Gagal membuat data pendaftaran di layanan Admisi.");
+    }
+  }
+
+  static async getRawatJalanTodayMobile(faskesUuid, admisiApiKey) {
+    try {
+      const startDate = moment().startOf("day").unix();
+      const endDate = moment().endOf("day").unix();
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile`;
+      const response = await axios.get(endpoint, {
+        headers: {
+          "x-api-key": admisiApiKey,
+          "faskes-uuid": faskesUuid,
+        },
+        params: {
+          // faskesUuid: faskesUuid,
+          start_date: startDate,
+          end_date: endDate,
+        },
+        validateStatus: () => true,
+      });
+      // console.log("Response dari layanan Admisi (GET):", response);
+
+      return response.data.payload || [];
+    } catch (error) {
+      console.error("Error saat memanggil layanan Admisi (MOBILE):", error.message);
+      throw new Error("Gagal terhubung ke layanan Admisi.");
     }
   }
 }

@@ -1,20 +1,14 @@
-import { compareSync } from "bcrypt";
-// import { PatientRepository } from "../repositories/patient.repository.js";
-// import { APMSchema } from "../validations/apm.validation.js";
-// import ZodValidator from "../validations/zod.validation.js";
-// import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
-// import { AntrianRepository } from "../repositories/antrian.repository.js";
 import { DataAntrianService } from "./data-antrian.service.js";
 import { AdmisiClient } from "../clients/admisi.client.js";
-// import { DataMasterClient } from "../clients/datamaster.client.js";
+import moment from "moment";
 
 export class APMService {
   // static async checkPatientStatus({body, token }) {
   //   return await AdmisiClient.checkPatient(body, token);
   // }
 
-  static async registerPatient({ faskesUuid, body, token }) {
+  static async registerPatient({ faskesUuid, body, token, platform }) {
     const checkBody = {
       faskes_uuid: faskesUuid,
       no_identity: body.patient_data?.no_identity,
@@ -26,96 +20,130 @@ export class APMService {
     console.log("Check Patient Result:", checkResult);
 
     const isPasienBaru = checkResult === false;
+    console.log("Is Pasien Baru:", isPasienBaru);
 
-    const registrationBodyWithFlag = {
-      ...body, 
-      is_pasien_baru: isPasienBaru, 
-    };
-console.log("Registration Body with Flag:", registrationBodyWithFlag);
-    const pendaftaran = await AdmisiClient.createRawatJalan(registrationBodyWithFlag, token);
-
-    return {
-      ...pendaftaran,
-      is_pasien_baru: isPasienBaru, // flag ini dibawa ke backend antrian
-    };
-  }
-
-  static async checkIn({ faskesUuid, body, token }) {
-    const { kode_booking } = body;
-
-    // 1. Memicu check-in di layanan Admisi
-    const pendaftaran = await AdmisiClient.checkInByBookingCode(
-      kode_booking,
-      token
-    );
-
-    // 2. Memicu proses pembuatan nomor antrian
-    await DataAntrianService.processRegistration({
+    const generatedCodes = await DataAntrianService.processRegistration({
       faskesUuid,
-      body: { rawat_jalan_uuid: pendaftaran.uuid },
-      token,
+      requestData: body,
+      isPasienBaru,
+      platform,
+      // transaction: tx
     });
 
-    // 3. Ambil kembali data yang sudah lengkap dengan nomor antrian
-    const pendaftaranLengkap = await AdmisiClient.getRawatJalanDetail(
-      pendaftaran.uuid,
-      token
-    );
+    const basePayload = {
+      platform: platform,
+      jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+      ...generatedCodes,
+    };
 
-    return pendaftaranLengkap;
-  }
-
-  /**
-   * Mengambil detail booking dari layanan Admisi untuk di-print.
-   */
-  static async getBookingDetail({ faskesUuid, params, token }) {
-    const { kode_booking } = params;
-    // Meneruskan permintaan pencarian booking ke layanan Admisi
-    return await AdmisiClient.findRawatJalanByBookingCode(kode_booking, token);
-  }
-
-  static async getAvailableSchedule({ faskesUuid, params, token }) {
-    const { poli_uuid: poliUuid } = params;
-
-    // 1. Ambil semua jadwal aktif hari ini dari database lokal
-    const jadwalDokterHariIni =
-      await JadwalDokterRepository.findAllByLocationToday({
-        faskesUuid,
-        poliUuid,
-      });
-
-    if (jadwalDokterHariIni.length === 0) {
-      return [];
+    let finalPayload;
+    if (isPasienBaru) {
+      // Untuk pasien baru
+      finalPayload = {
+        patient_data: {
+          identity: body.patient_data.identity,
+          no_identity: body.patient_data.no_identity,
+        },
+        ...basePayload,
+      };
+      console.log("Final Payload for New Patient:", finalPayload);
+    } else {
+      // Pasien lama
+      finalPayload = {
+        ...basePayload,
+        patient_data: {
+          uuid: checkResult.uuid,
+          identity: checkResult.identity, // <-- Tambahkan ini
+          no_identity: checkResult.noIdentity, // <-- Tambahkan ini
+        },
+      };
+      console.log("Final Payload for Existing Patient:", finalPayload);
     }
 
-    // 2. Ambil semua data pendaftaran hari ini dari layanan Admisi
-    const pendaftaranHariIni = await AdmisiClient.getRawatJalanToday(
-      faskesUuid,
+    const pendaftaran = await AdmisiClient.createRawatJalan(
+      finalPayload,
       token
     );
 
-    // 3. Hitung sisa kuota untuk setiap jadwal
-    const jadwalDenganSisaKuota = jadwalDokterHariIni.map((jadwal) => {
-      // Hitung berapa banyak pendaftaran yang sudah menggunakan jadwal ini
-      const pendaftarSaatIni = pendaftaranHariIni.filter(
-        (rj) => rj.schedule && rj.schedule.uuid === jadwal.uuid
-      ).length;
-
-      // Hitung sisa kuota
-      const sisaKuota = jadwal.kuota - pendaftarSaatIni;
-
-      return {
-        ...jadwal,
-        sisa_kuota: sisaKuota > 0 ? sisaKuota : 0, // Pastikan tidak negatif
-      };
-    });
-
-    return jadwalDenganSisaKuota;
+    return pendaftaran;
   }
 
-  // static async getAvailablePoliklinik({ faskesUuid, token }) {
-  //   const poliklinik = await DataMasterClient.getAktifPoli(token);
+  // FOR MOBILE
 
-  //   return poliklinik;
-  // }
+  static async registerPatientMobile({ faskesUuid, body, platform }) {
+    const admisiApiKey =
+      "90bc209559363a69d4cc2c77c4dca75b6e1387ecc6b07162b41663a2b19df143";
+    console.log("faskesUuid service apm:", faskesUuid);
+    console.log("platform service apm:", platform);
+    if (!admisiApiKey) {
+      throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
+    }
+
+    let tanggalPelayananString;
+
+    // Aturan Bisnis: Jika platform APM, selalu hari ini. Jika MOBILE, ambil dari body.
+    if (platform === "APM") {
+      tanggalPelayananString = moment().format("YYYY-MM-DD");
+      console.log(
+        "Platform APM, tanggal diatur ke hari ini:",
+        tanggalPelayananString
+      );
+    } else {
+      // Untuk MOBILE atau platform lain, ambil dari body.
+      tanggalPelayananString =
+        body.tanggal_pelayanan || moment().format("YYYY-MM-DD");
+    }
+
+    // Validasi format tanggal yang sudah ditentukan.
+    if (!moment(tanggalPelayananString, "YYYY-MM-DD", true).isValid()) {
+      throw new BadRequestException(
+        "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
+      );
+    }
+
+    const isPasienBaru = body.patient_data?.no_rm == null;
+    console.log("Is Pasien Baru (Mobile):", isPasienBaru);
+
+    console.log("body mobile:", body);
+    const generatedCodes = await DataAntrianService.processRegistration({
+      faskesUuid,
+      requestData: body,
+      isPasienBaru,
+      platform,
+      token: admisiApiKey,
+      tanggalPelayanan: tanggalPelayananString,
+    });
+    console.log("Generated Codes:", generatedCodes);
+
+    const basePayload = {
+      platform: platform,
+      jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+      ...generatedCodes,
+    };
+
+    let finalPayload;
+    if (isPasienBaru) {
+      // Untuk pasien baru
+      finalPayload = {
+        ...basePayload,
+        patient_data: body.patient_data,
+      };
+      console.log("Final Payload for New Patient:", finalPayload);
+    } else {
+      // Pasien lama
+      finalPayload = {
+        ...basePayload,
+        no_rm: body.patient_data.no_rm,
+      };
+      console.log("Final Payload for Existing Patient:", finalPayload);
+    }
+
+    const pendaftaran = await AdmisiClient.createRawatJalanMobile(
+      finalPayload,
+      faskesUuid,
+      admisiApiKey
+    );
+
+    return pendaftaran;
+  }
 }
