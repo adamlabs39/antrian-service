@@ -9,23 +9,47 @@ import moment from "moment";
 import { ReportAntrianRepository } from "../repositories/report-antrian.repository.js";
 
 export class DataAntrianService {
-    static async processRegistration({ faskesUuid, requestData, isPasienBaru, platform, token, tanggalPelayanan}) {
-    
-      let rawatJalanToday;
-
-    if (platform === "MOBILE"){
-      rawatJalanToday = await AdmisiClient.getRawatJalanTodayMobile(
-        faskesUuid,
-        token
-      );
+  static async processRegistration({
+    faskesUuid,
+    requestData,
+    isPasienBaru,
+    platform,
+    token,
+    tanggalPelayanan: tanggalDariService,
+  }) {
+    let finalTanggalPelayanan;
+    if (platform === "APM") {
+      finalTanggalPelayanan = moment().format("YYYY-MM-DD");
     }else{
-      rawatJalanToday = await AdmisiClient.getRawatJalanToday(
-        faskesUuid,
-        token 
-      );
+       const tanggalDariRequest =
+         tanggalDariService ||
+         requestData.tanggal_periksa ||
+         moment().format("YYYY-MM-DD");
+
+       // Validasi format tanggal
+       if (!moment(tanggalDariRequest, "YYYY-MM-DD", true).isValid()) {
+         throw new BadRequestException(
+           "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
+         );
+       }
+       finalTanggalPelayanan = tanggalDariRequest;
     }
 
+    let rawatJalanToday;
 
+    if (platform === "MOBILE") {
+      rawatJalanToday = await AdmisiClient.getRawatJalanTodayMobile(
+        faskesUuid,
+        token,
+        finalTanggalPelayanan
+      );
+    } else {
+      rawatJalanToday = await AdmisiClient.getRawatJalanToday(
+        faskesUuid,
+        token,
+        finalTanggalPelayanan
+      );
+    }
 
     let noAntrianAdmisi = null;
     let noAntrianPoli = null;
@@ -37,17 +61,21 @@ export class DataAntrianService {
       );
 
       if (!jadwalHariIni) {
-        throw new NotFoundException("Tidak ada jadwal aktif untuk dokter ini hari ini.");
+        throw new NotFoundException(
+          "Tidak ada jadwal aktif untuk dokter ini hari ini."
+        );
       }
 
       // const tanggalPelayanan = moment().format("YYYY-MM-DD");
       const report = await ReportAntrianRepository.findOrCreateReport({
         jadwalDokter: jadwalHariIni,
-        tanggalPelayanan,
+        tanggalPelayanan: finalTanggalPelayanan,
       });
 
       if (report.kuotaTerpakai >= report.kuota) {
-        throw new ConflictException("Kuota antrian untuk jadwal ini sudah penuh.");
+        throw new ConflictException(
+          "Kuota antrian untuk jadwal ini sudah penuh."
+        );
       }
 
       await report.update({
@@ -66,7 +94,8 @@ export class DataAntrianService {
     // === GENERATE NOMOR ADMISI (khusus pasien baru) ===
     if (isPasienBaru) {
       console.log("is pasien baru (DI IF)", isPasienBaru);
-      const noUrutAdmisi = rawatJalanToday.filter(rj => rj.no_antrian_admisi).length + 1;
+      const noUrutAdmisi =
+        rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
       noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
     }
 
