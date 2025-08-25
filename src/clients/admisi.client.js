@@ -99,7 +99,6 @@ export class AdmisiClient {
           "x-api-key": admisiApiKey,
           "faskes-uuid": faskesUuid,
         },
-        
       });
 
       return response.data.payload;
@@ -112,16 +111,37 @@ export class AdmisiClient {
   static async getTodayRegistrationCountMobile(faskesUuid, admisiApiKey) {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile/today`;
-      
+
       const response = await axios.get(endpoint, {
         headers: {
           "x-api-key": admisiApiKey,
           "faskes-uuid": faskesUuid,
         },
-       
       });
       return response.data.payload.jumlah || 0;
     } catch (error) {
+      handleApiError(error);
+    }
+  }
+
+  static async checkPatientMobile(body, faskesUuid, apiKey) {
+    console.log("apikey:", apiKey);
+    try {
+      // Menggunakan endpoint terpusat yang Anda berikan
+      const endpoint = `${ADMISI_API_URL}/patient/check-patient`;
+      const response = await axios.post(endpoint, body, {
+        headers: {
+          "x-api-key": apiKey,
+          "faskes-uuid": faskesUuid,
+        },
+      });
+      return response.data.payload;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        // Jika 404, pasien tidak ditemukan, kembalikan null agar bisa dideteksi sbg pasien baru
+        return null;
+      }
+      // Untuk error lain, gunakan handler umum
       handleApiError(error);
     }
   }

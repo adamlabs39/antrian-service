@@ -2,6 +2,7 @@ import { DataAntrianService } from "./data-antrian.service.js";
 import { AdmisiClient } from "../clients/admisi.client.js";
 import moment from "moment";
 import { TransactionService } from "./transaction.service.js";
+import { NotFoundException } from "../exceptions/not-found.exception.js";
 
 export class APMService {
   static async registerPatient({ faskesUuid, body, token, platform }) {
@@ -67,18 +68,15 @@ export class APMService {
 
   static async registerPatientMobile({ faskesUuid, body, platform }) {
     const admisiApiKey = process.env.ADMISI_SECRET_KEY;
+    console.log("admisi api key:", admisiApiKey);
+    console.log("faskes uuid:", faskesUuid);
     if (!admisiApiKey) {
       throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
     }
 
     let tanggalPelayananString;
-
-    if (platform === "APM") {
-      tanggalPelayananString = moment().format("YYYY-MM-DD");
-    } else {
-      tanggalPelayananString =
-        body.tanggal_pelayanan || moment().format("YYYY-MM-DD");
-    }
+    tanggalPelayananString =
+      body.tanggal_pelayanan || moment().format("YYYY-MM-DD");
 
     // Validasi format tanggal yang sudah ditentukan.
     if (!moment(tanggalPelayananString, "YYYY-MM-DD", true).isValid()) {
@@ -87,7 +85,27 @@ export class APMService {
       );
     }
 
-    const isPasienBaru = body.patient_data?.no_rm == null;
+    const no_rm = body.patient_data?.no_rm;
+    const isPasienBaru = no_rm == null || no_rm === "null";
+    let checkResult = null;
+
+    if (!isPasienBaru) {
+      checkResult = await AdmisiClient.checkPatientMobile(
+        {
+          faskes_uuid: faskesUuid,
+          no_identity: body.patient_data?.no_identity,
+        },
+        faskesUuid,
+        admisiApiKey
+      );
+      console.log("Check Result Mobile:", checkResult);
+
+      if (!checkResult) {
+        throw new NotFoundException(
+          `Pasien dengan No. RM ${body.patient_data.no_rm} tidak ditemukan.`
+        );
+      }
+    }
 
     return TransactionService.run(async (transaction) => {
       const generatedCodes = await DataAntrianService.processRegistration({
@@ -97,6 +115,7 @@ export class APMService {
         platform,
         token: admisiApiKey,
         tanggalPelayanan: tanggalPelayananString,
+        transaction: transaction,
       });
 
       const basePayload = {
@@ -116,7 +135,11 @@ export class APMService {
         // Pasien lama
         finalPayload = {
           ...basePayload,
-          no_rm: body.patient_data.no_rm,
+          patient_data: {
+            patient_uuid: checkResult.uuid,
+            identity: checkResult.identity,
+            no_identity: checkResult.no_identity,
+          },
         };
       }
 
