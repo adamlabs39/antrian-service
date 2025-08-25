@@ -106,6 +106,7 @@ export class AdmisiClient {
           "x-api-key": admisiApiKey,
           "faskes-uuid": faskesUuid,
         },
+        // validateStatus: () => true
       });
 
       return response.data.payload;

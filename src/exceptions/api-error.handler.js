@@ -6,7 +6,6 @@ import { ConflictException } from "./conflict.exception.js";
 import { ServiceUnavailableException } from "./service-unavailable.exception.js";
 
 export function handleApiError(error) {
-  // Periksa apakah error berasal dari respons API (memiliki status code)
   if (error.response) {
     const status = error.response.status;
     const data = error.response.data;
