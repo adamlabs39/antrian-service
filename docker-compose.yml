@@ -14,7 +14,7 @@ services:
       APPLICATION_PORT: ${APPLICATION_PORT}
       ADMISI_API_URL: ${ADMISI_API_URL}
       ADMISI_SECRET_KEY: ${ADMISI_SECRET_KEY}
-      API_KEY_SECRET: ${API_KEY_SECRET}
+      ANTRIAN_KEY_SECRET: ${ANTRIAN_KEY_SECRET}
     networks:
       - antrian-bridge
 networks:
