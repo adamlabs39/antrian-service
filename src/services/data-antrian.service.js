@@ -114,6 +114,7 @@ export class DataAntrianService {
     return generatedCodes;
   }
 
+  // khusus untuk platform ADMISI
   static async processAdmisiRegistration({ requestData, token }) {
     console.log("Menjalankan service khusus untuk platform: ADMISI");
 
@@ -165,10 +166,10 @@ export class DataAntrianService {
     );
     const kodeBooking = CodeGenerator.generateKodeBooking();
 
-     const paymentMethodMap = {
-       1: "TUNAI",
-       2: "ASURANSI",
-     };
+    const paymentMethodMap = {
+      1: "TUNAI",
+      2: "ASURANSI",
+    };
 
     const codesToUpdate = {
       no_antrian_poli: noAntrianPoli,

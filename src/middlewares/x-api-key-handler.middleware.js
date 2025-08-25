@@ -6,7 +6,7 @@ import { generateErrorResponse } from "../helpers/generate-message.js";
  * Factory function yang menghasilkan middleware untuk validasi X-API-KEY.
  * @param {string[]} protectedRoutes - Array berisi path rute yang harus dilindungi.
  */
-const API_KEY_SECRET = "KalGen6eMdJmzLBgl1cgp6D68Q4XHRLIm8sry6ylJYZlH1x1cv";
+const API_KEY_SECRET = process.env.API_KEY_SECRET;
 export function apiKeyMiddleware(protectedRoutes = []) {
   return function (request, response, nextFunction) {
     try {

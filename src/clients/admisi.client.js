@@ -1,10 +1,9 @@
 import axios from "axios";
 import moment from "moment";
-import { NotFoundException } from "../exceptions/not-found.exception.js";
-import { BadRequestException } from "../exceptions/bad-request.exception.js";
-// import { ADMISI_API_URL } from "../configurations/env.js";
+import { ADMISI_API_URL } from "../configurations/env.js";
+import { handleApiError } from "../exceptions/api-error.handler.js";
 
-const ADMISI_API_URL = "https://9wgw9phj-8080.asse.devtunnels.ms/api/v3/admisi";
+//fungsi untuk mengecek pasien baru atau lama pada fitur apm
 export class AdmisiClient {
   static async checkPatient(body, token) {
     try {
@@ -22,40 +21,29 @@ export class AdmisiClient {
         // pasien baru
         return false;
       }
-      throw error;
+      handleApiError(error);
     }
   }
 
+  //fungsi untuk create pasien dari fitur antrian
   static async createRawatJalan(body, token) {
-    console.log("Creating rawat jalan with body:", body);
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/apm`;
-      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
-        validateStatus: () => true,
       });
-      console.log("Response dari layanan Admisi (CREATE):", response.data);
       return response.data.payload;
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        const errorMessage =
-          error.response.data?.errors?.[0]?.message ||
-          "Data pendaftaran tidak valid.";
-        throw new BadRequestException(errorMessage);
-      }
-      console.error(
-        "Error saat membuat rawat jalan di layanan Admisi:",
-        error.message
-      );
-      throw new Error("Gagal membuat data pendaftaran di layanan Admisi.");
+      handleApiError(error);
     }
   }
 
+  //fungsi untuk mendapatkan data rawat jalan hari ini
   static async getRawatJalanToday(faskesUuid, token) {
     try {
       const startDate = moment().startOf("day").unix();
       const endDate = moment().endOf("day").unix();
+      console.log("Mendapatkan data rawat jalan untuk tanggal:", startDate, "sampai", endDate);
 
       const response = await axios.get(`${ADMISI_API_URL}/rawat-jalan`, {
         headers: {
@@ -66,37 +54,27 @@ export class AdmisiClient {
           start_date: startDate,
           end_date: endDate,
         },
-        validateStatus: () => true,
       });
-      // console.log("Response dari layanan Admisi (GET):", response);
 
       return response.data.payload || [];
     } catch (error) {
-      console.error("Error saat memanggil layanan Admisi:", error.message);
-      throw new Error("Gagal terhubung ke layanan Admisi.");
+      handleApiError(error);
     }
   }
 
+  //fungsi untuk mendapatkan detail rawat jalan
   static async getRawatJalanDetail(rawatJalanUuid, token) {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
-      console.log("Memanggil endpoint:", endpoint);
-      console.log("Token:", token);
-      console.log("Rawat Jalan UUID:", rawatJalanUuid);
-  
+
       const response = await axios.get(endpoint, {
         headers: {
           Authorization: token,
         },
-        validateStatus: () => true,
       });
-      console.log("Response dari layanan Admisi (DETAIL):", response.data);
       return response.data.payload || null;
     } catch (error) {
-      console.error("Error saat mengambil detail rawat jalan:", error.message);
-      throw new Error(
-        "Gagal mengambil detail pendaftaran dari layanan Admisi."
-      );
+      handleApiError(error);
     }
   }
 
@@ -109,71 +87,34 @@ export class AdmisiClient {
         headers: {
           Authorization: token,
         },
-        validateStatus: () => true,
       });
-      console.log("Response update:", response.data);
-      console.log("TESSSS");
-      // console.log("response update: ", response);
-      console.log("Response dari layanan Admisi:", response.data);
+
       return response.data;
     } catch (error) {
-      if (error.response) {
-        // Tangani error 400 (Bad Request) dan 404 (Not Found) secara spesifik
-        if (error.response.status === 400) {
-          const errorMessage =
-            error.response.data?.errors?.[0]?.message ||
-            "Data untuk update tidak valid.";
-          throw new BadRequestException(errorMessage);
-        }
-        if (error.response.status === 404) {
-          throw new NotFoundException(
-            "Data rawat jalan yang akan diupdate tidak ditemukan."
-          );
-        }
-      }
-      console.error(
-        "Error saat mengupdate rawat jalan di layanan Admisi:",
-        error.message
-      );
-      throw new Error("Gagal mengupdate nomor antrian di layanan Admisi.");
+      handleApiError(error);
     }
   }
 
   // FOR MOBILE
+
+  //fungsi untuk create pasien yang melakukan booking dengan menggunakan mobile app
   static async createRawatJalanMobile(body, faskesUuid, admisiApiKey) {
-    console.log("Creating rawat jalan with body:", body);
-    console.log("Admisi API Key:", admisiApiKey);
-    console.log("Faskes UUID ADMISI CLIENT:", faskesUuid);
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile`;
-      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.post(endpoint, body, {
         headers: {
           "x-api-key": admisiApiKey,
           "faskes-uuid": faskesUuid,
         },
-        validateStatus: () => true,
       });
-      console.log(
-        "Response dari layanan Admisi (CREATE MOBILE):",
-        response.data
-      );
+
       return response.data.payload;
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        const errorMessage =
-          error.response.data?.errors?.[0]?.message ||
-          "Data pendaftaran tidak valid.";
-        throw new BadRequestException(errorMessage);
-      }
-      console.error(
-        "Error saat membuat rawat jalan di layanan Admisi:",
-        error.message
-      );
-      throw new Error("Gagal membuat data pendaftaran di layanan Admisi.");
+      handleApiError(error);
     }
   }
 
+  //fungsi untuk memanggil jdaftar rawat jalan hari ini untuk menghitung nomor antrian admisi khusus mobile
   static async getRawatJalanTodayMobile(faskesUuid, admisiApiKey) {
     try {
       const startDate = moment().startOf("day").unix();
@@ -185,21 +126,14 @@ export class AdmisiClient {
           "faskes-uuid": faskesUuid,
         },
         params: {
-          // faskesUuid: faskesUuid,
           start_date: startDate,
           end_date: endDate,
         },
-        validateStatus: () => true,
       });
-      // console.log("Response dari layanan Admisi (GET):", response);
 
       return response.data.payload || [];
     } catch (error) {
-      console.error(
-        "Error saat memanggil layanan Admisi (MOBILE):",
-        error.message
-      );
-      throw new Error("Gagal terhubung ke layanan Admisi.");
+      handleApiError(error);
     }
   }
 }

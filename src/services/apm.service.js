@@ -4,30 +4,22 @@ import { AdmisiClient } from "../clients/admisi.client.js";
 import moment from "moment";
 
 export class APMService {
-  // static async checkPatientStatus({body, token }) {
-  //   return await AdmisiClient.checkPatient(body, token);
-  // }
-
   static async registerPatient({ faskesUuid, body, token, platform }) {
     const checkBody = {
       faskes_uuid: faskesUuid,
       no_identity: body.patient_data?.no_identity,
     };
 
-    console.log("Check Patient Body:", checkBody);
-
     const checkResult = await AdmisiClient.checkPatient(checkBody, token);
-    console.log("Check Patient Result:", checkResult);
 
     const isPasienBaru = checkResult === false;
-    console.log("Is Pasien Baru:", isPasienBaru);
 
     const generatedCodes = await DataAntrianService.processRegistration({
       faskesUuid,
       requestData: body,
       isPasienBaru,
       platform,
-      // transaction: tx
+      token: token,
     });
 
     const basePayload = {
@@ -53,8 +45,8 @@ export class APMService {
         ...basePayload,
         patient_data: {
           uuid: checkResult.uuid,
-          identity: checkResult.identity, // <-- Tambahkan ini
-          no_identity: checkResult.noIdentity, // <-- Tambahkan ini
+          identity: checkResult.identity, 
+          no_identity: checkResult.noIdentity, 
         },
       };
       console.log("Final Payload for Existing Patient:", finalPayload);
@@ -71,10 +63,8 @@ export class APMService {
   // FOR MOBILE
 
   static async registerPatientMobile({ faskesUuid, body, platform }) {
-    const admisiApiKey =
-      "90bc209559363a69d4cc2c77c4dca75b6e1387ecc6b07162b41663a2b19df143";
-    console.log("faskesUuid service apm:", faskesUuid);
-    console.log("platform service apm:", platform);
+    const admisiApiKey = process.env.ADMISI_SECRET_KEY;
+    console.log("Admisi API Key:", admisiApiKey);
     if (!admisiApiKey) {
       throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
     }
