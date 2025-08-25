@@ -46,9 +46,9 @@ export class APMService {
         finalPayload = {
           ...basePayload,
           patient_data: {
-            // patient_uuid: checkResult.uuid,
+            patient_uuid: checkResult.uuid,
             identity: checkResult.identity,
-            no_identity: checkResult.noIdentity,
+            no_identity: checkResult.no_identity,
           },
         };
         console.log("Final Payload for Existing Patient:", finalPayload);
