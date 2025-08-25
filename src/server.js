@@ -83,6 +83,7 @@ app.use(errorHandler);
 // Start the server.
 app.listen(APPLICATION_PORT, APPLICATION_HOST, async () => {
   // Log telling that the server is successfully running.
+  console.log(process.env)
   console.log(
     `Server is running on http://${APPLICATION_HOST}:${APPLICATION_PORT}`
   );
