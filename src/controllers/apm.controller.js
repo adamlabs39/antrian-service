@@ -2,23 +2,6 @@ import { APMService } from "../services/apm.service.js";
 import { FormatterService } from "../services/formatter.service.js";
 
 export class APMController {
-  static async checkPatientStatus(req, res, next) {
-    try {
-      const { faskesUuid } = req.author;
-      const token = req.headers.authorization;
-
-      // Meneruskan permintaan ke service
-      const result = await APMService.checkPatientStatus({
-        // faskesUuid,
-        body: req.body,
-        token,
-      });
-
-      res.status(200).json(result);
-    } catch (err) {
-      next(err);
-    }
-  }
 
   static async registerPatient(req, res, next) {
     try {
@@ -39,8 +22,10 @@ export class APMController {
       next(err);
     }
   }
-  
+
   // FOR MOBILE
+
+  //registrasi melalui mobile
   static async registerPatientMobile(req, res, next) {
     try {
       const platform = "MOBILE";
@@ -58,8 +43,4 @@ export class APMController {
       next(err);
     }
   }
-
-
-
-
 }

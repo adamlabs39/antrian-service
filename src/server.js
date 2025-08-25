@@ -62,7 +62,6 @@ const jwtExemptEndpoints = [
   
 ];
 
-// console.log("JWT Exempt Endpoints =", jwtExemptEndpoints);
 
 app.use((req, res, next) => {
   const normalized = normalizeUrl(req.originalUrl);

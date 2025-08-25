@@ -92,7 +92,6 @@ export class LayarAntrianService {
   static async update({ faskesUuid, params, layarAntrian }) {
     await TransactionService.run(async (tx) => {
       ZodValidator.validate(LayarAntrianSchema.UPDATE, layarAntrian);
-      console.log(params)
       const { layar_antrian_uuid } = ZodValidator.validate(
         LayarAntrianSchema.LAYAR_ANTRIAN_PARAM,
         params
