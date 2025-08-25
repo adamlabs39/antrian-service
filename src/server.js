@@ -57,7 +57,6 @@ app.use(apiKeyMiddleware([`${BASE_URL}/mobile`]));
 const jwtExemptEndpoints = [
   `${BASE_URL}/mobile/jadwal-dokter`,
   `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
-  `${BASE_URL}/mobile/jadwal-dokter/record-booking`,
   `${BASE_URL}/mobile/apm/process-registration`,
   
 ];

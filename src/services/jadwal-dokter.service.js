@@ -64,59 +64,6 @@ export class JadwalDokterService {
     return jadwalDenganKuota;
   }
 
-  static async recordBooking({ jadwalDokterUuid, tanggalPelayanan }) {
-    return TransactionService.run(async (tx) => {
-      // Validasi input
-      if (!jadwalDokterUuid || !tanggalPelayanan) {
-        throw new BadRequestException(
-          "Jadwal dokter dan tanggal pelayanan wajib diisi."
-        );
-      }
-
-      const jadwalDasar = await JadwalDokterRepository.findJadwalByUuid(
-        jadwalDokterUuid
-      );
-      if (!jadwalDasar) {
-        throw new NotFoundException("Jadwal dokter tidak ditemukan.");
-      }
-
-      const tanggal = moment(tanggalPelayanan);
-      const hariBooking = ToIndoDay.fromEng(tanggal.format("dddd"));
-
-      if (hariBooking !== jadwalDasar.day) {
-        throw new BadRequestException(
-          `Hari pada tanggal yang dipilih (${hariBooking}) tidak sesuai dengan hari praktik dokter (${jadwalDasar.day}).`
-        );
-      }
-
-      const hariIni = moment().startOf("day");
-      if (tanggal.isBefore(hariIni)) {
-        throw new BadRequestException(
-          "Tidak bisa melakukan booking untuk tanggal yang sudah terlewat."
-        );
-      }
-
-      // Cari atau buat catatan laporan untuk tanggal ini
-      const report = await ReportAntrianRepository.findOrCreateReport({
-        jadwalDokter: jadwalDasar,
-        tanggalPelayanan,
-        transaction: tx,
-      });
-
-      if (report.kuotaSisa <= 0) {
-        throw new ConflictException(
-          "Kuota untuk jadwal di tanggal ini sudah penuh."
-        );
-      }
-
-      // Update kuota
-      report.kuotaTerpakai += 1;
-      report.kuotaSisa -= 1;
-      await report.save({ transaction: tx });
-
-      return report;
-    });
-  }
 
   static async findAll({ faskesUuid, filterBy: filterQuery }) {
     const queries = ZodValidator.validate(

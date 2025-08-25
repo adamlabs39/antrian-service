@@ -16,6 +16,7 @@ export class DataAntrianService {
     platform,
     token,
     tanggalPelayanan: tanggalDariService,
+    transaction,
   }) {
     let finalTanggalPelayanan;
     if (platform === "APM") {
@@ -35,20 +36,17 @@ export class DataAntrianService {
       finalTanggalPelayanan = tanggalDariRequest;
     }
 
-    let rawatJalanToday;
-
-    if (platform === "MOBILE") {
-      rawatJalanToday = await AdmisiClient.getRawatJalanTodayMobile(
-        faskesUuid,
-        token,
-        finalTanggalPelayanan
-      );
-    } else {
-      rawatJalanToday = await AdmisiClient.getRawatJalanToday(
-        faskesUuid,
-        token,
-        finalTanggalPelayanan
-      );
+    let totalRegistrasiHariIni = 0;
+    if (isPasienBaru) {
+      // Hanya panggil jika pasien baru
+      if (platform === "MOBILE") {
+        totalRegistrasiHariIni =
+          await AdmisiClient.getTodayRegistrationCountMobile(faskesUuid, token);
+      } else {
+        totalRegistrasiHariIni = await AdmisiClient.getTodayRegistrationCount(
+          token
+        );
+      }
     }
 
     let noAntrianAdmisi = null;
@@ -57,7 +55,8 @@ export class DataAntrianService {
     // === GENERATE NOMOR POLI ===
     if (requestData.jadwal_dokter_uuid) {
       const jadwalHariIni = await JadwalDokterRepository.findJadwalByUuid(
-        requestData.jadwal_dokter_uuid
+        requestData.jadwal_dokter_uuid,
+        { transaction }
       );
 
       if (!jadwalHariIni) {
@@ -66,11 +65,13 @@ export class DataAntrianService {
         );
       }
 
-      // const tanggalPelayanan = moment().format("YYYY-MM-DD");
-      const report = await ReportAntrianRepository.findOrCreateReport({
-        jadwalDokter: jadwalHariIni,
-        tanggalPelayanan: finalTanggalPelayanan,
-      });
+      const report = await ReportAntrianRepository.findOrCreateReport(
+        {
+          jadwalDokter: jadwalHariIni,
+          tanggalPelayanan: finalTanggalPelayanan,
+        },
+        { transaction }
+      );
 
       if (report.kuotaTerpakai >= report.kuota) {
         throw new ConflictException(
@@ -78,12 +79,16 @@ export class DataAntrianService {
         );
       }
 
-      await report.update({
-        kuotaTerpakai: report.kuotaTerpakai + 1,
-        kuotaSisa: report.kuota - (report.kuotaTerpakai + 1),
-      });
-
       const noUrutPoli = report.kuotaTerpakai + 1;
+
+      await report.update(
+        {
+          kuotaTerpakai: noUrutPoli,
+          kuotaSisa: report.kuota - noUrutPoli,
+        },
+        { transaction }
+      );
+
       noAntrianPoli = CodeGenerator.generateNoAntrianPoli(
         jadwalHariIni.codeAntrianPoli,
         jadwalHariIni.codeAntrianDokter,
@@ -93,9 +98,7 @@ export class DataAntrianService {
 
     // === GENERATE NOMOR ADMISI (khusus pasien baru) ===
     if (isPasienBaru) {
-      console.log("is pasien baru (DI IF)", isPasienBaru);
-      const noUrutAdmisi =
-        rawatJalanToday.filter((rj) => rj.no_antrian_admisi).length + 1;
+      const noUrutAdmisi = totalRegistrasiHariIni + 1;
       noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
     }
 
@@ -116,8 +119,6 @@ export class DataAntrianService {
 
   // khusus untuk platform ADMISI
   static async processAdmisiRegistration({ requestData, token }) {
-    console.log("Menjalankan service khusus untuk platform: ADMISI");
-
     if (!requestData?.rawat_jalan_uuid) {
       throw new BadRequestException("rawat_jalan_uuid wajib diisi.");
     }

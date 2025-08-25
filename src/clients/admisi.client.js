@@ -6,11 +6,14 @@ import { handleApiError } from "../exceptions/api-error.handler.js";
 //fungsi untuk mengecek pasien baru atau lama pada fitur apm
 export class AdmisiClient {
   static async checkPatient(body, token) {
+    console.log("Request Body:", body);
     try {
       const endpoint = `${ADMISI_API_URL}/patient/check-patient/apm`;
+      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
+      console.log("Response from checkPatient:", response.data);
       //pasien lama
       return response.data.payload || null;
     } catch (error) {
@@ -39,24 +42,14 @@ export class AdmisiClient {
   }
 
   //fungsi untuk mendapatkan data rawat jalan hari ini
-  static async getRawatJalanToday(faskesUuid, token) {
+  static async getTodayRegistrationCount(token) {
     try {
-      const startDate = moment().startOf("day").unix();
-      const endDate = moment().endOf("day").unix();
-      console.log("Mendapatkan data rawat jalan untuk tanggal:", startDate, "sampai", endDate);
-
-      const response = await axios.get(`${ADMISI_API_URL}/rawat-jalan`, {
-        headers: {
-          Authorization: token,
-        },
-        params: {
-          faskesUuid: faskesUuid,
-          start_date: startDate,
-          end_date: endDate,
-        },
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/today`;
+      console.log("Memanggil endpoint:", endpoint);
+      const response = await axios.get(endpoint, {
+        headers: { Authorization: token },
       });
-
-      return response.data.payload || [];
+      return response.data.payload.jumlah || 0;
     } catch (error) {
       handleApiError(error);
     }
@@ -106,7 +99,7 @@ export class AdmisiClient {
           "x-api-key": admisiApiKey,
           "faskes-uuid": faskesUuid,
         },
-        // validateStatus: () => true
+        
       });
 
       return response.data.payload;
@@ -116,23 +109,18 @@ export class AdmisiClient {
   }
 
   //fungsi untuk memanggil jdaftar rawat jalan hari ini untuk menghitung nomor antrian admisi khusus mobile
-  static async getRawatJalanTodayMobile(faskesUuid, admisiApiKey) {
+  static async getTodayRegistrationCountMobile(faskesUuid, admisiApiKey) {
     try {
-      const startDate = moment().startOf("day").unix();
-      const endDate = moment().endOf("day").unix();
-      const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile`;
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile/today`;
+      
       const response = await axios.get(endpoint, {
         headers: {
           "x-api-key": admisiApiKey,
           "faskes-uuid": faskesUuid,
         },
-        params: {
-          start_date: startDate,
-          end_date: endDate,
-        },
+       
       });
-
-      return response.data.payload || [];
+      return response.data.payload.jumlah || 0;
     } catch (error) {
       handleApiError(error);
     }
