@@ -136,9 +136,8 @@ export class APMService {
         finalPayload = {
           ...basePayload,
           patient_data: {
+            ...body.patient_data,
             patient_uuid: checkResult.uuid,
-            identity: checkResult.identity,
-            no_identity: checkResult.no_identity,
           },
         };
       }
