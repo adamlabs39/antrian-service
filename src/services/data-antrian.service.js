@@ -7,6 +7,7 @@ import { ConflictException } from "../exceptions/conflict.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import moment from "moment";
 import { ReportAntrianRepository } from "../repositories/report-antrian.repository.js";
+import { getDay } from "../helpers/get-day.helper.js"; 
 
 export class DataAntrianService {
   static async processRegistration({
@@ -62,6 +63,15 @@ export class DataAntrianService {
       if (!jadwalHariIni) {
         throw new NotFoundException(
           "Tidak ada jadwal aktif untuk dokter ini hari ini."
+        );
+      }
+
+      const namaHariPilihan = getDay(finalTanggalPelayanan);
+      const namaHariJadwal = jadwalHariIni.day; 
+
+      if (namaHariPilihan !== namaHariJadwal) {
+        throw new BadRequestException(
+          `Jadwal dokter tidak tersedia pada hari ${namaHariPilihan}. Jadwal yang tersedia adalah hari ${namaHariJadwal}.`
         );
       }
 

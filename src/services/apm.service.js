@@ -140,7 +140,6 @@ export class APMService {
             patient_uuid: checkResult.uuid,
           },
         };
-        console.log("Final Payload for Existing Patient:", finalPayload);
       }
 
       const pendaftaran = await AdmisiClient.createRawatJalanMobile(
