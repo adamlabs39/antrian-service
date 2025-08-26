@@ -64,6 +64,17 @@ export class APMService {
     });
   }
 
+  static async printAntrian({ kodeBooking, token }) {
+    const response = await AdmisiClient.printAntrian(
+      {
+        kode_booking: kodeBooking,
+      },
+      token
+    );
+    return response;
+  }
+
+
   // FOR MOBILE
 
   static async registerPatientMobile({ faskesUuid, body, platform }) {
@@ -150,5 +161,16 @@ export class APMService {
 
       return pendaftaran;
     });
+  }
+
+  //fungsi untuk checkin pasien yang mendaftar dari mobile melalui apm
+  static async checkInPatient({ kodeBooking, token }) {
+    const response = await AdmisiClient.checkInBooking(
+      {
+        kode_booking: kodeBooking,
+      },
+      token
+    );
+    return response;
   }
 }
