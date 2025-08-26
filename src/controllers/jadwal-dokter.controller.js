@@ -167,20 +167,4 @@ export class JadwalDokterController {
     }
   }
 
-  static async recordBooking(req, res, next) {
-    try {
-      const { jadwal_dokter_uuid, tanggal_pelayanan } = req.body;
-
-      await JadwalDokterService.recordBooking({
-        jadwalDokterUuid: jadwal_dokter_uuid,
-        tanggalPelayanan: tanggal_pelayanan,
-      });
-
-      res.status(200).json({
-        message: "Booking berhasil dicatat dan kuota telah diperbarui.",
-      });
-    } catch (err) {
-      next(err);
-    }
-  }
 }
