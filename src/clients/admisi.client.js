@@ -88,6 +88,20 @@ export class AdmisiClient {
     }
   }
 
+  static async printAntrian(body, token){
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/print-booking`;
+
+      const response = await axios.post(endpoint, body, {
+        headers: { Authorization: token },
+      });
+
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
   // FOR MOBILE
 
   //fungsi untuk create pasien yang melakukan booking dengan menggunakan mobile app
@@ -142,6 +156,21 @@ export class AdmisiClient {
         return null;
       }
       // Untuk error lain, gunakan handler umum
+      handleApiError(error);
+    }
+  }
+
+  //fungsi untuk checkin di apm pada pasien yang mendaftar melalui mobile
+  static async checkInBooking(body, token) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/check-booking`;
+
+      const response = await axios.post(endpoint, body, {
+        headers: { Authorization: token },
+      });
+
+      return response.data; 
+    } catch (error) {
       handleApiError(error);
     }
   }

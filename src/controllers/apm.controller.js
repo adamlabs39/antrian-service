@@ -1,8 +1,8 @@
+import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import { APMService } from "../services/apm.service.js";
 import { FormatterService } from "../services/formatter.service.js";
 
 export class APMController {
-
   static async registerPatient(req, res, next) {
     try {
       const platform = "APM";
@@ -18,6 +18,29 @@ export class APMController {
       });
 
       res.status(201).json(result); // Kirim kembali respons dari service
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async printAntrian(req, res, next) {
+    try {
+      const { kode_booking } = req.body;
+      const token = req.headers.authorization;
+
+      if (!kode_booking) {
+        throw new BadRequestException("Kode booking wajib diisi.");
+      }
+
+      const result = await APMService.printAntrian({
+        kodeBooking: kode_booking,
+        token,
+      });
+
+      res.status(200).json({
+        message: "Print berhasil.",
+        payload: result.payload,
+      });
     } catch (err) {
       next(err);
     }
@@ -39,6 +62,30 @@ export class APMController {
       });
 
       res.status(201).json(result); // Kirim kembali respons dari service
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  //fungsi untuk checkin mobile
+  static async checkInPatient(req, res, next) {
+    try {
+      const { kode_booking } = req.body;
+      const token = req.headers.authorization;
+
+      if (!kode_booking) {
+        throw new BadRequestException("Kode booking wajib diisi.");
+      }
+
+      const result = await APMService.checkInPatient({
+        kodeBooking: kode_booking,
+        token,
+      });
+
+      res.status(200).json({
+        message: "Check-in berhasil.",
+        payload: result.payload,
+      });
     } catch (err) {
       next(err);
     }
