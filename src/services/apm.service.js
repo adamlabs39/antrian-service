@@ -3,18 +3,33 @@ import { AdmisiClient } from "../clients/admisi.client.js";
 import moment from "moment";
 import { TransactionService } from "./transaction.service.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
+import { BadRequestException } from "../exceptions/bad-request.exception.js";
 
 export class APMService {
   static async registerPatient({ faskesUuid, body, token, platform }) {
+    const patientData = body.patient_data;
+
+    if (!patientData) {
+      throw new BadRequestException("Data pasien (patient_data) wajib diisi.");
+    }
+
+    // Cek field 'identity'
+    if (!patientData.identity) {
+      throw new BadRequestException("Jenis identitas wajib diisi.");
+    }
+
+    // Cek field 'no_identity'
+    if (!patientData.no_identity) {
+      throw new BadRequestException("Nomor identitas wajib diisi.");
+    }
+
     const checkBody = {
       faskes_uuid: faskesUuid,
       no_identity: body.patient_data?.no_identity,
     };
 
     const checkResult = await AdmisiClient.checkPatient(checkBody, token);
-    console.log("Check Result:", checkResult);
     const isPasienBaru = checkResult === false;
-    console.log("Is Pasien Baru:", isPasienBaru);
     return TransactionService.run(async (transaction) => {
       const generatedCodes = await DataAntrianService.processRegistration({
         faskesUuid,
@@ -73,7 +88,6 @@ export class APMService {
     );
     return response;
   }
-
 
   // FOR MOBILE
 
