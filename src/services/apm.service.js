@@ -155,6 +155,29 @@ export class APMService {
       }
     }
 
+    const startDate = moment(tanggalPelayananString).startOf("day").unix();
+    const endDate = moment(tanggalPelayananString).endOf("day").unix();
+
+    const existingRegistrations =
+      await AdmisiClient.getAllRawatJalanMobile({
+        startDate,
+        endDate,
+        faskesUuid,
+        admisiApiKey,
+      });
+
+    const alreadyRegistered = existingRegistrations.some(
+      (reg) =>
+        reg.patient?.no_identity === body.patient_data.no_identity &&
+        reg.schedule?.uuid === body.jadwal_dokter_uuid
+    );
+
+    if (alreadyRegistered) {
+      throw new BadRequestException(
+        "Pasien sudah terdaftar pada jadwal dokter ini untuk tanggal tersebut."
+      );
+    }
+
     return TransactionService.run(async (transaction) => {
       const generatedCodes = await DataAntrianService.processRegistration({
         faskesUuid,
