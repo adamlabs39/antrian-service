@@ -23,6 +23,31 @@ export class APMService {
       throw new BadRequestException("Nomor identitas wajib diisi.");
     }
 
+    // Hitung tanggal hari ini (karena APM selalu hari ini)
+    const startDate = moment().startOf("day").unix();
+    const endDate = moment().endOf("day").unix();
+
+    // Ambil semua pendaftaran hari ini
+    const rawatJalanHariIni = await AdmisiClient.getAllRawatJalan({
+      faskesUuid,
+      startDate,
+      endDate,
+      token,
+    });
+
+    // Cek apakah pasien dengan no_identity + jadwal_dokter_uuid sudah ada
+    const sudahTerdaftar = rawatJalanHariIni.some(
+      (rj) =>
+        rj.patient?.no_identity === patientData.no_identity &&
+        rj.schedule?.uuid === body.jadwal_dokter_uuid
+    );
+
+    if (sudahTerdaftar) {
+      throw new BadRequestException(
+        "Pasien sudah terdaftar pada jadwal ini, tidak bisa mendaftar dua kali."
+      );
+    }
+
     const checkBody = {
       faskes_uuid: faskesUuid,
       no_identity: body.patient_data?.no_identity,
@@ -30,6 +55,7 @@ export class APMService {
 
     const checkResult = await AdmisiClient.checkPatient(checkBody, token);
     const isPasienBaru = checkResult === false;
+
     return TransactionService.run(async (transaction) => {
       const generatedCodes = await DataAntrianService.processRegistration({
         faskesUuid,
@@ -93,8 +119,6 @@ export class APMService {
 
   static async registerPatientMobile({ faskesUuid, body, platform }) {
     const admisiApiKey = process.env.ADMISI_SECRET_KEY;
-    console.log("admisi api key:", admisiApiKey);
-    console.log("faskes uuid:", faskesUuid);
     if (!admisiApiKey) {
       throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
     }
@@ -123,7 +147,6 @@ export class APMService {
         faskesUuid,
         admisiApiKey
       );
-      console.log("Check Result Mobile:", checkResult);
 
       if (!checkResult) {
         throw new NotFoundException(

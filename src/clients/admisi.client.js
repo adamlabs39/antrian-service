@@ -41,6 +41,28 @@ export class AdmisiClient {
     }
   }
 
+  //fungsi untuk get all rawat jalan sebagai pengecekan duplikasi pendaftran pasien
+  static async getAllRawatJalan({ faskesUuid, startDate, endDate, token }) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan`;
+      const response = await axios.get(endpoint, {
+        headers: {
+          Authorization: token,
+        },
+        params: {
+          faskesUuid: faskesUuid,
+          start_date: startDate,
+          end_date: endDate,
+          all: 1,
+        },
+      });
+
+      return response.data.payload || [];
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
   //fungsi untuk mendapatkan data rawat jalan hari ini
   static async getTodayRegistrationCount(token) {
     try {
@@ -88,7 +110,7 @@ export class AdmisiClient {
     }
   }
 
-  static async printAntrian(body, token){
+  static async printAntrian(body, token) {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/print-booking`;
 
@@ -169,7 +191,30 @@ export class AdmisiClient {
         headers: { Authorization: token },
       });
 
-      return response.data; 
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
+  //fungsi untuk get all rawat jalan sebagai pengecekan duplikasi pendaftaran pasien yang mendaftar melalui mobile
+  static async getAllRawatJalanMobile({
+    startDate,
+    endDate,
+    faskesUuid,
+    admisiApiKey,
+  }) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile?start_date=${startDate}&end_date=${endDate}`;
+
+      const response = await axios.get(endpoint, {
+        headers: {
+          "x-api-key": admisiApiKey,
+          "faskes-uuid": faskesUuid,
+        },
+      });
+
+      return response.data.payload || [];
     } catch (error) {
       handleApiError(error);
     }
