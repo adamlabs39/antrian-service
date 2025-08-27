@@ -35,7 +35,7 @@ export class ReportAntrianRepository {
           [Op.in]: jadwalDokterUuids,
         },
         kuotaTerpakai: {
-          [Op.gt]: 0, 
+          [Op.gt]: 0,
         },
         deletedAt: null,
       },

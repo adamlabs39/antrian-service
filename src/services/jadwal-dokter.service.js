@@ -479,19 +479,13 @@ export class JadwalDokterService {
         (j) => j.jadwal_dokter_uuid
       );
 
-      const [existingAppointments, existingAdmissions] = await Promise.all([
-        AppointmentClient.countByJadwalDokterUuids({
-          faskesUuid,
-          jadwalDokterUuids,
-        }),
-        AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-          faskesUuid,
+      const bookedSchedulesCount =
+        await ReportAntrianRepository.countBookedSchedules({
           jadwalDokterUuids,
           transaction: tx,
-        }),
-      ]);
+        });
 
-      if (existingAppointments > 0 || existingAdmissions > 0) {
+      if (bookedSchedulesCount > 0) {
         throw new ConflictException(
           "Jadwal tidak dapat dihapus karena sudah ada pasien yang terdaftar."
         );
