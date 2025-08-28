@@ -23,7 +23,7 @@ export class LayarAntrianRepository {
           nama_layar: {
             [Op.iLike]: `%${filters.nama_layar}%`,
           },
-        }
+        },
       ];
     }
 
@@ -83,6 +83,7 @@ export class LayarAntrianRepository {
         },
       ],
       group: ["LayarAntrian.uuid"],
+      order: [["createdAt", "ASC"]],
       transaction,
     });
 
