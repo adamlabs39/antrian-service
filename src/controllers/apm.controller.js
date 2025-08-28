@@ -53,7 +53,6 @@ export class APMController {
     try {
       const platform = "MOBILE";
       const faskesUuid = req.headers["faskes-uuid"];
-      console.log("faskes uuid controller", faskesUuid);
 
       const result = await APMService.registerPatientMobile({
         faskesUuid,
@@ -79,6 +78,7 @@ export class APMController {
 
       const result = await APMService.checkInPatient({
         kodeBooking: kode_booking,
+        body: req.body,
         token,
       });
 

@@ -10,17 +10,20 @@ import {
 import AdmissionRJModel from "./admission-rj.model.js";
 import PencatatTaskIdModel from "./pencatat-task-id.model.js";
 import { PatientModel, BirthDetailModel } from "@adameds/model-sdk/admisi";
+import { RawatJalanModel } from "@adameds/model-sdk/pelayanan";
+import ReportAntrianModel from "./report-antrian.model.js";
 
 export const MODELS = [
   JadwalDokterModel,
-  PractitionerModel,
+  // PractitionerModel,
   LayarAntrianModel,
   LayarAntrianPoliModel,
-  LokasiModel,
-  PegawaiModel,
-  AdmissionRJModel,
+  // LokasiModel,
+  // PegawaiModel,
+  RawatJalanModel,
   AntrianModel,
-  PencatatTaskIdModel,
+  // PencatatTaskIdModel,
   PatientModel,
-  BirthDetailModel
+  ReportAntrianModel,
+  // BirthDetailModel
 ];

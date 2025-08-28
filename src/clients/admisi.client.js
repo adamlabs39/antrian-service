@@ -2,6 +2,8 @@ import axios from "axios";
 import moment from "moment";
 import { ADMISI_API_URL } from "../configurations/env.js";
 import { handleApiError } from "../exceptions/api-error.handler.js";
+import { BadRequestException } from "../exceptions/bad-request.exception.js";
+import { NotFoundException } from "../exceptions/not-found.exception.js";
 
 //fungsi untuk mengecek pasien baru atau lama pada fitur apm
 export class AdmisiClient {
@@ -36,6 +38,28 @@ export class AdmisiClient {
         headers: { Authorization: token },
       });
       return response.data.payload;
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
+  //fungsi untuk get all rawat jalan sebagai pengecekan duplikasi pendaftran pasien
+  static async getAllRawatJalan({ faskesUuid, startDate, endDate, token }) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan`;
+      const response = await axios.get(endpoint, {
+        headers: {
+          Authorization: token,
+        },
+        params: {
+          faskesUuid: faskesUuid,
+          start_date: startDate,
+          end_date: endDate,
+          all: 1,
+        },
+      });
+
+      return response.data.payload || [];
     } catch (error) {
       handleApiError(error);
     }
@@ -88,16 +112,28 @@ export class AdmisiClient {
     }
   }
 
-  static async printAntrian(body, token){
+  static async printAntrian(body, token) {
+    // console.log("Memanggil endpoint printAntrian:", endpoint);
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/print-booking`;
+      console.log("Memanggil endpoint printAntrian:", endpoint);
 
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
+      console.log("Response from printAntrian:", response.data);
+
+      if (!response.data.payload) {
+        throw new NotFoundException("Kode booking tidak ditemukan atau tidak valid");
+      }
 
       return response.data;
     } catch (error) {
+
+       if (error instanceof NotFoundException) {
+         throw error;
+       }
+
       handleApiError(error);
     }
   }
@@ -169,7 +205,30 @@ export class AdmisiClient {
         headers: { Authorization: token },
       });
 
-      return response.data; 
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
+  //fungsi untuk get all rawat jalan sebagai pengecekan duplikasi pendaftaran pasien yang mendaftar melalui mobile
+  static async getAllRawatJalanMobile({
+    startDate,
+    endDate,
+    faskesUuid,
+    admisiApiKey,
+  }) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile?start_date=${startDate}&end_date=${endDate}`;
+
+      const response = await axios.get(endpoint, {
+        headers: {
+          "x-api-key": admisiApiKey,
+          "faskes-uuid": faskesUuid,
+        },
+      });
+
+      return response.data.payload || [];
     } catch (error) {
       handleApiError(error);
     }

@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import ReportAntrianModel from "../models/report-antrian.model.js";
 
 export class ReportAntrianRepository {
@@ -27,5 +28,38 @@ export class ReportAntrianRepository {
     return report;
   }
 
+  static async countBookedSchedules({ jadwalDokterUuids, transaction }) {
+    const count = await ReportAntrianModel.count({
+      where: {
+        jadwalDokterUuid: {
+          [Op.in]: jadwalDokterUuids,
+        },
+        kuotaTerpakai: {
+          [Op.gt]: 0,
+        },
+        deletedAt: null,
+      },
+      transaction,
+    });
+    return count;
+  }
 
+  static async isPatientAlreadyBooked({
+    patientIdentity, 
+    jadwalDokterUuid,
+    tanggalPelayanan,
+    transaction,
+  }) {
+    const existing = await ReportAntrianModel.findOne({
+      where: {
+        jadwalDokterUuid,
+        tanggalPelayanan,
+        patientIdentity, // pastikan kolom ini ada di report_antrian
+        deletedAt: null,
+      },
+      transaction,
+    });
+
+    return !!existing; // true kalau sudah ada
+  }
 }

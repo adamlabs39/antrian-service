@@ -1,11 +1,7 @@
 import { z } from "zod";
 
 export class CommonSchema {
-  /**
-   * URL Param
-   * e.g. /jadwal-dokter/:uuid
-   * uuid: 123e4567-e89b-12d3-a456-426614174000
-   */
+
   static UUID_PARAM = z.string().uuid({
     message: "Invalid UUID format.",
   });

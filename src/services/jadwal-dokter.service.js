@@ -1,7 +1,6 @@
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
-import { AdmissionRJRepository } from "../repositories/admission-rj.repository.js";
 import { DokterRepository } from "../repositories/dokter.repository.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
 import { PoliklinikRepository } from "../repositories/poliklinik.repository.js";
@@ -9,7 +8,6 @@ import { JadwalDokterSchema } from "../validations/jadwal-dokter.validation.js";
 import ZodValidator from "../validations/zod.validation.js";
 import { FormatterService } from "./formatter.service.js";
 import { TransactionService } from "./transaction.service.js";
-import { AppointmentClient } from "../clients/appointment.client.js";
 import { TimeConverter } from "../helpers/time-converter.helper.js";
 import { ReportAntrianRepository } from "../repositories/report-antrian.repository.js";
 import moment from "moment";
@@ -111,18 +109,6 @@ export class JadwalDokterService {
     return data;
   }
 
-  /**
-   * What does this method do?
-   * 1. Validate the jadwalDokter
-   * 2. Get the dokter by UUID
-   * 3. If the dokter is not exist, then throw BadRequestException
-   * 4. Get the poliklinik by UUID
-   * 5. If the poliklinik is not exist, then throw BadRequestException
-   * 6. Get the jadwal dokter by dokterUuid and poliUuid
-   * 7. If the jadwal dokter is exist, then throw ConflictException
-   * 8. Create the jadwal dokter
-   * 9. Return the formatted data
-   */
   static async create({ faskesUuid, jadwalDokter }) {
     return TransactionService.run(async (tx) => {
       const validated = ZodValidator.validate(
@@ -244,29 +230,6 @@ export class JadwalDokterService {
     });
   }
 
-  /**
-   * What does this method do?
-   * 1. Validate the UUIDs
-   * 2. Validate the body
-   * 3. Get the dokter by UUID taken from the params
-   * 4. If the dokter is not exist, then throw BadRequestException
-   * 5. Get the poliklinik by UUID taken from the params
-   * 6. If the poliklinik is not exist, then throw BadRequestException
-   * 7. Get the jadwal dokter by dokterUuid and poliUuid
-   * 8. If the jadwal dokter is not exist, then throw NotFoundException
-   * 9. Check if there is booking, if yes, then throw ConflictException
-   * 10. Bulk delete the jadwal dokter
-   * 11. Bulk update the jadwal dokter
-   * 12. Bulk create the jadwal dokter
-   *
-   * where the params expect this schema:
-   * {
-   *  doctor_uuid: string,
-   *  location_uuid: string
-   * }
-   *
-   *
-   */
   static async updateByDoctorAndLocation({ faskesUuid, params, body }) {
     return await TransactionService.run(async (tx) => {
       // Validate the UUIDs
@@ -340,19 +303,13 @@ export class JadwalDokterService {
         (j) => j.jadwal_dokter_uuid
       );
 
-      const [existingAppointments, existingAdmissions] = await Promise.all([
-        AppointmentClient.countByJadwalDokterUuids({
-          faskesUuid,
-          jadwalDokterUuids,
-        }),
-        AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-          faskesUuid,
+      const bookedSchedulesCount =
+        await ReportAntrianRepository.countBookedSchedules({
           jadwalDokterUuids,
           transaction: tx,
-        }),
-      ]);
+        });
 
-      if (existingAppointments > 0 || existingAdmissions > 0) {
+      if (bookedSchedulesCount > 0) {
         throw new ConflictException(
           "Jadwal tidak dapat diubah karena sudah ada pasien yang terdaftar."
         );
@@ -496,20 +453,8 @@ export class JadwalDokterService {
     });
   }
 
-  /**
-   * What does this method do?
-   * 1. Validate the UUIDs
-   * 2. Get the jadwal dokter by dokterUuid and poliUuid
-   * 3. If the jadwal dokter is not exist, then throw NotFoundException
-   * 4. Check if there is booking, if yes, then throw ConflictException (
-   * 5. Delete all the jadwal dokter by dokterUuid and poliUuid
-   */
   static async deleteAllByDoctorAndLocation({ faskesUuid, params }) {
     await TransactionService.run(async (tx) => {
-      /**
-       *Do there exist booking? If yes, then we cannot delete the schedule
-       */
-
       const { doctor_uuid: dokterUuid, location_uuid: poliUuid } =
         ZodValidator.validate(
           JadwalDokterSchema.DOCTOR_LOCATION_UUID_PARAM,
@@ -532,19 +477,13 @@ export class JadwalDokterService {
         (j) => j.jadwal_dokter_uuid
       );
 
-      const [existingAppointments, existingAdmissions] = await Promise.all([
-        AppointmentClient.countByJadwalDokterUuids({
-          faskesUuid,
-          jadwalDokterUuids,
-        }),
-        AdmissionRJRepository.countByJadwalDokterUuidsForToday({
-          faskesUuid,
+      const bookedSchedulesCount =
+        await ReportAntrianRepository.countBookedSchedules({
           jadwalDokterUuids,
           transaction: tx,
-        }),
-      ]);
+        });
 
-      if (existingAppointments > 0 || existingAdmissions > 0) {
+      if (bookedSchedulesCount > 0) {
         throw new ConflictException(
           "Jadwal tidak dapat dihapus karena sudah ada pasien yang terdaftar."
         );
