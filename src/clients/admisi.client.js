@@ -2,6 +2,8 @@ import axios from "axios";
 import moment from "moment";
 import { ADMISI_API_URL } from "../configurations/env.js";
 import { handleApiError } from "../exceptions/api-error.handler.js";
+import { BadRequestException } from "../exceptions/bad-request.exception.js";
+import { NotFoundException } from "../exceptions/not-found.exception.js";
 
 //fungsi untuk mengecek pasien baru atau lama pada fitur apm
 export class AdmisiClient {
@@ -111,15 +113,27 @@ export class AdmisiClient {
   }
 
   static async printAntrian(body, token) {
+    // console.log("Memanggil endpoint printAntrian:", endpoint);
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/print-booking`;
+      console.log("Memanggil endpoint printAntrian:", endpoint);
 
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
+      console.log("Response from printAntrian:", response.data);
+
+      if (!response.data.payload) {
+        throw new NotFoundException("Kode booking tidak ditemukan atau tidak valid");
+      }
 
       return response.data;
     } catch (error) {
+
+       if (error instanceof NotFoundException) {
+         throw error;
+       }
+
       handleApiError(error);
     }
   }

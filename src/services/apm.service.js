@@ -158,13 +158,12 @@ export class APMService {
     const startDate = moment(tanggalPelayananString).startOf("day").unix();
     const endDate = moment(tanggalPelayananString).endOf("day").unix();
 
-    const existingRegistrations =
-      await AdmisiClient.getAllRawatJalanMobile({
-        startDate,
-        endDate,
-        faskesUuid,
-        admisiApiKey,
-      });
+    const existingRegistrations = await AdmisiClient.getAllRawatJalanMobile({
+      startDate,
+      endDate,
+      faskesUuid,
+      admisiApiKey,
+    });
 
     const alreadyRegistered = existingRegistrations.some(
       (reg) =>
@@ -224,7 +223,18 @@ export class APMService {
   }
 
   //fungsi untuk checkin pasien yang mendaftar dari mobile melalui apm
-  static async checkInPatient({ kodeBooking, token }) {
+  static async checkInPatient({ kodeBooking, token, faskesUuid }) {
+
+    //untuk pengecekan kode booking (sementara)
+    const bookingDetail = await AdmisiClient.printAntrian(
+      {
+        kode_booking: kodeBooking,
+      },
+      token
+    );
+
+    
+
     const response = await AdmisiClient.checkInBooking(
       {
         kode_booking: kodeBooking,
