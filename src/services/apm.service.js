@@ -4,6 +4,7 @@ import moment from "moment";
 import { TransactionService } from "./transaction.service.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
+import { ConflictException } from "../exceptions/conflict.exception.js";
 
 export class APMService {
   static async registerPatient({ faskesUuid, body, token, platform }) {
@@ -223,8 +224,8 @@ export class APMService {
   }
 
   //fungsi untuk checkin pasien yang mendaftar dari mobile melalui apm
-  static async checkInPatient({ kodeBooking, token, faskesUuid }) {
-
+  static async checkInPatient({ kodeBooking, body, token }) {
+    console.log("body checkin", body);
     //untuk pengecekan kode booking (sementara)
     const bookingDetail = await AdmisiClient.printAntrian(
       {
@@ -232,8 +233,39 @@ export class APMService {
       },
       token
     );
+    console.log("bookingDetail", bookingDetail);
 
-    
+    const payload = bookingDetail?.payload;
+    if (!payload) {
+      throw new BadRequestException("Data booking tidak ditemukan.");
+    }
+
+    if (payload?.tanggal_checkin) {
+      throw new ConflictException(
+        "Pasien sudah melakukan check-in sebelumnya."
+      );
+    }
+
+    const jadwalDokter = payload?.jadwal_dokter;
+    if (!jadwalDokter) {
+      throw new BadRequestException("Jadwal dokter tidak ditemukan.");
+    }
+
+    const now = moment();
+    const todayDate = moment().format("YYYY-MM-DD");
+
+    const endTime = moment(
+      `${todayDate} ${jadwalDokter.end_time}`,
+      "YYYY-MM-DD HH:mm:ss"
+    );
+    console.log("jadwal_dokter", jadwalDokter);
+    console.log("endTime", endTime);
+
+    if (now.isAfter(endTime)) {
+      throw new BadRequestException(
+        `Waktu check-in sudah kadaluarsa. Jam praktek dokter berakhir pukul ${jadwalDokter.end_time}.`
+      );
+    }
 
     const response = await AdmisiClient.checkInBooking(
       {

@@ -78,6 +78,7 @@ export class APMController {
 
       const result = await APMService.checkInPatient({
         kodeBooking: kode_booking,
+        body: req.body,
         token,
       });
 

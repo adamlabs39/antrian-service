@@ -43,4 +43,23 @@ export class ReportAntrianRepository {
     });
     return count;
   }
+
+  static async isPatientAlreadyBooked({
+    patientIdentity, 
+    jadwalDokterUuid,
+    tanggalPelayanan,
+    transaction,
+  }) {
+    const existing = await ReportAntrianModel.findOne({
+      where: {
+        jadwalDokterUuid,
+        tanggalPelayanan,
+        patientIdentity, // pastikan kolom ini ada di report_antrian
+        deletedAt: null,
+      },
+      transaction,
+    });
+
+    return !!existing; // true kalau sudah ada
+  }
 }
