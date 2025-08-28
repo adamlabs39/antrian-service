@@ -9,10 +9,6 @@ import {
 import moment from "moment";
 import { FormatterService } from "../services/formatter.service.js";
 import { ToIndoDay } from "../helpers/to-indo-day.js";
-import AdmissionRJModel from "../models/admission-rj.model.js";
-import AntrianModel from "../models/antrian.model.js";
-import { InternalServerErrorException } from "../exceptions/internal-server-error.exception.js";
-import { RawatJalanModel } from "@adameds/model-sdk/pelayanan";
 
 export class JadwalDokterRepository {
   static _buildCommonQueryOptions() {

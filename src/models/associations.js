@@ -2,10 +2,9 @@ import { PractitionerModel, LokasiModel } from "@adameds/model-sdk/datamaster";
 import { JadwalDokterModel } from "@adameds/model-sdk/antrian";
 import LayarAntrianModel from "./layar-antrian.model.js";
 import LayarAntrianPoliModel from "./layar-antrian-poli.model.js";
-import PencatatTaskIdModel from "./pencatat-task-id.model.js";
-import AdmissionRJModel from "./admission-rj.model.js";
 import AntrianModel from "./antrian.model.js";
 import ReportAntrianModel from "./report-antrian.model.js";
+import { RawatJalanModel } from "@adameds/model-sdk/pelayanan";
 
 export function defineAssociations() {
   PractitionerModel.hasMany(JadwalDokterModel, {
@@ -22,22 +21,12 @@ export function defineAssociations() {
     constraints: false,
   });
 
-  PencatatTaskIdModel.belongsTo(AdmissionRJModel, {
-    foreignKey: "kodeBooking",
-    targetKey: "kodeBooking",
-  });
+  AntrianModel.belongsTo(RawatJalanModel, { foreignKey: "rawatJalanUuid" });
+  RawatJalanModel.hasMany(AntrianModel, { foreignKey: "rawatJalanUuid" });
 
-  AdmissionRJModel.hasMany(PencatatTaskIdModel, {
-    foreignKey: "kodeBooking",
-    sourceKey: "kodeBooking",
-  });
-
-  AntrianModel.belongsTo(AdmissionRJModel, { foreignKey: "admissionRjUuid" });
-  AdmissionRJModel.hasMany(AntrianModel, { foreignKey: "admissionRjUuid" });
-
-  JadwalDokterModel.hasMany(AdmissionRJModel, {
+  JadwalDokterModel.hasMany(RawatJalanModel, {
     foreignKey: "jadwalDokterUuid",
-    as: "admission_rj",
+    as: "rawat_jalan",
     constraints: false,
   });
 

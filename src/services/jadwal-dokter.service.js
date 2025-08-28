@@ -1,7 +1,6 @@
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
-import { AdmissionRJRepository } from "../repositories/admission-rj.repository.js";
 import { DokterRepository } from "../repositories/dokter.repository.js";
 import { JadwalDokterRepository } from "../repositories/jadwal-dokter.repository.js";
 import { PoliklinikRepository } from "../repositories/poliklinik.repository.js";
@@ -9,7 +8,6 @@ import { JadwalDokterSchema } from "../validations/jadwal-dokter.validation.js";
 import ZodValidator from "../validations/zod.validation.js";
 import { FormatterService } from "./formatter.service.js";
 import { TransactionService } from "./transaction.service.js";
-import { AppointmentClient } from "../clients/appointment.client.js";
 import { TimeConverter } from "../helpers/time-converter.helper.js";
 import { ReportAntrianRepository } from "../repositories/report-antrian.repository.js";
 import moment from "moment";
