@@ -22,7 +22,7 @@ export const MODELS = [
   // PegawaiModel,
   RawatJalanModel,
   AntrianModel,
-  // PencatatTaskIdModel,
+  PencatatTaskIdModel,
   PatientModel,
   ReportAntrianModel,
   // BirthDetailModel

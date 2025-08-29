@@ -17,7 +17,7 @@ export class APMController {
         platform,
       });
 
-      res.status(201).json(result); // Kirim kembali respons dari service
+      res.status(201).json(result); 
     } catch (err) {
       next(err);
     }

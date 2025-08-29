@@ -5,6 +5,7 @@ import LayarAntrianPoliModel from "./layar-antrian-poli.model.js";
 import AntrianModel from "./antrian.model.js";
 import ReportAntrianModel from "./report-antrian.model.js";
 import { RawatJalanModel } from "@adameds/model-sdk/pelayanan";
+import PencatatTaskIdModel from "./pencatat-task-id.model.js";
 
 export function defineAssociations() {
   PractitionerModel.hasMany(JadwalDokterModel, {
@@ -21,6 +22,11 @@ export function defineAssociations() {
     constraints: false,
   });
 
+    PencatatTaskIdModel.belongsTo(RawatJalanModel, {
+      foreignKey: "kodeBooking",
+      targetKey: "kodeBooking",
+    });
+
   AntrianModel.belongsTo(RawatJalanModel, { foreignKey: "rawatJalanUuid" });
   RawatJalanModel.hasMany(AntrianModel, { foreignKey: "rawatJalanUuid" });
 
@@ -30,15 +36,13 @@ export function defineAssociations() {
     constraints: false,
   });
 
-  // Menghubungkan ReportAntrian ke JadwalDokter
   ReportAntrianModel.belongsTo(JadwalDokterModel, {
     foreignKey: "jadwalDokterUuid",
-    targetKey: "uuid", // Menghubungkan ke kolom 'uuid' di jadwal_dokter
+    targetKey: "uuid", 
     as: "jadwalDokter",
     constraints: false,
   });
 
-  // (Opsional) Relasi sebaliknya dari JadwalDokter ke ReportAntrian
   JadwalDokterModel.hasMany(ReportAntrianModel, {
     foreignKey: "jadwalDokterUuid",
     sourceKey: "uuid",

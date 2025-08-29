@@ -20,15 +20,4 @@ export class AntrianRepository {
     });
   }
 
-  // static async countTodayFarmasi({ faskesUuid, startDate, endDate }) {
-  //   return await RawatJalanModel.count({
-  //     where: {
-  //       faskes_uuid: faskesUuid,
-  //       no_antrian_farmasi: { [Op.ne]: null },
-  //       created_at: {
-  //         [Op.between]: [startDate, endDate], // Filter hari ini
-  //       },
-  //     },
-  //   });
-  // }
 }
