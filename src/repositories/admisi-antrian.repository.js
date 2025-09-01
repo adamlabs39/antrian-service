@@ -12,6 +12,7 @@ const antrianAttributes = [
   "pelayanan",
   "jenis_pasien",
   "pasien_baru",
+  "jenis_resep",
 ];
 
 export default class AdmisiAntrianRepository {
@@ -44,39 +45,50 @@ export default class AdmisiAntrianRepository {
     return snakeCase;
   }
 
-  static async findAll(
-    faskesUuid,
-    { status_panggilan, start_date, end_date } = {}
-  ) {
+  static async findAll({ faskesUuid, filters, page, pageSize }) {
+    console.log("nama yang dicari:", filters.name);
     const where = { faskes_uuid: faskesUuid };
 
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
+
     if (
-      status_panggilan !== undefined &&
-      status_panggilan !== null &&
-      status_panggilan !== ""
+      filters.status_panggilan !== undefined &&
+      filters.status_panggilan !== null &&
+      filters.status_panggilan !== ""
     ) {
-      where.status_panggilan = parseInt(status_panggilan, 10);
+      where.status_panggilan = parseInt(filters.status_panggilan, 10);
+    }
+    const patientWhere = {};
+    if (filters.start_date && filters.end_date) {
+      patientWhere.tanggal_daftar = {
+        [Op.between]: [
+          parseInt(filters.start_date),
+          parseInt(filters.end_date),
+        ],
+      };
+    } else if (filters.start_date) {
+      patientWhere.tanggal_daftar = { [Op.gte]: parseInt(filters.start_date) };
+    } else if (filters.end_date) {
+      patientWhere.tanggal_daftar = { [Op.lte]: parseInt(filters.end_date) };
     }
 
-    if (start_date && end_date) {
-      where["$patient_data.tanggal_daftar$"] = {
-        [Op.between]: [parseInt(start_date), parseInt(end_date)],
-      };
-    } else if (start_date) {
-      where["$patient_data.tanggal_daftar$"] = {
-        [Op.gte]: parseInt(start_date),
-      };
-    } else if (end_date) {
-      where["$patient_data.tanggal_daftar$"] = { [Op.lte]: parseInt(end_date) };
+    if (filters.name) {
+      patientWhere.name = { [Op.iLike]: `%${filters.name}%` }; // PostgreSQL
+      // kalau MySQL pakai Op.like
     }
 
-    const antrianList = await AntrianModel.findAll({
+    const { count, rows } = await AntrianModel.findAndCountAll({
       where,
+      limit,
+      offset,
+      distinct: true,
       include: [
         {
           model: RawatJalanModel,
           as: "patient_data",
-          required: false,
+          required: true,
+          where: patientWhere,
           attributes: [
             "patient_uuid",
             "no_rm",
@@ -114,7 +126,15 @@ export default class AdmisiAntrianRepository {
       attributes: antrianAttributes,
     });
 
-    return antrianList.map(this.transform);
+    return {
+      pagination: {
+        totalData: count,
+        totalPages: Math.ceil(count / limit),
+        page: parseInt(page, 10),
+        pageSize: parseInt(pageSize, 10),
+      },
+      data: rows.map(this.transform),
+    };
   }
 
   static async findByUuid(uuid) {

@@ -5,16 +5,14 @@ export class AdmisiAntrianController {
   static async getAllAntrian(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      const { status_panggilan, start_date, end_date } = req.query;
-
-      const data = await AdmisiAntrianService.getAllAntrian(faskesUuid, {
-        status_panggilan,
-        start_date,
-        end_date,
+      const { pagination, data } = await AdmisiAntrianService.getAllAntrian({
+        faskesUuid,
+        filterBy: req.query,
       });
 
       res.status(200).json({
         message: "List antrian berhasil diambil",
+        pagination,
         payload: FormatterService.toSnakeCase(data),
       });
     } catch (error) {

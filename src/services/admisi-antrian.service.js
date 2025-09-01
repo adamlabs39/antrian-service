@@ -2,10 +2,27 @@ import { v4 as uuidv4 } from "uuid";
 import moment from "moment";
 import AdmisiAntrianRepository from "../repositories/admisi-antrian.repository.js";
 import { FormatterService } from "./formatter.service.js";
+import { NotFoundException } from "../exceptions/not-found.exception.js";
 
 export default class AdmisiAntrianService {
-  static async getAllAntrian(faskesUuid, filters) {
-    return await AdmisiAntrianRepository.findAll(faskesUuid, filters);
+  static async getAllAntrian({faskesUuid, filterBy: filterQuery}) {
+
+      let { page, page_size: pageSize, ...filters } = filterQuery;
+      if (page === undefined) page = 1;
+      if (pageSize === undefined) pageSize = 10;
+
+     const { pagination, data } = await AdmisiAntrianRepository.findAll({
+       faskesUuid,
+       filters,
+       page,
+       pageSize,
+     });
+    
+        if (data.length === 0) {
+          throw new NotFoundException("Data tidak ditemukan");
+        }
+    
+        return { pagination, data };
   }
 
   static async getAntrianByUuid(faskesUuid, uuid) {
