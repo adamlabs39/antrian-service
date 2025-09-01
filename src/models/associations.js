@@ -22,13 +22,21 @@ export function defineAssociations() {
     constraints: false,
   });
 
-    PencatatTaskIdModel.belongsTo(RawatJalanModel, {
-      foreignKey: "kodeBooking",
-      targetKey: "kodeBooking",
-    });
+  PencatatTaskIdModel.belongsTo(RawatJalanModel, {
+    foreignKey: "kodeBooking",
+    targetKey: "kodeBooking",
+    constraints: false,
+  });
 
-  AntrianModel.belongsTo(RawatJalanModel, { foreignKey: "rawatJalanUuid" });
-  RawatJalanModel.hasMany(AntrianModel, { foreignKey: "rawatJalanUuid" });
+  AntrianModel.belongsTo(RawatJalanModel, {
+    foreignKey: "rawatJalanUuid",
+    as: "patient_data",
+    constraints: false,
+  });
+  RawatJalanModel.hasMany(AntrianModel, {
+    foreignKey: "rawatJalanUuid",
+    constraints: false,
+  });
 
   JadwalDokterModel.hasMany(RawatJalanModel, {
     foreignKey: "jadwalDokterUuid",
@@ -38,7 +46,7 @@ export function defineAssociations() {
 
   ReportAntrianModel.belongsTo(JadwalDokterModel, {
     foreignKey: "jadwalDokterUuid",
-    targetKey: "uuid", 
+    targetKey: "uuid",
     as: "jadwalDokter",
     constraints: false,
   });

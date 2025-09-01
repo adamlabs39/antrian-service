@@ -3,6 +3,19 @@ import { FormatterService } from "../services/formatter.service.js";
 
 export class AdmisiAntrianController {
 
+  static async getAllAntrian(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const data = await AdmisiAntrianService.getAllAntrian(faskesUuid);
+      res.status(200).json({
+        message: "List antrian berhasil diambil",
+        payload: FormatterService.toSnakeCase(data),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
     static async getAntrianByUuid(req, res, next) {
         try {
             const { faskesUuid } = req.author;

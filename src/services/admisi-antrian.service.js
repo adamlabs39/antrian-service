@@ -4,6 +4,12 @@ import AdmisiAntrianRepository from "../repositories/admisi-antrian.repository.j
 import { FormatterService } from "./formatter.service.js";
 
 export default class AdmisiAntrianService {
+  
+  static async getAllAntrian(faskesUuid) {
+    const antrianList = await AdmisiAntrianRepository.findAll(faskesUuid);
+    return antrianList;
+  }
+
   static async getAntrianByUuid(faskesUuid, uuid) {
     const antrian = await AdmisiAntrianRepository.findByUuid(uuid);
     if (!antrian) {
