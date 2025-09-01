@@ -3,6 +3,7 @@ import AntrianModel from "../models/antrian.model.js";
 import { FormatterService } from "../services/formatter.service.js";
 import { PatientModel } from "@adameds/model-sdk/admisi";
 import { JadwalDokterModel } from "@adameds/model-sdk/antrian";
+import { Op } from "sequelize";
 
 const antrianAttributes = [
   "uuid",
@@ -43,9 +44,34 @@ export default class AdmisiAntrianRepository {
     return snakeCase;
   }
 
-  static async findAll(faskesUuid) {
+  static async findAll(
+    faskesUuid,
+    { status_panggilan, start_date, end_date } = {}
+  ) {
+    const where = { faskes_uuid: faskesUuid };
+
+    if (
+      status_panggilan !== undefined &&
+      status_panggilan !== null &&
+      status_panggilan !== ""
+    ) {
+      where.status_panggilan = parseInt(status_panggilan, 10);
+    }
+
+    if (start_date && end_date) {
+      where["$patient_data.tanggal_daftar$"] = {
+        [Op.between]: [parseInt(start_date), parseInt(end_date)],
+      };
+    } else if (start_date) {
+      where["$patient_data.tanggal_daftar$"] = {
+        [Op.gte]: parseInt(start_date),
+      };
+    } else if (end_date) {
+      where["$patient_data.tanggal_daftar$"] = { [Op.lte]: parseInt(end_date) };
+    }
+
     const antrianList = await AntrianModel.findAll({
-      where: { faskes_uuid: faskesUuid },
+      where,
       include: [
         {
           model: RawatJalanModel,
@@ -61,6 +87,7 @@ export default class AdmisiAntrianRepository {
             "no_antrian_poli",
             "no_antrian_farmasi",
             "payment_method",
+            "tanggal_daftar",
           ],
           include: [
             {
@@ -96,7 +123,7 @@ export default class AdmisiAntrianRepository {
         {
           model: RawatJalanModel,
           as: "patient_data",
-          required: false,
+          required: true,
           attributes: [
             "patient_uuid",
             "no_rm",

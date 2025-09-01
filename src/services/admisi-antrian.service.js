@@ -4,10 +4,8 @@ import AdmisiAntrianRepository from "../repositories/admisi-antrian.repository.j
 import { FormatterService } from "./formatter.service.js";
 
 export default class AdmisiAntrianService {
-  
-  static async getAllAntrian(faskesUuid) {
-    const antrianList = await AdmisiAntrianRepository.findAll(faskesUuid);
-    return antrianList;
+  static async getAllAntrian(faskesUuid, filters) {
+    return await AdmisiAntrianRepository.findAll(faskesUuid, filters);
   }
 
   static async getAntrianByUuid(faskesUuid, uuid) {
@@ -32,7 +30,6 @@ export default class AdmisiAntrianService {
 
   static async updateAntrian({ faskesUuid, uuid, requestData }) {
     const { statusPanggilan } = FormatterService.toCamelCase(requestData);
-  
 
     // if (!statusPanggilan || statusPanggilan === 0 || statusPanggilan > 6) {
     //   throw new Error(

@@ -2,11 +2,17 @@ import AdmisiAntrianService from "../services/admisi-antrian.service.js";
 import { FormatterService } from "../services/formatter.service.js";
 
 export class AdmisiAntrianController {
-
   static async getAllAntrian(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      const data = await AdmisiAntrianService.getAllAntrian(faskesUuid);
+      const { status_panggilan, start_date, end_date } = req.query;
+
+      const data = await AdmisiAntrianService.getAllAntrian(faskesUuid, {
+        status_panggilan,
+        start_date,
+        end_date,
+      });
+
       res.status(200).json({
         message: "List antrian berhasil diambil",
         payload: FormatterService.toSnakeCase(data),
@@ -16,19 +22,22 @@ export class AdmisiAntrianController {
     }
   }
 
-    static async getAntrianByUuid(req, res, next) {
-        try {
-            const { faskesUuid } = req.author;
-            const { uuid } = req.params;
-            const data = await AdmisiAntrianService.getAntrianByUuid(faskesUuid, uuid);
-            res.status(200).json({
-                message: "Detail antrian berhasil diambil",
-                payload: data,
-            });
-        } catch (error) {
-            next(error);
-        }
+  static async getAntrianByUuid(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const { uuid } = req.params;
+      const data = await AdmisiAntrianService.getAntrianByUuid(
+        faskesUuid,
+        uuid
+      );
+      res.status(200).json({
+        message: "Detail antrian berhasil diambil",
+        payload: data,
+      });
+    } catch (error) {
+      next(error);
     }
+  }
 
   static async createAntrian(req, res, next) {
     try {
