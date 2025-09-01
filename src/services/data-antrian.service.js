@@ -7,7 +7,7 @@ import { ConflictException } from "../exceptions/conflict.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import moment from "moment";
 import { ReportAntrianRepository } from "../repositories/report-antrian.repository.js";
-import { getDay } from "../helpers/get-day.helper.js"; 
+import { getDay } from "../helpers/get-day.helper.js";
 
 export class DataAntrianService {
   static async processRegistration({
@@ -67,7 +67,7 @@ export class DataAntrianService {
       }
 
       const namaHariPilihan = getDay(finalTanggalPelayanan);
-      const namaHariJadwal = jadwalHariIni.day; 
+      const namaHariJadwal = jadwalHariIni.day;
 
       if (namaHariPilihan !== namaHariJadwal) {
         throw new BadRequestException(
@@ -128,28 +128,21 @@ export class DataAntrianService {
   }
 
   // khusus untuk platform ADMISI
-  static async processAdmisiRegistration({ requestData, token }) {
-    if (!requestData?.rawat_jalan_uuid) {
-      throw new BadRequestException("rawat_jalan_uuid wajib diisi.");
-    }
-
-    const rawatJalanUuid = requestData.rawat_jalan_uuid;
-    const rawatJalan = await AdmisiClient.getRawatJalanDetail(
-      rawatJalanUuid,
-      token
-    );
-    if (!rawatJalan) {
-      throw new NotFoundException("Data rawat jalan tidak ditemukan.");
+  static async processAdmisiRegistration({ faskesUuid, requestData, token }) {
+    const { jadwal_dokter_uuid } = requestData;
+    if (!jadwal_dokter_uuid) {
+      throw new NotFoundException("jadwal dokter tidak ditemukan.");
     }
 
     const jadwalDokter = await JadwalDokterRepository.findJadwalByUuid(
-      rawatJalan.jadwal_dokter_uuid
+      jadwal_dokter_uuid
     );
+
     if (!jadwalDokter) {
       throw new NotFoundException("Jadwal dokter terkait tidak ditemukan.");
     }
 
-    const tanggalPelayanan = moment(rawatJalan.tanggal_daftar).format(
+    const tanggalPelayanan = moment().format(
       "YYYY-MM-DD"
     );
 
@@ -164,12 +157,13 @@ export class DataAntrianService {
       );
     }
 
+    const noUrutPoli = report.kuotaTerpakai + 1;
+
     await report.update({
-      kuotaTerpakai: report.kuotaTerpakai + 1,
-      kuotaSisa: report.kuota - (report.kuotaTerpakai + 1),
+      kuotaTerpakai: noUrutPoli,
+      kuotaSisa: report.kuota - noUrutPoli,
     });
 
-    const noUrutPoli = report.kuotaTerpakai + 1;
     const noAntrianPoli = CodeGenerator.generateNoAntrianPoli(
       jadwalDokter.codeAntrianPoli,
       jadwalDokter.codeAntrianDokter,
@@ -177,24 +171,11 @@ export class DataAntrianService {
     );
     const kodeBooking = CodeGenerator.generateKodeBooking();
 
-    const paymentMethodMap = {
-      1: "TUNAI",
-      2: "ASURANSI",
-    };
-
-    const codesToUpdate = {
+   
+    return {
       no_antrian_poli: noAntrianPoli,
       kode_booking: kodeBooking,
-      patient_data: rawatJalan.patient,
-      payment_method: paymentMethodMap[rawatJalan.payment_method],
-      jadwal_dokter_uuid: rawatJalan.jadwal_dokter_uuid,
-      complaint: rawatJalan.complaint,
-      note: rawatJalan.note,
+      tanggal_pelayanan: tanggalPelayanan,
     };
-
-    console.log(`Melakukan UPDATE pada Rawat Jalan UUID: ${rawatJalanUuid}`);
-    await AdmisiClient.updateRawatJalan(rawatJalanUuid, codesToUpdate, token);
-
-    return codesToUpdate;
   }
 }

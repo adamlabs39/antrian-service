@@ -9,9 +9,6 @@ export default class AdmisiAntrianService {
     if (!antrian) {
       throw new Error("Antrian tidak ditemukan");
     }
-    if (antrian.faskesUuid !== faskesUuid) {
-      throw new Error("Tidak punya akses untuk mengubah antrian ini");
-    }
     return antrian;
   }
 
