@@ -85,6 +85,14 @@ export default class AdmisiAntrianRepository {
       patientWhere.name = { [Op.iLike]: `%${filters.name}%` };
     }
 
+    if (
+      filters.pelayanan !== undefined &&
+      filters.pelayanan !== null &&
+      filters.pelayanan !== ""
+    ) {
+      where.pelayanan = filters.pelayanan;
+    }
+
     const queryOptions = {
       where,
       include: [
