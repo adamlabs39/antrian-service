@@ -16,8 +16,8 @@ export class AntrianRepository {
           [Op.lte]: endOfDayUnix,
         },
         noAntrianPoli: { [Op.ne]: null },
+        order: [["createdAt", "ASC"]],
       },
     });
   }
-
 }

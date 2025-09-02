@@ -127,6 +127,11 @@ export class DataAntrianService {
     return generatedCodes;
   }
 
+  // untuk antrian farmasi
+  static async processAntrianFarmasi({ faskesUuid, requestData, token }) {
+    
+  }
+
   // khusus untuk platform ADMISI
   static async processAdmisiRegistration({ faskesUuid, requestData, token }) {
     const { jadwal_dokter_uuid } = requestData;

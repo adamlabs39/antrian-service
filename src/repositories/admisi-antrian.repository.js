@@ -64,7 +64,16 @@ export default class AdmisiAntrianRepository {
       filters.status_panggilan !== null &&
       filters.status_panggilan !== ""
     ) {
-      where.status_panggilan = parseInt(filters.status_panggilan, 10);
+      const statusArray = filters.status_panggilan.split(",");
+
+      const statusNumbers = statusArray
+        .map((status) => parseInt(status, 10))
+        .filter((num) => !isNaN(num));
+      if (statusNumbers.length > 0) {
+        where.status_panggilan = {
+          [Op.in]: statusNumbers,
+        };
+      }
     }
 
     const patientWhere = {};

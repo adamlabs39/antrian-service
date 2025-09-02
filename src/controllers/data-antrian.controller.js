@@ -23,6 +23,25 @@ export class DataAntrianController {
     }
   }
 
+  static async antrianFarmasi(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const token = req.headers.authorization;
+
+      await DataAntrianService.processAntrianFarmasi({
+        faskesUuid,
+        token,
+        body: req.body,
+      });
+
+      res.status(200).json({
+        message: "Proses antrian farmasi berhasil dibuat.",
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   //fungsi untuk registrasi dari layanan admisi
   static async regisAdmisi(req, res, next) {
     try {
