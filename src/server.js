@@ -58,9 +58,8 @@ const jwtExemptEndpoints = [
   `${BASE_URL}/mobile/jadwal-dokter`,
   `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
   `${BASE_URL}/mobile/apm/process-registration`,
-  
+  `${BASE_URL}/mobile/admisi-antrian`,
 ];
-
 
 app.use((req, res, next) => {
   const normalized = normalizeUrl(req.originalUrl);

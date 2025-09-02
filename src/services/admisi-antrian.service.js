@@ -77,4 +77,21 @@ export default class AdmisiAntrianService {
 
     return updated;
   }
+
+  //FOR MOBILE
+
+  static async createAntrianMobile({faskesUuid, requestData}){
+
+    const camelCaseBody = FormatterService.toCamelCase(requestData);
+
+     const dataToCreate = {
+       statusPanggilan: 0, 
+       faskesUuid,
+       ...camelCaseBody,
+     };
+
+    const antrianMobile = await AdmisiAntrianRepository.create(dataToCreate);
+
+    return antrianMobile;
+  }
 }

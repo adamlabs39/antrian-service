@@ -89,4 +89,22 @@ export class AdmisiAntrianController {
       next(error);
     }
   }
+
+
+  //FOR MOBILE
+  static async createAntrianMobile(req, res, next) {
+    try{
+      const faskesUuid = req.headers["faskes-uuid"];
+      const data = await AdmisiAntrianService.createAntrianMobile({
+        faskesUuid,
+        requestData: req.body,
+      });
+      res.status(201).json({
+        message: "Data antrian berhasil disimpan",
+        payload: FormatterService.toSnakeCase(data),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
