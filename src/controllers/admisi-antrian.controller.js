@@ -12,7 +12,24 @@ export class AdmisiAntrianController {
 
       res.status(200).json({
         message: "List antrian berhasil diambil",
-        pagination,
+        properties: pagination,
+        payload: FormatterService.toSnakeCase(data),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getAllNoPagination(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const { data } = await AdmisiAntrianService.getAllNoPagination({
+        faskesUuid,
+        filterBy: req.query,
+      });
+
+      res.status(200).json({
+        message: "List antrian berhasil diambil",
         payload: FormatterService.toSnakeCase(data),
       });
     } catch (error) {

@@ -45,13 +45,20 @@ export default class AdmisiAntrianRepository {
     return snakeCase;
   }
 
-  static async findAll({ faskesUuid, filters, page, pageSize }) {
-    console.log("nama yang dicari:", filters.name);
+  static async findAll({
+    faskesUuid,
+    filters = {},
+    page,
+    pageSize,
+    noPagination = false,
+  }) {
     const where = { faskes_uuid: faskesUuid };
 
-    const limit = pageSize;
-    const offset = (page - 1) * pageSize;
+    // pagination values
+    const limit = pageSize ? parseInt(pageSize, 10) : 10;
+    const offset = page ? (parseInt(page, 10) - 1) * limit : 0;
 
+    // filter status_panggilan
     if (
       filters.status_panggilan !== undefined &&
       filters.status_panggilan !== null &&
@@ -59,6 +66,7 @@ export default class AdmisiAntrianRepository {
     ) {
       where.status_panggilan = parseInt(filters.status_panggilan, 10);
     }
+
     const patientWhere = {};
     if (filters.start_date && filters.end_date) {
       patientWhere.tanggal_daftar = {
@@ -74,15 +82,11 @@ export default class AdmisiAntrianRepository {
     }
 
     if (filters.name) {
-      patientWhere.name = { [Op.iLike]: `%${filters.name}%` }; // PostgreSQL
-      // kalau MySQL pakai Op.like
+      patientWhere.name = { [Op.iLike]: `%${filters.name}%` };
     }
 
-    const { count, rows } = await AntrianModel.findAndCountAll({
+    const queryOptions = {
       where,
-      limit,
-      offset,
-      distinct: true,
       include: [
         {
           model: RawatJalanModel,
@@ -124,15 +128,28 @@ export default class AdmisiAntrianRepository {
         },
       ],
       attributes: antrianAttributes,
-    });
+    };
 
+    if (!noPagination) {
+      // ⬇️ kalau pakai pagination
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+
+      const { count, rows } = await AntrianModel.findAndCountAll(queryOptions);
+      return {
+        pagination: {
+          page: parseInt(page, 10) || 1,
+          page_size: limit,
+          total: count,
+        },
+        data: rows.map(this.transform),
+      };
+    }
+
+    // ⬇️ kalau tanpa pagination
+    const rows = await AntrianModel.findAll(queryOptions);
     return {
-      pagination: {
-        totalData: count,
-        totalPages: Math.ceil(count / limit),
-        page: parseInt(page, 10),
-        pageSize: parseInt(pageSize, 10),
-      },
+      pagination: null,
       data: rows.map(this.transform),
     };
   }

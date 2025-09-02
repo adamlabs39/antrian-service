@@ -5,24 +5,31 @@ import { FormatterService } from "./formatter.service.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 
 export default class AdmisiAntrianService {
-  static async getAllAntrian({faskesUuid, filterBy: filterQuery}) {
+  static async getAllAntrian({ faskesUuid, filterBy: filterQuery }) {
+    let { page, page_size: pageSize, ...filters } = filterQuery;
+    if (page === undefined) page = 1;
+    if (pageSize === undefined) pageSize = 10;
 
-      let { page, page_size: pageSize, ...filters } = filterQuery;
-      if (page === undefined) page = 1;
-      if (pageSize === undefined) pageSize = 10;
+    const { pagination, data } = await AdmisiAntrianRepository.findAll({
+      faskesUuid,
+      filters,
+      page,
+      pageSize,
+    });
 
-     const { pagination, data } = await AdmisiAntrianRepository.findAll({
-       faskesUuid,
-       filters,
-       page,
-       pageSize,
-     });
-    
-        if (data.length === 0) {
-          throw new NotFoundException("Data tidak ditemukan");
-        }
-    
-        return { pagination, data };
+    if (data.length === 0) {
+      throw new NotFoundException("Data tidak ditemukan");
+    }
+
+    return { pagination, data };
+  }
+
+  static async getAllNoPagination({ faskesUuid, filterBy = {} }) {
+    return await AdmisiAntrianRepository.findAll({
+      faskesUuid,
+      filters: filterBy,
+      noPagination: true,
+    });
   }
 
   static async getAntrianByUuid(faskesUuid, uuid) {
