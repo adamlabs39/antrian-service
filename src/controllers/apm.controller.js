@@ -90,4 +90,27 @@ export class APMController {
       next(err);
     }
   }
+
+  static async antrianFarmasi(req, res, next){
+    try{
+      const { kode_booking } = req.body;
+      const token = req.headers.authorization;
+
+      if (!kode_booking) {
+        throw new BadRequestException("Kode booking wajib diisi.");
+      }
+
+      const result = await APMService.antrianFarmasi({
+        kodeBooking: kode_booking,
+        token,
+      });
+
+      res.status(200).json({
+        message: "Konfirmasi Obat Berhasil",
+        payload: result.payload,
+      });
+    } catch (err) {
+      throw new BadRequestException("Terjadi kesalahan saat memproses antrian farmasi.");
+    }
+  }
 }

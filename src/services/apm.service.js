@@ -131,7 +131,7 @@ export class APMService {
 
     if (now.isAfter(endTime)) {
       throw new BadRequestException(
-        `Waktu check-in sudah kadaluarsa. Jam praktek dokter berakhir pukul ${jadwalDokter.end_time}.`
+        `Jadwal dokter sudah kadaluarsa. Jam praktek dokter berakhir pukul ${jadwalDokter.end_time}.`
       );
     }
 
@@ -142,6 +142,17 @@ export class APMService {
       token
     );
     return response;
+  }
+
+  static async antrianFarmasi({kodeBooking, token}){
+    const bookingDetail = await AdmisiClient.printAntrian(
+      {
+        kode_booking: kodeBooking,
+      },
+      token
+    );
+
+   return bookingDetail;
   }
 
   // FOR MOBILE

@@ -142,7 +142,8 @@ export class DataAntrianService {
 
     const totalFarmasiHariIni = await AntrianRepository.countTodayByPelayanan({
       faskesUuid,
-      pelayanan: "farmasi", 
+      pelayanan: "farmasi",
+      jenisResep,
       transaction,
     });
 
@@ -152,7 +153,6 @@ export class DataAntrianService {
       nomorUrut
     );
 
-    // 5. Buat data antrian dengan field yang lengkap dan nama yang konsisten (camelCase)
     await AdmisiAntrianRepository.create(
       {
         faskesUuid,
@@ -162,7 +162,7 @@ export class DataAntrianService {
         jenisPasien,
         pasienBaru,
         jenisResep,
-        // kodeFarmasi: noAntrianFarmasi, 
+        // kodeFarmasi: noAntrianFarmasi,
       },
       { transaction }
     );
@@ -171,7 +171,11 @@ export class DataAntrianService {
       no_antrian_farmasi: noAntrianFarmasi,
     };
 
-    await AdmisiClient.updateRawatJalan(rawatJalanUuid, dataToUpdate, token);
+    await AdmisiClient.updateAntrianFarmasi(
+      rawatJalanUuid,
+      dataToUpdate,
+      token
+    );
 
     return { no_antrian_farmasi: noAntrianFarmasi };
   }

@@ -22,13 +22,14 @@ export class AntrianRepository {
     });
   }
 
-  static async countTodayByPelayanan({ faskesUuid, pelayanan, transaction }) {
+  static async countTodayByPelayanan({ faskesUuid, pelayanan,jenisResep, transaction }) {
     const todayStart = moment().startOf("day").unix();
     const todayEnd = moment().endOf("day").unix();
 
     return await AntrianModel.count({
       where: {
         pelayanan,
+        jenisResep,
         faskesUuid,
         createdAt: {
           [Op.gte]: todayStart,
