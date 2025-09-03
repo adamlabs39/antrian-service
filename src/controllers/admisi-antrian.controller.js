@@ -1,5 +1,6 @@
 import AdmisiAntrianService from "../services/admisi-antrian.service.js";
 import { FormatterService } from "../services/formatter.service.js";
+import { TransactionService } from "../services/transaction.service.js";
 
 export class AdmisiAntrianController {
   static async getAllAntrian(req, res, next) {
@@ -54,13 +55,19 @@ export class AdmisiAntrianController {
     }
   }
 
-  static async createAntrian(req, res, next) {
+    static async createAntrian(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      const data = await AdmisiAntrianService.createAntrian({
-        faskesUuid,
-        requestData: req.body,
+      
+      // 2. Gunakan TransactionService.run
+      const data = await TransactionService.run(async (transaction) => {
+        return await AdmisiAntrianService.createAntrian({
+          faskesUuid,
+          requestData: req.body,
+          transaction, // 3. Teruskan object transaction
+        });
       });
+
       res.status(201).json({
         message: "Data antrian berhasil disimpan",
         payload: FormatterService.toSnakeCase(data),
@@ -73,14 +80,18 @@ export class AdmisiAntrianController {
   static async updateAntrian(req, res, next) {
     try {
       const { faskesUuid } = req.author;
-      console.log("faskesUuid controller", faskesUuid);
       const { uuid } = req.params;
-      console.log("uuid", uuid);
-      const data = await AdmisiAntrianService.updateAntrian({
-        faskesUuid,
-        requestData: req.body,
-        uuid,
+
+      // 2. Gunakan TransactionService.run
+      const data = await TransactionService.run(async (transaction) => {
+        return await AdmisiAntrianService.updateAntrian({
+          faskesUuid,
+          requestData: req.body,
+          uuid,
+          transaction, // 3. Teruskan object transaction
+        });
       });
+      
       res.status(200).json({
         message: "Antrian berhasil diperbarui",
         payload: FormatterService.toSnakeCase(data),
@@ -90,15 +101,20 @@ export class AdmisiAntrianController {
     }
   }
 
-
   //FOR MOBILE
   static async createAntrianMobile(req, res, next) {
-    try{
+    try {
       const faskesUuid = req.headers["faskes-uuid"];
-      const data = await AdmisiAntrianService.createAntrianMobile({
-        faskesUuid,
-        requestData: req.body,
+
+      // 2. Gunakan TransactionService.run
+      const data = await TransactionService.run(async (transaction) => {
+        return await AdmisiAntrianService.createAntrianMobile({
+          faskesUuid,
+          requestData: req.body,
+          transaction, // 3. Teruskan object transaction
+        });
       });
+
       res.status(201).json({
         message: "Data antrian berhasil disimpan",
         payload: FormatterService.toSnakeCase(data),
@@ -108,3 +124,4 @@ export class AdmisiAntrianController {
     }
   }
 }
+

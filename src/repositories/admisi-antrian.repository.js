@@ -51,6 +51,7 @@ export default class AdmisiAntrianRepository {
     page,
     pageSize,
     noPagination = false,
+    transaction = null,
   }) {
     const where = { faskes_uuid: faskesUuid };
 
@@ -147,6 +148,10 @@ export default class AdmisiAntrianRepository {
       attributes: antrianAttributes,
     };
 
+    if (transaction) {
+      queryOptions.transaction = transaction;
+    }
+
     if (!noPagination) {
       // ⬇️ kalau pakai pagination
       queryOptions.limit = limit;
@@ -171,7 +176,7 @@ export default class AdmisiAntrianRepository {
     };
   }
 
-  static async findByUuid(uuid) {
+  static async findByUuid(uuid, options = {}) {
     const antrian = await AntrianModel.findByPk(uuid, {
       include: [
         {
@@ -211,7 +216,7 @@ export default class AdmisiAntrianRepository {
           ],
         },
       ],
-      attributes: antrianAttributes,
+      attributes: antrianAttributes, ...options
     });
 
     if (!antrian) return null;
@@ -219,13 +224,13 @@ export default class AdmisiAntrianRepository {
     return this.transform(antrian);
   }
 
-  static async create(data) {
-    const newAntrian = await AntrianModel.create(data);
-    return await this.findByUuid(newAntrian.uuid);
+  static async create(data, options = {}) {
+    const newAntrian = await AntrianModel.create(data, options);
+    return await this.findByUuid(newAntrian.uuid, options);
   }
 
-  static async update(uuid, data) {
-    await AntrianModel.update(data, { where: { uuid } });
-    return await this.findByUuid(uuid);
+  static async update(uuid, data, options = {}) {
+    await AntrianModel.update(data, { where: { uuid }, ...options });
+    return await this.findByUuid(uuid, options);
   }
 }

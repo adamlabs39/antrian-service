@@ -40,57 +40,54 @@ export default class AdmisiAntrianService {
     return antrian;
   }
 
-  static async createAntrian({ faskesUuid, requestData }) {
+  static async createAntrian({ faskesUuid, requestData, transaction }) {
     const camelCaseBody = FormatterService.toCamelCase(requestData);
 
-    const newAntrian = await AdmisiAntrianRepository.create({
-      statusPanggilan: 0,
-      faskesUuid,
-      ...camelCaseBody,
-    });
+    const newAntrian = await AdmisiAntrianRepository.create(
+      {
+        statusPanggilan: 0,
+        faskesUuid,
+        ...camelCaseBody,
+      },
+      { transaction }
+    );
 
     return newAntrian;
   }
 
-  static async updateAntrian({ faskesUuid, uuid, requestData }) {
+  static async updateAntrian({ faskesUuid, uuid, requestData, transaction }) {
     const { statusPanggilan } = FormatterService.toCamelCase(requestData);
-
-    // if (!statusPanggilan || statusPanggilan === 0 || statusPanggilan > 6) {
-    //   throw new Error(
-    //     "statusPanggilan wajib diisi dengan nilai antara 1 sampai 6"
-    //   );
-    // }
-
-    const antrian = await AdmisiAntrianRepository.findByUuid(uuid);
+    const antrian = await AdmisiAntrianRepository.findByUuid(uuid, {
+      transaction,
+    });
     if (!antrian) {
       throw new Error("Antrian tidak ditemukan");
     }
 
-    // if (antrian.faskesUuid !== faskesUuid) {
-    //   throw new Error("Tidak punya akses untuk mengubah antrian ini");
-    // }
+    await AdmisiAntrianRepository.update(
+      uuid,
+      {
+        statusPanggilan,
+        updatedAt: moment().unix(),
+      },
+      { transaction }
+    );
 
-    const updated = await AdmisiAntrianRepository.update(uuid, {
-      statusPanggilan,
-      updatedAt: moment().unix(),
-    });
-
-    return updated;
+    return await AdmisiAntrianRepository.findByUuid(uuid, { transaction });
   }
 
   //FOR MOBILE
 
-  static async createAntrianMobile({faskesUuid, requestData}){
-
+  static async createAntrianMobile({ faskesUuid, requestData, transaction }) {
     const camelCaseBody = FormatterService.toCamelCase(requestData);
 
-     const dataToCreate = {
-       statusPanggilan: 0, 
-       faskesUuid,
-       ...camelCaseBody,
-     };
+    const dataToCreate = {
+      statusPanggilan: 0,
+      faskesUuid,
+      ...camelCaseBody,
+    };
 
-    const antrianMobile = await AdmisiAntrianRepository.create(dataToCreate);
+    const antrianMobile = await AdmisiAntrianRepository.create(dataToCreate, { transaction });
 
     return antrianMobile;
   }

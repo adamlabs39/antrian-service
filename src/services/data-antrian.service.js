@@ -8,6 +8,8 @@ import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import moment from "moment";
 import { ReportAntrianRepository } from "../repositories/report-antrian.repository.js";
 import { getDay } from "../helpers/get-day.helper.js";
+import { FormatterService } from "./formatter.service.js";
+import AdmisiAntrianRepository from "../repositories/admisi-antrian.repository.js";
 
 export class DataAntrianService {
   static async processRegistration({
@@ -127,9 +129,51 @@ export class DataAntrianService {
     return generatedCodes;
   }
 
-  // untuk antrian farmasi
-  static async processAntrianFarmasi({ faskesUuid, requestData, token }) {
-    
+  static async processAntrianFarmasi({ faskesUuid, body, token, transaction }) {
+    const camelCaseBody = FormatterService.toCamelCase(body);
+    const { patientUuid, rawatJalanUuid, jenisResep, jenisPasien, pasienBaru } =
+      camelCaseBody;
+
+    if (!jenisResep) {
+      throw new BadRequestException(
+        "jenis_resep wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    const totalFarmasiHariIni = await AntrianRepository.countTodayByPelayanan({
+      faskesUuid,
+      pelayanan: "farmasi", 
+      transaction,
+    });
+
+    const nomorUrut = totalFarmasiHariIni + 1;
+    const noAntrianFarmasi = CodeGenerator.generateNoAntrianFarmasi(
+      jenisResep,
+      nomorUrut
+    );
+
+    // 5. Buat data antrian dengan field yang lengkap dan nama yang konsisten (camelCase)
+    await AdmisiAntrianRepository.create(
+      {
+        faskesUuid,
+        patientUuid,
+        rawatJalanUuid,
+        pelayanan: "farmasi",
+        jenisPasien,
+        pasienBaru,
+        jenisResep,
+        // kodeFarmasi: noAntrianFarmasi, 
+      },
+      { transaction }
+    );
+
+    const dataToUpdate = {
+      no_antrian_farmasi: noAntrianFarmasi,
+    };
+
+    await AdmisiClient.updateRawatJalan(rawatJalanUuid, dataToUpdate, token);
+
+    return { no_antrian_farmasi: noAntrianFarmasi };
   }
 
   // khusus untuk platform ADMISI
@@ -147,9 +191,7 @@ export class DataAntrianService {
       throw new NotFoundException("Jadwal dokter terkait tidak ditemukan.");
     }
 
-    const tanggalPelayanan = moment().format(
-      "YYYY-MM-DD"
-    );
+    const tanggalPelayanan = moment().format("YYYY-MM-DD");
 
     const report = await ReportAntrianRepository.findOrCreateReport({
       jadwalDokter: jadwalDokter,
@@ -176,7 +218,6 @@ export class DataAntrianService {
     );
     const kodeBooking = CodeGenerator.generateKodeBooking();
 
-   
     return {
       no_antrian_poli: noAntrianPoli,
       kode_booking: kodeBooking,
