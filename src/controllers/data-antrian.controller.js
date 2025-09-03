@@ -23,13 +23,32 @@ export class DataAntrianController {
     }
   }
 
+  static async antrianFarmasi(req, res, next) {
+    try {
+      const { faskesUuid } = req.author;
+      const token = req.headers.authorization;
+
+      await DataAntrianService.processAntrianFarmasi({
+        faskesUuid,
+        token,
+        body: req.body,
+      });
+
+      res.status(200).json({
+        message: "Proses antrian farmasi berhasil dibuat.",
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   //fungsi untuk registrasi dari layanan admisi
   static async regisAdmisi(req, res, next) {
     try {
-      const { rawat_jalan_uuid } = req.body;
-      if (!rawat_jalan_uuid) {
+      const { jadwal_dokter_uuid } = req.body;
+      if (!jadwal_dokter_uuid) {
         throw new BadRequestException(
-          "rawat_jalan_uuid wajib ada di dalam body request."
+          "jadwal_dokter_uuid wajib ada di dalam body request."
         );
       }
 
@@ -37,8 +56,8 @@ export class DataAntrianController {
         faskesUuid: req.author.faskesUuid,
         token: req.headers.authorization,
         requestData: req.body,
-        isPasienBaru: false,
-        tanggalPelayanan: null,
+        // isPasienBaru: false,
+        // tanggalPelayanan: null,
       };
 
       const generatedCodes = await DataAntrianService.processAdmisiRegistration(
@@ -46,7 +65,7 @@ export class DataAntrianController {
       );
 
       res.status(200).json({
-        message: "Nomor antrian berhasil digenerate dan diupdate.",
+        message: "Nomor antrian berhasil digenerate.",
         payload: generatedCodes,
       });
     } catch (err) {

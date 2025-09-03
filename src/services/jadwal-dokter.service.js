@@ -14,14 +14,15 @@ import moment from "moment";
 import { ToIndoDay } from "../helpers/to-indo-day.js";
 
 export class JadwalDokterService {
+
   //FOR MOBILE START
+
   static async getAvailableKuota({
     faskesUuid,
     dokterUuid,
     poliUuid,
     tanggalPelayanan,
   }) {
-    // Validasi input tanggal
     if (!tanggalPelayanan) {
       throw new BadRequestException("Tanggal pelayanan wajib diisi.");
     }
@@ -30,7 +31,6 @@ export class JadwalDokterService {
     const hariDalamInggris = tanggal.format("dddd");
     const hariDalamIndonesia = ToIndoDay.fromEng(hariDalamInggris);
 
-    // 1. Dapatkan semua jadwal dasar untuk hari tersebut
     const jadwalDasarList = await JadwalDokterRepository.findAllSchedulesByDay({
       faskesUuid,
       dokterUuid,
@@ -39,10 +39,9 @@ export class JadwalDokterService {
     });
 
     if (!jadwalDasarList || jadwalDasarList.length === 0) {
-      return []; // Kembalikan array kosong jika tidak ada jadwal sama sekali
+      return []; 
     }
 
-    // 2. Untuk setiap jadwal, cari laporannya dan hitung sisa kuota
     const jadwalDenganKuota = await Promise.all(
       jadwalDasarList.map(async (jadwalDasar) => {
         const report = await ReportAntrianRepository.findOrCreateReport({
@@ -232,14 +231,12 @@ export class JadwalDokterService {
 
   static async updateByDoctorAndLocation({ faskesUuid, params, body }) {
     return await TransactionService.run(async (tx) => {
-      // Validate the UUIDs
       const { doctor_uuid: dokterUuid, location_uuid: poliUuid } =
         ZodValidator.validate(
           JadwalDokterSchema.DOCTOR_LOCATION_UUID_PARAM,
           params
         );
 
-      // Validate the body
       const validated = ZodValidator.validate(JadwalDokterSchema.UPDATE, body);
       validated.dokterUuid = dokterUuid;
       validated.poliUuid = poliUuid;
@@ -263,7 +260,6 @@ export class JadwalDokterService {
         }),
       ]);
 
-      // If it is not exis, then throw the request is bad.
       if (!dokter) {
         throw new BadRequestException(
           "Dokter dengan uuid tersebut tidak ditemukan."
@@ -271,7 +267,6 @@ export class JadwalDokterService {
       }
       validated.code_antrian_dokter = dokter.code_antrian_dokter;
 
-      // If it is not exist, then throw the request is bad.
       if (!poli) {
         throw new BadRequestException(
           "Poli dengan uuid tersebut tidak ditemukan."
@@ -288,11 +283,9 @@ export class JadwalDokterService {
       const existingSchedules = jadwalDokter.jadwal_dokter;
       const uuidsToDelete = validated.deleted || [];
 
-      // Hitung jumlah jadwal yang akan tersisa setelah dihapus
       const remainingSchedulesCount =
         existingSchedules.length - uuidsToDelete.length;
 
-      // Jika user mencoba menghapus semua jadwal yang tersisa, tolak permintaan.
       if (existingSchedules.length > 0 && remainingSchedulesCount === 0) {
         throw new BadRequestException(
           "Tidak bisa menghapus jadwal terakhir. Gunakan endpoint DELETE untuk menghapus seluruh set jadwal dokter di poliklinik ini."
@@ -388,7 +381,6 @@ export class JadwalDokterService {
         });
       }
 
-      //durasi otomatis pada update
       if (validated.added && validated.added.length > 0) {
         validated.added.forEach((jadwal) => {
           jadwal.kuota = jadwal.kuota_jkn + jadwal.kuota_non_jkn;

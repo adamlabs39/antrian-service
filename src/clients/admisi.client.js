@@ -143,6 +143,9 @@ export class AdmisiClient {
   //fungsi untuk create pasien yang melakukan booking dengan menggunakan mobile app
   static async createRawatJalanMobile(body, faskesUuid, admisiApiKey) {
     try {
+      console.log("apikey admisi:", admisiApiKey);
+      console.log("request body:", body);
+      console.log("faskesUuid", faskesUuid)
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile`;
       const response = await axios.post(endpoint, body, {
         headers: {
