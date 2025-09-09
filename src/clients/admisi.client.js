@@ -8,14 +8,11 @@ import { NotFoundException } from "../exceptions/not-found.exception.js";
 //fungsi untuk mengecek pasien baru atau lama pada fitur apm
 export class AdmisiClient {
   static async checkPatient(body, token) {
-    console.log("Request Body:", body);
     try {
       const endpoint = `${ADMISI_API_URL}/patient/check-patient/apm`;
-      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
-      console.log("Response from checkPatient:", response.data);
       //pasien lama
       return response.data.payload || null;
     } catch (error) {
@@ -69,7 +66,6 @@ export class AdmisiClient {
   static async getTodayRegistrationCount(token) {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/today`;
-      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.get(endpoint, {
         headers: { Authorization: token },
       });
@@ -98,7 +94,6 @@ export class AdmisiClient {
   static async updateRawatJalan(rawatJalanUuid, codes, token) {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/${rawatJalanUuid}`;
-      console.log("Memanggil endpoint update:", endpoint);
 
       const response = await axios.put(endpoint, codes, {
         headers: {
@@ -115,8 +110,6 @@ export class AdmisiClient {
   static async updateAntrianFarmasi(rawatJalanUuid, codes, token) {
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/farmasi/${rawatJalanUuid}`;
-      console.log("Memanggil endpoint update:", endpoint);
-      console.log("body:", codes);
 
       const response = await axios.put(endpoint, codes, {
         headers: {
@@ -131,15 +124,12 @@ export class AdmisiClient {
   }
 
   static async printAntrian(body, token) {
-    // console.log("Memanggil endpoint printAntrian:", endpoint);
     try {
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/print-booking`;
-      console.log("Memanggil endpoint printAntrian:", endpoint);
 
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
-      console.log("Response from printAntrian:", response.data);
 
       if (!response.data.payload) {
         throw new NotFoundException("Kode booking tidak ditemukan atau tidak valid");
@@ -161,9 +151,6 @@ export class AdmisiClient {
   //fungsi untuk create pasien yang melakukan booking dengan menggunakan mobile app
   static async createRawatJalanMobile(body, faskesUuid, admisiApiKey) {
     try {
-      console.log("apikey admisi:", admisiApiKey);
-      console.log("request body:", body);
-      console.log("faskesUuid", faskesUuid)
       const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile`;
       const response = await axios.post(endpoint, body, {
         headers: {
@@ -196,7 +183,6 @@ export class AdmisiClient {
   }
 
   static async checkPatientMobile(body, faskesUuid, apiKey) {
-    console.log("apikey:", apiKey);
     try {
       // Menggunakan endpoint terpusat yang Anda berikan
       const endpoint = `${ADMISI_API_URL}/patient/check-patient`;
