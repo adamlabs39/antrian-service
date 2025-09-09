@@ -80,7 +80,6 @@ export class APMService {
           },
           ...basePayload,
         };
-        console.log("Final Payload for new patient:", finalPayload);
       } else {
         // Pasien lama
         finalPayload = {
@@ -163,7 +162,6 @@ export class APMService {
     tanggalPelayananString =
       body.tanggal_pelayanan || moment().format("YYYY-MM-DD");
 
-    // Validasi format tanggal yang sudah ditentukan.
     if (!moment(tanggalPelayananString, "YYYY-MM-DD", true).isValid()) {
       throw new BadRequestException(
         "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
@@ -191,28 +189,6 @@ export class APMService {
       }
     }
 
-    // const startDate = moment(tanggalPelayananString).startOf("day").unix();
-    // const endDate = moment(tanggalPelayananString).endOf("day").unix();
-
-    // const existingRegistrations = await AdmisiClient.getAllRawatJalanMobile({
-    //   startDate,
-    //   endDate,
-    //   faskesUuid,
-    //   admisiApiKey,
-    // });
-
-    // const alreadyRegistered = existingRegistrations.some(
-    //   (reg) =>
-    //     reg.patient?.no_identity === body.patient_data.no_identity &&
-    //     reg.schedule?.uuid === body.jadwal_dokter_uuid
-    // );
-
-    // if (alreadyRegistered) {
-    //   throw new BadRequestException(
-    //     "Pasien sudah terdaftar pada jadwal dokter ini untuk tanggal tersebut."
-    //   );
-    // }
-
     return TransactionService.run(async (transaction) => {
       const generatedCodes = await DataAntrianService.processRegistration({
         faskesUuid,
@@ -227,6 +203,7 @@ export class APMService {
       const basePayload = {
         platform: platform,
         jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+        jadwal_periksa: moment(tanggalPelayananString, "YYYY-MM-DD").unix(),
         ...generatedCodes,
       };
 
@@ -270,6 +247,25 @@ export class APMService {
     const payload = bookingDetail?.payload;
     if (!payload) {
       throw new BadRequestException("Data booking tidak ditemukan.");
+    }
+
+    const jadwalPeriksaUnix = payload?.jadwal_periksa;
+    if (!jadwalPeriksaUnix) {
+      throw new BadRequestException(
+        "Tanggal jadwal periksa tidak ditemukan pada data booking."
+      );
+    }
+
+    const tanggalJadwalPeriksa = moment.unix(jadwalPeriksaUnix);
+
+    const tanggalHariIni = moment();
+
+    if (!tanggalJadwalPeriksa.isSame(tanggalHariIni, "day")) {
+      throw new BadRequestException(
+        `Check-in gagal. Jadwal periksa Anda adalah untuk tanggal ${tanggalJadwalPeriksa.format(
+          "DD MMMM YYYY"
+        )}, bukan untuk hari ini.`
+      );
     }
 
     if (payload?.tanggal_checkin) {
