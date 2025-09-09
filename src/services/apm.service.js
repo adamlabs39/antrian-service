@@ -83,7 +83,6 @@ export class APMService {
           },
           ...basePayload,
         };
-        console.log("Final Payload for New Patient:", finalPayload);
       } else {
         // Pasien lama
         finalPayload = {
@@ -94,7 +93,6 @@ export class APMService {
             no_identity: checkResult.no_identity,
           },
         };
-        console.log("Final Payload for Existing Patient:", finalPayload);
       }
 
       const pendaftaran = await AdmisiClient.createRawatJalan(
@@ -144,7 +142,7 @@ export class APMService {
     return response;
   }
 
-  static async antrianFarmasi({kodeBooking, token}){
+  static async antrianFarmasi({ kodeBooking, token }) {
     const bookingDetail = await AdmisiClient.printAntrian(
       {
         kode_booking: kodeBooking,
@@ -152,7 +150,7 @@ export class APMService {
       token
     );
 
-   return bookingDetail;
+    return bookingDetail;
   }
 
   // FOR MOBILE
