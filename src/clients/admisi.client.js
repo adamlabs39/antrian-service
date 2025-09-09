@@ -112,6 +112,24 @@ export class AdmisiClient {
     }
   }
 
+  static async updateAntrianFarmasi(rawatJalanUuid, codes, token) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/farmasi/${rawatJalanUuid}`;
+      console.log("Memanggil endpoint update:", endpoint);
+      console.log("body:", codes);
+
+      const response = await axios.put(endpoint, codes, {
+        headers: {
+          Authorization: token,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
   static async printAntrian(body, token) {
     // console.log("Memanggil endpoint printAntrian:", endpoint);
     try {

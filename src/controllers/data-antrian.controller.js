@@ -1,5 +1,6 @@
 import { DataAntrianService } from "../services/data-antrian.service.js";
 import { FormatterService } from "../services/formatter.service.js";
+import { TransactionService } from "../services/transaction.service.js";
 
 export class DataAntrianController {
   //fungsi untuk registrasi dari layanan apm dan mobile
@@ -28,14 +29,24 @@ export class DataAntrianController {
       const { faskesUuid } = req.author;
       const token = req.headers.authorization;
 
-      await DataAntrianService.processAntrianFarmasi({
-        faskesUuid,
-        token,
-        body: req.body,
+      const result = await TransactionService.run(async (transaction) => {
+
+        const antrianData = await DataAntrianService.processAntrianFarmasi({
+          faskesUuid,
+          token,
+          body: req.body,
+          transaction, 
+        });
+
+        return antrianData;
       });
 
-      res.status(200).json({
-        message: "Proses antrian farmasi berhasil dibuat.",
+      res.status(201).json({
+        message:
+          "Nomor antrian farmasi berhasil dibuat dan data rawat jalan telah diperbarui.",
+        payload: {
+          no_antrian_farmasi: result.no_antrian_farmasi,
+        },
       });
     } catch (err) {
       next(err);

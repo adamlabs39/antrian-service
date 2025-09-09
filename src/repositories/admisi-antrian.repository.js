@@ -4,6 +4,12 @@ import { FormatterService } from "../services/formatter.service.js";
 import { PatientModel } from "@adameds/model-sdk/admisi";
 import { JadwalDokterModel } from "@adameds/model-sdk/antrian";
 import { Op } from "sequelize";
+import { includes } from "zod/v4";
+import {
+  LokasiModel,
+  PegawaiModel,
+  PractitionerModel,
+} from "@adameds/model-sdk/datamaster";
 
 const antrianAttributes = [
   "uuid",
@@ -22,6 +28,26 @@ export default class AdmisiAntrianRepository {
 
     if (snakeCase.patient_data) {
       const patientData = snakeCase.patient_data;
+      console.log("patientData:", patientData);
+
+      if (patientData.jadwal_dokter) {
+        if (
+          patientData.jadwal_dokter.practitioner &&
+          patientData.jadwal_dokter.practitioner.pegawai
+        ) {
+          patientData.jadwal_dokter.nama_dokter =
+            patientData.jadwal_dokter.practitioner.pegawai.name;
+
+          delete patientData.jadwal_dokter.practitioner;
+        }
+
+        if (patientData.jadwal_dokter.lokasi) {
+          patientData.jadwal_dokter.nama_poli =
+            patientData.jadwal_dokter.lokasi.name;
+
+          delete patientData.jadwal_dokter.lokasi;
+        }
+      }
 
       if (patientData.patient) {
         patientData.identity = patientData.patient.identity;
@@ -51,6 +77,7 @@ export default class AdmisiAntrianRepository {
     page,
     pageSize,
     noPagination = false,
+    transaction = null,
   }) {
     const where = { faskes_uuid: faskesUuid };
 
@@ -134,6 +161,28 @@ export default class AdmisiAntrianRepository {
                 "start_time",
                 "end_time",
               ],
+              include: [
+                {
+                  model: PractitionerModel,
+                  as: "practitioner",
+                  required: false,
+                  attributes: ["pegawai_uuid"],
+                  include: [
+                    {
+                      model: PegawaiModel,
+                      as: "pegawai",
+                      required: false,
+                      attributes: ["name"],
+                    },
+                  ],
+                },
+                {
+                  model: LokasiModel,
+                  as: "lokasi",
+                  required: false,
+                  attributes: ["name"],
+                },
+              ],
             },
             {
               model: PatientModel,
@@ -145,10 +194,14 @@ export default class AdmisiAntrianRepository {
         },
       ],
       attributes: antrianAttributes,
+      order: [["createdAt", "ASC"]],
     };
 
+    if (transaction) {
+      queryOptions.transaction = transaction;
+    }
+
     if (!noPagination) {
-      // ⬇️ kalau pakai pagination
       queryOptions.limit = limit;
       queryOptions.offset = offset;
 
@@ -163,7 +216,6 @@ export default class AdmisiAntrianRepository {
       };
     }
 
-    // ⬇️ kalau tanpa pagination
     const rows = await AntrianModel.findAll(queryOptions);
     return {
       pagination: null,
@@ -171,7 +223,7 @@ export default class AdmisiAntrianRepository {
     };
   }
 
-  static async findByUuid(uuid) {
+  static async findByUuid(uuid, options = {}) {
     const antrian = await AntrianModel.findByPk(uuid, {
       include: [
         {
@@ -201,6 +253,28 @@ export default class AdmisiAntrianRepository {
                 "start_time",
                 "end_time",
               ],
+              include: [
+                {
+                  model: PractitionerModel,
+                  as: "practitioner",
+                  required: false,
+                  attributes: ["pegawai_uuid"],
+                  include: [
+                    {
+                      model: PegawaiModel,
+                      as: "pegawai",
+                      required: false,
+                      attributes: ["name"],
+                    },
+                  ],
+                },
+                {
+                  model: LokasiModel,
+                  as: "lokasi",
+                  required: false,
+                  attributes: ["name"],
+                },
+              ],
             },
             {
               model: PatientModel,
@@ -212,6 +286,7 @@ export default class AdmisiAntrianRepository {
         },
       ],
       attributes: antrianAttributes,
+      ...options,
     });
 
     if (!antrian) return null;
@@ -219,13 +294,13 @@ export default class AdmisiAntrianRepository {
     return this.transform(antrian);
   }
 
-  static async create(data) {
-    const newAntrian = await AntrianModel.create(data);
-    return await this.findByUuid(newAntrian.uuid);
+  static async create(data, options = {}) {
+    const newAntrian = await AntrianModel.create(data, options);
+    return await this.findByUuid(newAntrian.uuid, options);
   }
 
-  static async update(uuid, data) {
-    await AntrianModel.update(data, { where: { uuid } });
-    return await this.findByUuid(uuid);
+  static async update(uuid, data, options = {}) {
+    await AntrianModel.update(data, { where: { uuid }, ...options });
+    return await this.findByUuid(uuid, options);
   }
 }

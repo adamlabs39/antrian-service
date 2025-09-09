@@ -83,7 +83,6 @@ export class APMService {
           },
           ...basePayload,
         };
-        console.log("Final Payload for New Patient:", finalPayload);
       } else {
         // Pasien lama
         finalPayload = {
@@ -94,7 +93,6 @@ export class APMService {
             no_identity: checkResult.no_identity,
           },
         };
-        console.log("Final Payload for Existing Patient:", finalPayload);
       }
 
       const pendaftaran = await AdmisiClient.createRawatJalan(
@@ -131,7 +129,7 @@ export class APMService {
 
     if (now.isAfter(endTime)) {
       throw new BadRequestException(
-        `Waktu check-in sudah kadaluarsa. Jam praktek dokter berakhir pukul ${jadwalDokter.end_time}.`
+        `Jadwal dokter sudah kadaluarsa. Jam praktek dokter berakhir pukul ${jadwalDokter.end_time}.`
       );
     }
 
@@ -142,6 +140,17 @@ export class APMService {
       token
     );
     return response;
+  }
+
+  static async antrianFarmasi({ kodeBooking, token }) {
+    const bookingDetail = await AdmisiClient.printAntrian(
+      {
+        kode_booking: kodeBooking,
+      },
+      token
+    );
+
+    return bookingDetail;
   }
 
   // FOR MOBILE
@@ -184,27 +193,27 @@ export class APMService {
       }
     }
 
-    const startDate = moment(tanggalPelayananString).startOf("day").unix();
-    const endDate = moment(tanggalPelayananString).endOf("day").unix();
+    // const startDate = moment(tanggalPelayananString).startOf("day").unix();
+    // const endDate = moment(tanggalPelayananString).endOf("day").unix();
 
-    const existingRegistrations = await AdmisiClient.getAllRawatJalanMobile({
-      startDate,
-      endDate,
-      faskesUuid,
-      admisiApiKey,
-    });
+    // const existingRegistrations = await AdmisiClient.getAllRawatJalanMobile({
+    //   startDate,
+    //   endDate,
+    //   faskesUuid,
+    //   admisiApiKey,
+    // });
 
-    const alreadyRegistered = existingRegistrations.some(
-      (reg) =>
-        reg.patient?.no_identity === body.patient_data.no_identity &&
-        reg.schedule?.uuid === body.jadwal_dokter_uuid
-    );
+    // const alreadyRegistered = existingRegistrations.some(
+    //   (reg) =>
+    //     reg.patient?.no_identity === body.patient_data.no_identity &&
+    //     reg.schedule?.uuid === body.jadwal_dokter_uuid
+    // );
 
-    if (alreadyRegistered) {
-      throw new BadRequestException(
-        "Pasien sudah terdaftar pada jadwal dokter ini untuk tanggal tersebut."
-      );
-    }
+    // if (alreadyRegistered) {
+    //   throw new BadRequestException(
+    //     "Pasien sudah terdaftar pada jadwal dokter ini untuk tanggal tersebut."
+    //   );
+    // }
 
     return TransactionService.run(async (transaction) => {
       const generatedCodes = await DataAntrianService.processRegistration({

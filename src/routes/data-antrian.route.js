@@ -16,3 +16,5 @@ dataAntrianRouter.post(
   "/admisi-registration",
   DataAntrianController.regisAdmisi
 );
+
+dataAntrianRouter.post("/farmasi", DataAntrianController.antrianFarmasi);

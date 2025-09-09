@@ -79,23 +79,23 @@ AntrianModel.init(
     tableName: "antrian",
     underscored: true,
     timestamps: false,
-    hooks: {
-      ...hookModel,
-      async beforeCreate(instance) {
-        if (instance.pelayanan === "farmasi" && instance.jenisResep) {
-          const count = await AntrianModel.count({
-            where: {
-              pelayanan: "farmasi",
-              createdAt: {
-                [Op.gte]: moment().startOf("day").unix(),
-                [Op.lt]: moment().endOf("day").unix(),
-              },
-            },
-          });
+    // hooks: {
+    //   ...hookModel,
+    //   async beforeCreate(instance) {
+    //     if (instance.pelayanan === "farmasi" && instance.jenisResep) {
+    //       const count = await AntrianModel.count({
+    //         where: {
+    //           pelayanan: "farmasi",
+    //           createdAt: {
+    //             [Op.gte]: moment().startOf("day").unix(),
+    //             [Op.lt]: moment().endOf("day").unix(),
+    //           },
+    //         },
+    //       });
 
-          instance.kodeFarmasi = `${instance.jenisResep}-${count + 1}`;
-        }
-      },
-    },
+    //       instance.kodeFarmasi = `${instance.jenisResep}-${count + 1}`;
+    //     }
+    //   },
+    // },
   }
 );
