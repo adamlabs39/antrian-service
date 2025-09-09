@@ -14,21 +14,18 @@ export class APMService {
       throw new BadRequestException("Data pasien (patient_data) wajib diisi.");
     }
 
-    // Cek field 'identity'
     if (!patientData.identity) {
       throw new BadRequestException("Jenis identitas wajib diisi.");
     }
 
-    // Cek field 'no_identity'
     if (!patientData.no_identity) {
       throw new BadRequestException("Nomor identitas wajib diisi.");
     }
 
-    // Hitung tanggal hari ini (karena APM selalu hari ini)
     const startDate = moment().startOf("day").unix();
     const endDate = moment().endOf("day").unix();
+    const tanggalKunjugan = moment().unix();
 
-    // Ambil semua pendaftaran hari ini
     const rawatJalanHariIni = await AdmisiClient.getAllRawatJalan({
       faskesUuid,
       startDate,
@@ -36,7 +33,6 @@ export class APMService {
       token,
     });
 
-    // Cek apakah pasien dengan no_identity + jadwal_dokter_uuid sudah ada
     const sudahTerdaftar = rawatJalanHariIni.some(
       (rj) =>
         rj.patient?.no_identity === patientData.no_identity &&
@@ -70,6 +66,7 @@ export class APMService {
       const basePayload = {
         platform: platform,
         jadwal_dokter_uuid: body.jadwal_dokter_uuid,
+        jadwal_periksa: tanggalKunjugan,
         ...generatedCodes,
       };
 
@@ -83,6 +80,7 @@ export class APMService {
           },
           ...basePayload,
         };
+        console.log("Final Payload for new patient:", finalPayload);
       } else {
         // Pasien lama
         finalPayload = {

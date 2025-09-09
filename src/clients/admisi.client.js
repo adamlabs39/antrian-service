@@ -8,14 +8,11 @@ import { NotFoundException } from "../exceptions/not-found.exception.js";
 //fungsi untuk mengecek pasien baru atau lama pada fitur apm
 export class AdmisiClient {
   static async checkPatient(body, token) {
-    console.log("Request Body:", body);
     try {
       const endpoint = `${ADMISI_API_URL}/patient/check-patient/apm`;
-      console.log("Memanggil endpoint:", endpoint);
       const response = await axios.post(endpoint, body, {
         headers: { Authorization: token },
       });
-      console.log("Response from checkPatient:", response.data);
       //pasien lama
       return response.data.payload || null;
     } catch (error) {
