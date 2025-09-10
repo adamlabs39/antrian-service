@@ -1,5 +1,6 @@
 import { Op } from "sequelize";
 import ReportAntrianModel from "../models/report-antrian.model.js";
+import { NotFoundException } from "../exceptions/not-found.exception.js";
 
 export class ReportAntrianRepository {
   /**
@@ -45,7 +46,7 @@ export class ReportAntrianRepository {
   }
 
   static async isPatientAlreadyBooked({
-    patientIdentity, 
+    patientIdentity,
     jadwalDokterUuid,
     tanggalPelayanan,
     transaction,
@@ -54,12 +55,34 @@ export class ReportAntrianRepository {
       where: {
         jadwalDokterUuid,
         tanggalPelayanan,
-        patientIdentity, // pastikan kolom ini ada di report_antrian
+        patientIdentity,
         deletedAt: null,
       },
       transaction,
     });
 
-    return !!existing; // true kalau sudah ada
+    return !!existing;
+  }
+
+  static async updateKuotaSisa({
+    jadwalDokterUuid,
+    tanggalPelayanan,
+    increment = 1,
+    transaction,
+  }) {
+    const report = await ReportAntrianModel.findOne({
+      where: { jadwalDokterUuid, tanggalPelayanan },
+      transaction,
+    });
+
+    if (!report) {
+      throw new NotFoundException("Report antrian tidak ditemukan");
+    }
+
+    // update kuota_sisa
+    report.kuotaSisa = report.kuotaSisa + increment;
+
+    await report.save({ transaction });
+    return report;
   }
 }

@@ -30,7 +30,6 @@ export class DataAntrianService {
         requestData.tanggal_periksa ||
         moment().format("YYYY-MM-DD");
 
-      // Validasi format tanggal
       if (!moment(tanggalDariRequest, "YYYY-MM-DD", true).isValid()) {
         throw new BadRequestException(
           "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
@@ -41,7 +40,6 @@ export class DataAntrianService {
 
     let totalRegistrasiHariIni = 0;
     if (isPasienBaru) {
-      // Hanya panggil jika pasien baru
       if (platform === "MOBILE") {
         totalRegistrasiHariIni =
           await AdmisiClient.getTodayRegistrationCountMobile(faskesUuid, token);
@@ -55,7 +53,7 @@ export class DataAntrianService {
     let noAntrianAdmisi = null;
     let noAntrianPoli = null;
 
-    // === GENERATE NOMOR POLI ===
+    // GENERATE NOMOR ANTRIAN POLI
     if (requestData.jadwal_dokter_uuid) {
       const jadwalHariIni = await JadwalDokterRepository.findJadwalByUuid(
         requestData.jadwal_dokter_uuid,
@@ -85,11 +83,11 @@ export class DataAntrianService {
         { transaction }
       );
 
-      if (report.kuotaTerpakai >= report.kuota) {
-        throw new ConflictException(
-          "Kuota antrian untuk jadwal ini sudah penuh."
-        );
-      }
+       if (report.kuotaSisa <= 0) {
+         throw new ConflictException(
+           "Kuota antrian untuk jadwal ini sudah penuh."
+         );
+       }
 
       const noUrutPoli = report.kuotaTerpakai + 1;
 
@@ -108,7 +106,7 @@ export class DataAntrianService {
       );
     }
 
-    // === GENERATE NOMOR ADMISI (khusus pasien baru) ===
+    //  GENERATE NOMOR ANTRIAN ADMISI (khusus pasien baru) ===
     if (isPasienBaru) {
       const noUrutAdmisi = totalRegistrasiHariIni + 1;
       noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
@@ -202,7 +200,7 @@ export class DataAntrianService {
       tanggalPelayanan,
     });
 
-    if (report.kuotaTerpakai >= report.kuota) {
+    if (report.kuotaSisa <= 0) {
       throw new ConflictException(
         "Kuota antrian untuk jadwal ini sudah penuh."
       );

@@ -262,9 +262,9 @@ export class APMService {
 
     if (!tanggalJadwalPeriksa.isSame(tanggalHariIni, "day")) {
       throw new BadRequestException(
-        `Check-in gagal. Jadwal periksa Anda adalah untuk tanggal ${tanggalJadwalPeriksa.format(
+        `Waktu check-in tidak sesuai dengan jadwal periksa (${tanggalJadwalPeriksa.format(
           "DD MMMM YYYY"
-        )}, bukan untuk hari ini.`
+        )})`
       );
     }
 

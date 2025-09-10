@@ -59,6 +59,7 @@ const jwtExemptEndpoints = [
   `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
   `${BASE_URL}/mobile/apm/process-registration`,
   `${BASE_URL}/mobile/admisi-antrian`,
+  `${BASE_URL}/mobile/report-antrian/cancle-booking`,
 ];
 
 app.use((req, res, next) => {

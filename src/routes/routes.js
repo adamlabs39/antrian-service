@@ -7,6 +7,7 @@ import { jadwalDokterMobileRouter } from "./mobile-jadwal-dokter.route.js";
 import { APMMobileRouter } from "./mobile-apm.route.js";
 import { AdmisiAntrianRouter } from "./admisi-antrian.route.js";
 import { AdmisiAntrianMobileRouter } from "./mobile-admisi-antrian.route.js";
+import { ReportAntrianRouter } from "./report-antrian.route.js";
 
 export const router = express.Router();
 
@@ -28,3 +29,5 @@ router.use("/mobile/jadwal-dokter", jadwalDokterMobileRouter);
 router.use("/mobile/apm", APMMobileRouter);
 
 router.use("/mobile/admisi-antrian", AdmisiAntrianMobileRouter);
+
+router.use("/mobile/report-antrian", ReportAntrianRouter);
