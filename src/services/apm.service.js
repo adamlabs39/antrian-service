@@ -147,6 +147,18 @@ export class APMService {
       token
     );
 
+     const payload = bookingDetail?.payload;
+     if (!payload) {
+       throw new BadRequestException("Data booking tidak ditemukan.");
+     }
+
+     const antrianFarmasi = payload?.no_antrian_farmasi;
+     if (!antrianFarmasi) {
+       throw new BadRequestException(
+         "nomor antrian farmasi tidak ditemukan"
+       );
+     }
+
     return bookingDetail;
   }
 
