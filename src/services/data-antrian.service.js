@@ -132,11 +132,35 @@ export class DataAntrianService {
     const { patientUuid, rawatJalanUuid, jenisResep, jenisPasien, pasienBaru } =
       camelCaseBody;
 
-    if (!jenisResep) {
-      throw new BadRequestException(
-        "jenis_resep wajib diisi untuk antrian farmasi."
-      );
-    }
+       if ( !patientUuid ) {
+         throw new BadRequestException(
+           "patient_uuid wajib diisi untuk antrian farmasi."
+         );
+       }
+
+       if ( !rawatJalanUuid ) {
+         throw new BadRequestException(
+           "rawat_jalan_uuid wajib diisi untuk antrian farmasi."
+         );
+       }
+
+       if ( !jenisResep ) {
+         throw new BadRequestException(
+           "jenis_resep wajib diisi untuk antrian farmasi."
+         );
+       }
+
+       if(!jenisPasien){
+          throw new BadRequestException(
+            "jenis_pasien wajib diisi untuk antrian farmasi."
+          );
+       }
+
+       if(!pasienBaru){
+          throw new BadRequestException(
+            "pasien_baru wajib diisi untuk antrian farmasi."
+          );
+       }
 
     const totalFarmasiHariIni = await AntrianRepository.countTodayByPelayanan({
       faskesUuid,
