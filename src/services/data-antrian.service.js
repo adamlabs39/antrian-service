@@ -30,7 +30,6 @@ export class DataAntrianService {
         requestData.tanggal_periksa ||
         moment().format("YYYY-MM-DD");
 
-      // Validasi format tanggal
       if (!moment(tanggalDariRequest, "YYYY-MM-DD", true).isValid()) {
         throw new BadRequestException(
           "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
@@ -41,7 +40,6 @@ export class DataAntrianService {
 
     let totalRegistrasiHariIni = 0;
     if (isPasienBaru) {
-      // Hanya panggil jika pasien baru
       if (platform === "MOBILE") {
         totalRegistrasiHariIni =
           await AdmisiClient.getTodayRegistrationCountMobile(faskesUuid, token);
@@ -55,7 +53,7 @@ export class DataAntrianService {
     let noAntrianAdmisi = null;
     let noAntrianPoli = null;
 
-    // === GENERATE NOMOR POLI ===
+    // GENERATE NOMOR ANTRIAN POLI
     if (requestData.jadwal_dokter_uuid) {
       const jadwalHariIni = await JadwalDokterRepository.findJadwalByUuid(
         requestData.jadwal_dokter_uuid,
@@ -85,18 +83,20 @@ export class DataAntrianService {
         { transaction }
       );
 
-      if (report.kuotaTerpakai >= report.kuota) {
+      if (report.jumlahAntrianAktif >= report.kuota) {
         throw new ConflictException(
           "Kuota antrian untuk jadwal ini sudah penuh."
         );
       }
 
-      const noUrutPoli = report.kuotaTerpakai + 1;
+      // 2. Nomor urut baru diambil dari nomor antrian terakhir
+      const noUrutPoli = report.noAntrianTerakhir + 1;
 
+      // 3. Update report dengan kolom baru
       await report.update(
         {
-          kuotaTerpakai: noUrutPoli,
-          kuotaSisa: report.kuota - noUrutPoli,
+          noAntrianTerakhir: noUrutPoli,
+          jumlahAntrianAktif: report.jumlahAntrianAktif + 1,
         },
         { transaction }
       );
@@ -108,7 +108,7 @@ export class DataAntrianService {
       );
     }
 
-    // === GENERATE NOMOR ADMISI (khusus pasien baru) ===
+    //  GENERATE NOMOR ANTRIAN ADMISI (khusus pasien baru) ===
     if (isPasienBaru) {
       const noUrutAdmisi = totalRegistrasiHariIni + 1;
       noAntrianAdmisi = CodeGenerator.generateNoAntrianAdmisi(noUrutAdmisi);
@@ -131,12 +131,71 @@ export class DataAntrianService {
 
   static async processAntrianFarmasi({ faskesUuid, body, token, transaction }) {
     const camelCaseBody = FormatterService.toCamelCase(body);
-    const { patientUuid, rawatJalanUuid, jenisResep, jenisPasien, pasienBaru } =
-      camelCaseBody;
+    const {
+      patientUuid,
+      rawatJalanUuid,
+      jenisResep,
+      jenisPasien,
+      pasienBaru,
+      kodeBooking,
+    } = camelCaseBody;
+
+    const bookingDetail = await AdmisiClient.printAntrian(
+      { kode_booking: kodeBooking },
+      token
+    );
+    const bookingPayload = bookingDetail.payload;
+    console.log(bookingPayload);
+
+    if (bookingPayload.no_antrian_farmasi !== null) {
+      throw new ConflictException(
+        "Pasien sudah memiliki nomor antrian farmasi."
+      );
+    }
+    if (
+      !bookingPayload.patient ||
+      bookingPayload.patient.uuid !== patientUuid
+    ) {
+      console.log("patient uuid:", bookingPayload.patient.uuid);
+      console.log("patientUuid:", patientUuid);
+      throw new BadRequestException(
+        "Patient UUID yang dikirim tidak cocok dengan data dari kode booking."
+      );
+    }
+
+    if (bookingPayload.uuid !== rawatJalanUuid) {
+      throw new BadRequestException(
+        "rawat Jalan Uuid yang dikirim tidak cocok dengan data dari kode booking."
+      );
+    }
+
+    if (!patientUuid) {
+      throw new BadRequestException(
+        "patient_uuid wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    if (!rawatJalanUuid) {
+      throw new BadRequestException(
+        "rawat_jalan_uuid wajib diisi untuk antrian farmasi."
+      );
+    }
 
     if (!jenisResep) {
       throw new BadRequestException(
         "jenis_resep wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    if (!jenisPasien) {
+      throw new BadRequestException(
+        "jenis_pasien wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    if (!pasienBaru) {
+      throw new BadRequestException(
+        "pasien_baru wajib diisi untuk antrian farmasi."
       );
     }
 
@@ -162,7 +221,6 @@ export class DataAntrianService {
         jenisPasien,
         pasienBaru,
         jenisResep,
-        // kodeFarmasi: noAntrianFarmasi,
       },
       { transaction }
     );
@@ -202,17 +260,20 @@ export class DataAntrianService {
       tanggalPelayanan,
     });
 
-    if (report.kuotaTerpakai >= report.kuota) {
+    // 1. Validasi kuota berdasarkan jumlah antrian aktif
+    if (report.jumlahAntrianAktif >= report.kuota) {
       throw new ConflictException(
         "Kuota antrian untuk jadwal ini sudah penuh."
       );
     }
 
-    const noUrutPoli = report.kuotaTerpakai + 1;
+    // 2. Nomor urut baru diambil dari nomor antrian terakhir
+    const noUrutPoli = report.noAntrianTerakhir + 1;
 
+    // 3. Update report dengan kolom baru
     await report.update({
-      kuotaTerpakai: noUrutPoli,
-      kuotaSisa: report.kuota - noUrutPoli,
+      noAntrianTerakhir: noUrutPoli,
+      jumlahAntrianAktif: report.jumlahAntrianAktif + 1,
     });
 
     const noAntrianPoli = CodeGenerator.generateNoAntrianPoli(

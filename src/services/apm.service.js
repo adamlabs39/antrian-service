@@ -47,6 +47,7 @@ export class APMService {
 
     const checkBody = {
       faskes_uuid: faskesUuid,
+      identity: body.patient_data?.identity,
       no_identity: body.patient_data?.no_identity,
     };
 
@@ -146,6 +147,18 @@ export class APMService {
       },
       token
     );
+
+     const payload = bookingDetail?.payload;
+     if (!payload) {
+       throw new BadRequestException("Data booking tidak ditemukan.");
+     }
+
+     const antrianFarmasi = payload?.no_antrian_farmasi;
+     if (!antrianFarmasi) {
+       throw new BadRequestException(
+         "nomor antrian farmasi tidak ditemukan"
+       );
+     }
 
     return bookingDetail;
   }
@@ -262,9 +275,9 @@ export class APMService {
 
     if (!tanggalJadwalPeriksa.isSame(tanggalHariIni, "day")) {
       throw new BadRequestException(
-        `Check-in gagal. Jadwal periksa Anda adalah untuk tanggal ${tanggalJadwalPeriksa.format(
+        `Waktu check-in tidak sesuai dengan jadwal periksa (${tanggalJadwalPeriksa.format(
           "DD MMMM YYYY"
-        )}, bukan untuk hari ini.`
+        )})`
       );
     }
 

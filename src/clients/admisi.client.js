@@ -184,7 +184,6 @@ export class AdmisiClient {
 
   static async checkPatientMobile(body, faskesUuid, apiKey) {
     try {
-      // Menggunakan endpoint terpusat yang Anda berikan
       const endpoint = `${ADMISI_API_URL}/patient/check-patient`;
       const response = await axios.post(endpoint, body, {
         headers: {
@@ -195,10 +194,8 @@ export class AdmisiClient {
       return response.data.payload;
     } catch (error) {
       if (error.response?.status === 404) {
-        // Jika 404, pasien tidak ditemukan, kembalikan null agar bisa dideteksi sbg pasien baru
         return null;
       }
-      // Untuk error lain, gunakan handler umum
       handleApiError(error);
     }
   }
