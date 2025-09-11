@@ -30,4 +30,4 @@ router.use("/mobile/apm", APMMobileRouter);
 
 router.use("/mobile/admisi-antrian", AdmisiAntrianMobileRouter);
 
-// router.use("/mobile/report-antrian", ReportAntrianRouter);
+router.use("/mobile/report-antrian", ReportAntrianRouter);

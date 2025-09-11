@@ -1,30 +1,32 @@
+import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import { ReportAntrianService } from "../services/report-antrian.service.js";
 
 export class ReportAntrianController {
   /**
-   * Cancel booking → kuota sisa bertambah
+   * Mengurangi jumlah antrian aktif saat booking dibatalkan.
    */
   static async cancelBooking(req, res, next) {
     try {
       const { jadwalDokterUuid, tanggalPelayanan } = req.body;
 
+      // Validasi input
       if (!jadwalDokterUuid || !tanggalPelayanan) {
-        return res.status(400).json({
-          success: false,
-          message: "jadwalDokterUuid dan tanggalPelayanan wajib diisi",
-        });
+        throw new BadRequestException(
+          "jadwalDokterUuid dan tanggalPelayanan wajib diisi"
+        );
       }
 
       const result = await ReportAntrianService.cancelBooking({
         jadwalDokterUuid,
         tanggalPelayanan,
       });
-
+    
+      // Pesan dan data respons disesuaikan dengan logika baru
       return res.json({
         success: true,
-        message: "Kuota sisa berhasil diupdate",
+        message: "Jumlah antrian aktif berhasil diperbarui.",
         data: {
-          kuotaSisa: result.kuotaSisa,
+          jumlahAntrianAktif: result.jumlahAntrianAktif,
         },
       });
     } catch (err) {

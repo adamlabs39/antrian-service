@@ -53,7 +53,9 @@ export class JadwalDokterService {
           jadwal_dokter_uuid: jadwalDasar.uuid,
           start_time: jadwalDasar.startTime,
           end_time: jadwalDasar.endTime,
-          sisa_kuota: report.kuotaSisa,
+          total_kuota: report.kuota,
+          jumlah_antrian_aktif: report.jumlahAntrianAktif,
+
         };
       })
     );
