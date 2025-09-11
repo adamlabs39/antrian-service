@@ -26,7 +26,7 @@ ReportAntrianModel.init(
       allowNull: false,
     },
     tanggalPelayanan: {
-      type: DataTypes.DATEONLY, 
+      type: DataTypes.DATEONLY,
       allowNull: false,
     },
     jadwalDokterUuid: {
@@ -45,11 +45,11 @@ ReportAntrianModel.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    kuotaTerpakai: {
+    noAntrianTerakhir: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    kuotaSisa: {
+    jumlahAntrianAktif: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },

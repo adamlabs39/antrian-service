@@ -47,6 +47,7 @@ export class APMService {
 
     const checkBody = {
       faskes_uuid: faskesUuid,
+      identity: body.patient_data?.identity,
       no_identity: body.patient_data?.no_identity,
     };
 

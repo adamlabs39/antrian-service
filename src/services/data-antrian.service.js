@@ -83,18 +83,20 @@ export class DataAntrianService {
         { transaction }
       );
 
-      if (report.kuotaSisa <= 0) {
+      if (report.jumlahAntrianAktif >= report.kuota) {
         throw new ConflictException(
           "Kuota antrian untuk jadwal ini sudah penuh."
         );
       }
 
-      const noUrutPoli = report.kuotaTerpakai + 1;
+      // 2. Nomor urut baru diambil dari nomor antrian terakhir
+      const noUrutPoli = report.noAntrianTerakhir + 1;
 
+      // 3. Update report dengan kolom baru
       await report.update(
         {
-          kuotaTerpakai: noUrutPoli,
-          kuotaSisa: report.kuota - noUrutPoli,
+          noAntrianTerakhir: noUrutPoli,
+          jumlahAntrianAktif: report.jumlahAntrianAktif + 1,
         },
         { transaction }
       );
@@ -145,22 +147,21 @@ export class DataAntrianService {
     const bookingPayload = bookingDetail.payload;
     console.log(bookingPayload);
 
-    if (bookingPayload.no_antrian_farmasi !== null ) {
+    if (bookingPayload.no_antrian_farmasi !== null) {
       throw new ConflictException(
         "Pasien sudah memiliki nomor antrian farmasi."
       );
-
     }
-     if (
-       !bookingPayload.patient ||
-       bookingPayload.patient.uuid !== patientUuid
-     ) {
+    if (
+      !bookingPayload.patient ||
+      bookingPayload.patient.uuid !== patientUuid
+    ) {
       console.log("patient uuid:", bookingPayload.patient.uuid);
       console.log("patientUuid:", patientUuid);
-       throw new BadRequestException(
-         "Patient UUID yang dikirim tidak cocok dengan data dari kode booking."
-       );
-     }
+      throw new BadRequestException(
+        "Patient UUID yang dikirim tidak cocok dengan data dari kode booking."
+      );
+    }
 
     if (bookingPayload.uuid !== rawatJalanUuid) {
       throw new BadRequestException(
@@ -259,17 +260,20 @@ export class DataAntrianService {
       tanggalPelayanan,
     });
 
-    if (report.kuotaSisa <= 0) {
+    // 1. Validasi kuota berdasarkan jumlah antrian aktif
+    if (report.jumlahAntrianAktif >= report.kuota) {
       throw new ConflictException(
         "Kuota antrian untuk jadwal ini sudah penuh."
       );
     }
 
-    const noUrutPoli = report.kuotaTerpakai + 1;
+    // 2. Nomor urut baru diambil dari nomor antrian terakhir
+    const noUrutPoli = report.noAntrianTerakhir + 1;
 
+    // 3. Update report dengan kolom baru
     await report.update({
-      kuotaTerpakai: noUrutPoli,
-      kuotaSisa: report.kuota - noUrutPoli,
+      noAntrianTerakhir: noUrutPoli,
+      jumlahAntrianAktif: report.jumlahAntrianAktif + 1,
     });
 
     const noAntrianPoli = CodeGenerator.generateNoAntrianPoli(

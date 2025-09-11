@@ -21,8 +21,8 @@ export class ReportAntrianRepository {
         practitionerName: jadwalDokter.practitioner.pegawai.name,
         locationName: jadwalDokter.lokasi.name,
         kuota: jadwalDokter.kuota,
-        kuotaTerpakai: 0,
-        kuotaSisa: jadwalDokter.kuota,
+        noAntrianTerakhir: 0,
+        jumlahAntrianAktif: 0,
       },
       transaction,
     });
@@ -35,7 +35,7 @@ export class ReportAntrianRepository {
         jadwalDokterUuid: {
           [Op.in]: jadwalDokterUuids,
         },
-        kuotaTerpakai: {
+        jumlahAntrianAktif: {
           [Op.gt]: 0,
         },
         deletedAt: null,
@@ -45,44 +45,59 @@ export class ReportAntrianRepository {
     return count;
   }
 
-  static async isPatientAlreadyBooked({
-    patientIdentity,
+  static async findReportByJadwalAndDate(
     jadwalDokterUuid,
     tanggalPelayanan,
-    transaction,
-  }) {
-    const existing = await ReportAntrianModel.findOne({
+    { transaction } = {}
+  ) {
+    const report = await ReportAntrianModel.findOne({
       where: {
         jadwalDokterUuid,
         tanggalPelayanan,
-        patientIdentity,
-        deletedAt: null,
       },
       transaction,
     });
-
-    return !!existing;
-  }
-
-  static async updateKuotaSisa({
-    jadwalDokterUuid,
-    tanggalPelayanan,
-    increment = 1,
-    transaction,
-  }) {
-    const report = await ReportAntrianModel.findOne({
-      where: { jadwalDokterUuid, tanggalPelayanan },
-      transaction,
-    });
-
-    if (!report) {
-      throw new NotFoundException("Report antrian tidak ditemukan");
-    }
-
-    // update kuota_sisa
-    report.kuotaSisa = report.kuotaSisa + increment;
-
-    await report.save({ transaction });
     return report;
   }
+
+  // static async isPatientAlreadyBooked({
+  //   patientIdentity,
+  //   jadwalDokterUuid,
+  //   tanggalPelayanan,
+  //   transaction,
+  // }) {
+  //   const existing = await ReportAntrianModel.findOne({
+  //     where: {
+  //       jadwalDokterUuid,
+  //       tanggalPelayanan,
+  //       patientIdentity,
+  //       deletedAt: null,
+  //     },
+  //     transaction,
+  //   });
+
+  //   return !!existing;
+  // }
+
+  // static async updateKuotaSisa({
+  //   jadwalDokterUuid,
+  //   tanggalPelayanan,
+  //   increment = 1,
+  //   transaction,
+  // }) {
+  //   const report = await ReportAntrianModel.findOne({
+  //     where: { jadwalDokterUuid, tanggalPelayanan },
+  //     transaction,
+  //   });
+
+  //   if (!report) {
+  //     throw new NotFoundException("Report antrian tidak ditemukan");
+  //   }
+
+  //   // update kuota_sisa
+  //   report.kuotaSisa = report.kuotaSisa + increment;
+
+  //   await report.save({ transaction });
+  //   return report;
+  // }
 }
