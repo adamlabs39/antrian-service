@@ -83,11 +83,11 @@ export class DataAntrianService {
         { transaction }
       );
 
-       if (report.kuotaSisa <= 0) {
-         throw new ConflictException(
-           "Kuota antrian untuk jadwal ini sudah penuh."
-         );
-       }
+      if (report.kuotaSisa <= 0) {
+        throw new ConflictException(
+          "Kuota antrian untuk jadwal ini sudah penuh."
+        );
+      }
 
       const noUrutPoli = report.kuotaTerpakai + 1;
 
@@ -129,38 +129,74 @@ export class DataAntrianService {
 
   static async processAntrianFarmasi({ faskesUuid, body, token, transaction }) {
     const camelCaseBody = FormatterService.toCamelCase(body);
-    const { patientUuid, rawatJalanUuid, jenisResep, jenisPasien, pasienBaru } =
-      camelCaseBody;
+    const {
+      patientUuid,
+      rawatJalanUuid,
+      jenisResep,
+      jenisPasien,
+      pasienBaru,
+      kodeBooking,
+    } = camelCaseBody;
 
-       if ( !patientUuid ) {
-         throw new BadRequestException(
-           "patient_uuid wajib diisi untuk antrian farmasi."
-         );
-       }
+    const bookingDetail = await AdmisiClient.printAntrian(
+      { kode_booking: kodeBooking },
+      token
+    );
+    const bookingPayload = bookingDetail.payload;
+    console.log(bookingPayload);
 
-       if ( !rawatJalanUuid ) {
-         throw new BadRequestException(
-           "rawat_jalan_uuid wajib diisi untuk antrian farmasi."
-         );
-       }
+    if (bookingPayload.no_antrian_farmasi !== null ) {
+      throw new ConflictException(
+        "Pasien sudah memiliki nomor antrian farmasi."
+      );
 
-       if ( !jenisResep ) {
-         throw new BadRequestException(
-           "jenis_resep wajib diisi untuk antrian farmasi."
-         );
-       }
+    }
+     if (
+       !bookingPayload.patient ||
+       bookingPayload.patient.uuid !== patientUuid
+     ) {
+      console.log("patient uuid:", bookingPayload.patient.uuid);
+      console.log("patientUuid:", patientUuid);
+       throw new BadRequestException(
+         "Patient UUID yang dikirim tidak cocok dengan data dari kode booking."
+       );
+     }
 
-       if(!jenisPasien){
-          throw new BadRequestException(
-            "jenis_pasien wajib diisi untuk antrian farmasi."
-          );
-       }
+    if (bookingPayload.uuid !== rawatJalanUuid) {
+      throw new BadRequestException(
+        "rawat Jalan Uuid yang dikirim tidak cocok dengan data dari kode booking."
+      );
+    }
 
-       if(!pasienBaru){
-          throw new BadRequestException(
-            "pasien_baru wajib diisi untuk antrian farmasi."
-          );
-       }
+    if (!patientUuid) {
+      throw new BadRequestException(
+        "patient_uuid wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    if (!rawatJalanUuid) {
+      throw new BadRequestException(
+        "rawat_jalan_uuid wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    if (!jenisResep) {
+      throw new BadRequestException(
+        "jenis_resep wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    if (!jenisPasien) {
+      throw new BadRequestException(
+        "jenis_pasien wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    if (!pasienBaru) {
+      throw new BadRequestException(
+        "pasien_baru wajib diisi untuk antrian farmasi."
+      );
+    }
 
     const totalFarmasiHariIni = await AntrianRepository.countTodayByPelayanan({
       faskesUuid,
@@ -184,7 +220,6 @@ export class DataAntrianService {
         jenisPasien,
         pasienBaru,
         jenisResep,
-        // kodeFarmasi: noAntrianFarmasi,
       },
       { transaction }
     );
