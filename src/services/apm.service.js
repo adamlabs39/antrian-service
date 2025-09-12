@@ -148,17 +148,24 @@ export class APMService {
       token
     );
 
-     const payload = bookingDetail?.payload;
-     if (!payload) {
-       throw new BadRequestException("Data booking tidak ditemukan.");
-     }
+    const payload = bookingDetail?.payload;
 
-     const antrianFarmasi = payload?.no_antrian_farmasi;
-     if (!antrianFarmasi) {
-       throw new BadRequestException(
-         "nomor antrian farmasi tidak ditemukan"
-       );
-     }
+    if (!payload) {
+      throw new BadRequestException("Data booking tidak ditemukan.");
+    }
+
+    const antrianFarmasi = payload?.no_antrian_farmasi;
+    if (!antrianFarmasi) {
+      throw new BadRequestException("nomor antrian farmasi tidak ditemukan");
+    }
+
+    const tanggalHariIni = moment().startOf("day");
+
+    const tanggalPeriksa = moment.unix(payload.jadwal_periksa).startOf("day");
+
+    if (!tanggalHariIni.isSame(tanggalPeriksa, "day")) {
+      throw new BadRequestException("Kode booking sudah kadaluarsa.");
+    }
 
     return bookingDetail;
   }

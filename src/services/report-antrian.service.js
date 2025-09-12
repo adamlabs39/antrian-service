@@ -6,10 +6,9 @@ import { BadRequestException } from "../exceptions/bad-request.exception.js";
 export class ReportAntrianService {
 
   static async cancelBooking(requestBody) {
-    const { jadwalDokterUuid, tanggalPelayanan } =
-      FormatterService.toCamelCase(requestBody);
-
-      console.log("requestBody:",requestBody);
+    const camelCaseBody = FormatterService.toCamelCase(requestBody);
+    const { jadwalDokterUuid, jadwalPeriksa } = camelCaseBody;
+    const tanggalPelayanan = jadwalPeriksa;
 
     if (!jadwalDokterUuid || !tanggalPelayanan) {
       throw new BadRequestException(
