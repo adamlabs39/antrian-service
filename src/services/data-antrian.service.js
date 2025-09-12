@@ -27,7 +27,7 @@ export class DataAntrianService {
     } else {
       const tanggalDariRequest =
         tanggalDariService ||
-        requestData.tanggal_periksa ||
+        requestData.jadwal_periksa ||
         moment().format("YYYY-MM-DD");
 
       if (!moment(tanggalDariRequest, "YYYY-MM-DD", true).isValid()) {
@@ -74,7 +74,6 @@ export class DataAntrianService {
           `Jadwal dokter tidak tersedia pada hari ${namaHariPilihan}. Jadwal yang tersedia adalah hari ${namaHariJadwal}.`
         );
       }
-
       const report = await ReportAntrianRepository.findOrCreateReport(
         {
           jadwalDokter: jadwalHariIni,
