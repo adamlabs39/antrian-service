@@ -5,6 +5,7 @@ import { TransactionService } from "./transaction.service.js";
 import { NotFoundException } from "../exceptions/not-found.exception.js";
 import { BadRequestException } from "../exceptions/bad-request.exception.js";
 import { ConflictException } from "../exceptions/conflict.exception.js";
+import { ReportAntrianService } from "./report-antrian.service.js";
 
 export class APMService {
   static async registerPatient({ faskesUuid, body, token, platform }) {
@@ -253,6 +254,58 @@ export class APMService {
       );
 
       return pendaftaran;
+    });
+  }
+
+  static async updatePatientMobile({
+    faskesUuid,
+    appointmentUuid,
+    body,
+    platform,
+  }) {
+    const admisiApiKey = process.env.ADMISI_SECRET_KEY;
+    if (!admisiApiKey) {
+      throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
+    }
+
+    const newJadwalDokterUuid = body.jadwal_dokter_uuid;
+    const newTanggalPeriksa =
+      body.tanggal_periksa || moment().format("YYYY-MM-DD");
+
+    return TransactionService.run(async (transaction) => {
+      
+      await ReportAntrianService.cancelBooking({
+        jadwalDokterUuid: bookingLama.jadwal_dokter_uuid,
+        tanggalPelayanan: moment
+          .unix(bookingLama.jadwal_periksa)
+          .format("YYYY-MM-DD"),
+        transaction,
+      });
+
+      const generatedCodes = await DataAntrianService.processRegistration({
+        faskesUuid,
+        requestData: body,
+        isPasienBaru: false,
+        platform,
+        token: admisiApiKey,
+        tanggalPelayanan: newTanggalPeriksa,
+        transaction,
+      });
+
+      const finalPayload = {
+        ...generatedCodes,
+        jadwal_dokter_uuid: newJadwalDokterUuid,
+        jadwal_periksa: moment(newTanggalPeriksa, "YYYY-MM-DD").unix(),
+      };
+
+      const pendaftaranTerupdate = await AdmisiClient.updateRawatJalanMobile(
+        appointmentUuid,
+        finalPayload,
+        faskesUuid,
+        admisiApiKey
+      );
+
+      return pendaftaranTerupdate;
     });
   }
 

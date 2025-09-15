@@ -7,3 +7,8 @@ APMMobileRouter.post(
   "/process-registration",
   APMController.registerPatientMobile
 );
+
+APMMobileRouter.put(
+  "/update-patient/:appointmentUuid",
+  APMController.updatePatientMobile
+);

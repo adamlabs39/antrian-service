@@ -11,20 +11,17 @@ import { apiKeyMiddleware } from "./middlewares/x-api-key-handler.middleware.js"
 import { defineAssociations } from "./models/associations.js";
 import { normalizeUrl } from "./helpers/url-normalizer.js";
 
-// See if the database is connected.
 (async () => {
   await database.authenticate();
   defineAssociations();
 })();
 
-// Define the base URL for the API.
 const API_PREFIX = process.env.API_BASE || "api";
 const API_VERSION = process.env.API_VERSION || "v3";
 const BASE_URL = `/${API_PREFIX}/${API_VERSION}/antrian`;
 
 const app = express();
 
-// Use the cors middleware to allow cross-origin requests.
 app.use(
   cors({
     origin: "*",
@@ -41,15 +38,12 @@ app.use(
   })
 );
 
-// Use the morgan middleware to log the requests.
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
 );
 
-// Use the express.json() middleware to parse the body of the request.
 app.use(express.json());
 
-// use the express.urlencoded() middleware to parse the URL-encoded data.
 app.use(express.urlencoded({ extended: true }));
 
 app.use(apiKeyMiddleware([`${BASE_URL}/mobile`]));
@@ -59,12 +53,15 @@ const jwtExemptEndpoints = [
   `${BASE_URL}/mobile/jadwal-dokter/available-kuota`,
   `${BASE_URL}/mobile/apm/process-registration`,
   `${BASE_URL}/mobile/admisi-antrian`,
-  `${BASE_URL}/mobile/report-antrian/cancle-booking`,
+  `${BASE_URL}/mobile/report-antrian/cancel-booking`,
+  `${BASE_URL}/mobile/apm/update-patient`
 ];
 
 app.use((req, res, next) => {
   const normalized = normalizeUrl(req.originalUrl);
-  const isExempt = jwtExemptEndpoints.includes(normalized);
+   const isExempt = jwtExemptEndpoints.some((endpoint) =>
+     normalized.startsWith(endpoint)
+   );
 
   if (isExempt) {
     return next();
@@ -75,13 +72,10 @@ app.use((req, res, next) => {
 
 console.error();
 
-// Use the routes and error handler middleware.
 app.use(BASE_URL, router);
 app.use(errorHandler);
 
-// Start the server.
 app.listen(APPLICATION_PORT, APPLICATION_HOST, async () => {
-  // Log telling that the server is successfully running.
   console.log(
     `Server is running on http://${APPLICATION_HOST}:${APPLICATION_PORT}`
   );

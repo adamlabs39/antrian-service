@@ -3,4 +3,7 @@ import { ReportAntrianController } from "../controllers/report-antrian.controlle
 
 export const ReportAntrianRouter = express.Router();
 
-ReportAntrianRouter.post("/cancle-booking", ReportAntrianController.cancelBooking);
+ReportAntrianRouter.delete(
+  "/cancel-booking",
+  ReportAntrianController.cancelBookingFromMobile
+);

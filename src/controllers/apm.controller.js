@@ -9,7 +9,6 @@ export class APMController {
       const { faskesUuid } = req.author;
       const token = req.headers.authorization;
 
-      // Meneruskan semua data pendaftaran ke service
       const result = await APMService.registerPatient({
         faskesUuid,
         body: req.body,
@@ -18,6 +17,29 @@ export class APMController {
       });
 
       res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async updatePatientMobile(req, res, next) {
+    try {
+      const { appointmentUuid } = req.params;
+
+      const faskesUuid = req.headers["faskes-uuid"];
+
+      const result = await APMService.updatePatientMobile({
+        faskesUuid,
+        appointmentUuid,
+        body: req.body,
+        platform: "MOBILE",
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Booking berhasil diperbarui.",
+        data: result,
+      });
     } catch (err) {
       next(err);
     }
@@ -68,7 +90,6 @@ export class APMController {
       next(err);
     }
   }
-
 
   // FOR MOBILE
 

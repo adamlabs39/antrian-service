@@ -21,12 +21,12 @@ export class DataAntrianService {
     tanggalPelayanan: tanggalDariService,
     transaction,
   }) {
+ 
     let finalTanggalPelayanan;
     if (platform === "APM") {
       finalTanggalPelayanan = moment().format("YYYY-MM-DD");
     } else {
       const tanggalDariRequest =
-        tanggalDariService ||
         requestData.jadwal_periksa ||
         moment().format("YYYY-MM-DD");
 
@@ -74,6 +74,7 @@ export class DataAntrianService {
           `Jadwal dokter tidak tersedia pada hari ${namaHariPilihan}. Jadwal yang tersedia adalah hari ${namaHariJadwal}.`
         );
       }
+
       const report = await ReportAntrianRepository.findOrCreateReport(
         {
           jadwalDokter: jadwalHariIni,
