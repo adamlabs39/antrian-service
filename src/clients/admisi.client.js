@@ -132,15 +132,16 @@ export class AdmisiClient {
       });
 
       if (!response.data.payload) {
-        throw new NotFoundException("Kode booking tidak ditemukan atau tidak valid");
+        throw new NotFoundException(
+          "Kode booking tidak ditemukan atau tidak valid"
+        );
       }
 
       return response.data;
     } catch (error) {
-
-       if (error instanceof NotFoundException) {
-         throw error;
-       }
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
 
       handleApiError(error);
     }
@@ -159,6 +160,26 @@ export class AdmisiClient {
         },
       });
 
+      return response.data.payload;
+    } catch (error) {
+      handleApiError(error);
+    }
+  }
+
+  static async updateRawatJalanMobile(
+    appointmentUuid,
+    body,
+    faskesUuid,
+    admisiApiKey
+  ) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile/${appointmentUuid}`;
+      const response = await axios.put(endpoint, body, {
+        headers: {
+          "x-api-key": admisiApiKey,
+          "faskes-uuid": faskesUuid,
+        },
+      });
       return response.data.payload;
     } catch (error) {
       handleApiError(error);
@@ -235,6 +256,31 @@ export class AdmisiClient {
       return response.data.payload || [];
     } catch (error) {
       handleApiError(error);
+    }
+  }
+
+  static async cancelBookingMobile({ kodeBooking, faskesUuid }, apiKey) {
+    try {
+      const endpoint = `${ADMISI_API_URL}/rawat-jalan/mobile/cancel`;
+
+      const response = await axios.delete(endpoint, {
+        headers: { "x-api-key": apiKey, "faskes-uuid": faskesUuid },
+        data: {
+          kode_booking: kodeBooking,
+        },
+      });
+
+      console.log(
+        "Successfully cancelled booking in Admisi Service:",
+        response.data
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error cancelling booking in Admisi Service:",
+        error.response?.data || error.message
+      );
+      throw error;
     }
   }
 }
