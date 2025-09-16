@@ -317,7 +317,7 @@ export class APMService {
 
     const payload = bookingDetail?.payload;
     if (!payload) {
-      throw new BadRequestException("Data booking tidak ditemukan.");
+      throw new BadRequestException("Data booking tidak ditemukan");
     }
 
     const jadwalPeriksaUnix = payload?.jadwal_periksa;
