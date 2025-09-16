@@ -179,13 +179,11 @@ export class APMService {
       throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
     }
 
-    let tanggalPelayananString;
-    tanggalPelayananString =
-      body.tanggal_pelayanan || moment().format("YYYY-MM-DD");
+    const tanggalPelayananString = moment(body.jadwal_periksa).format("YYYY-MM-DD");
 
     if (!moment(tanggalPelayananString, "YYYY-MM-DD", true).isValid()) {
       throw new BadRequestException(
-        "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
+        "Format tanggal tidak valid. Gunakan format YYYY-MM-DD."
       );
     }
 
@@ -273,7 +271,6 @@ export class APMService {
       body.tanggal_periksa || moment().format("YYYY-MM-DD");
 
     return TransactionService.run(async (transaction) => {
-      
       await ReportAntrianService.cancelBooking({
         jadwalDokterUuid: bookingLama.jadwal_dokter_uuid,
         tanggalPelayanan: moment
@@ -333,7 +330,6 @@ export class APMService {
     const tanggalJadwalPeriksa = moment.unix(jadwalPeriksaUnix);
 
     const tanggalHariIni = moment();
-
     if (!tanggalJadwalPeriksa.isSame(tanggalHariIni, "day")) {
       throw new BadRequestException(
         `Waktu check-in tidak sesuai dengan jadwal periksa (${tanggalJadwalPeriksa.format(

@@ -7,14 +7,13 @@ import { AdmisiClient } from "../clients/admisi.client.js";
 export class ReportAntrianService {
 
   static async cancelBookingFromMobile(requestBody) {
-    console.log("Request Body:", requestBody);
     const camelCaseBody = FormatterService.toCamelCase(requestBody);
     const { jadwalDokterUuid, jadwalPeriksa, kodeBooking, faskesUuid } =
       camelCaseBody;
 
     if (!jadwalDokterUuid || !jadwalPeriksa || !kodeBooking || !faskesUuid) {
       throw new BadRequestException(
-        "jadwal_dokter_uuid, jadwal_eriksa, kode_booking, dan faskes_uuid wajib diisi."
+        "jadwal_dokter_uuid, jadwal_periksa, kode_booking, dan faskes_uuid wajib diisi."
       );
     }
 
