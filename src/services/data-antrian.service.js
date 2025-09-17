@@ -145,29 +145,6 @@ export class DataAntrianService {
       token
     );
     const bookingPayload = bookingDetail.payload;
-    console.log(bookingPayload);
-
-    if (bookingPayload.no_antrian_farmasi !== null) {
-      throw new ConflictException(
-        "Pasien sudah memiliki nomor antrian farmasi."
-      );
-    }
-    if (
-      !bookingPayload.patient ||
-      bookingPayload.patient.uuid !== patientUuid
-    ) {
-      console.log("patient uuid:", bookingPayload.patient.uuid);
-      console.log("patientUuid:", patientUuid);
-      throw new BadRequestException(
-        "Patient UUID yang dikirim tidak cocok dengan data dari kode booking."
-      );
-    }
-
-    if (bookingPayload.uuid !== rawatJalanUuid) {
-      throw new BadRequestException(
-        "rawat Jalan Uuid yang dikirim tidak cocok dengan data dari kode booking."
-      );
-    }
 
     if (!patientUuid) {
       throw new BadRequestException(
@@ -196,6 +173,27 @@ export class DataAntrianService {
     if (!pasienBaru) {
       throw new BadRequestException(
         "pasien_baru wajib diisi untuk antrian farmasi."
+      );
+    }
+
+    if (
+      !bookingPayload.patient ||
+      bookingPayload.patient.uuid !== patientUuid
+    ) {
+      throw new BadRequestException(
+        "Patient UUID yang dikirim tidak cocok dengan data dari kode booking."
+      );
+    }
+
+    if (bookingPayload.uuid !== rawatJalanUuid) {
+      throw new BadRequestException(
+        "rawat Jalan Uuid yang dikirim tidak cocok dengan data dari kode booking."
+      );
+    }
+
+    if (bookingPayload.no_antrian_farmasi !== null) {
+      throw new ConflictException(
+        "Pasien sudah memiliki nomor antrian farmasi."
       );
     }
 

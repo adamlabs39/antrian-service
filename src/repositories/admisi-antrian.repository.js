@@ -10,6 +10,7 @@ import {
   PegawaiModel,
   PractitionerModel,
 } from "@adameds/model-sdk/datamaster";
+import moment from "moment";
 
 const antrianAttributes = [
   "uuid",
@@ -104,17 +105,33 @@ export default class AdmisiAntrianRepository {
     }
 
     const patientWhere = {};
+
     if (filters.start_date && filters.end_date) {
+      const startOfDay = moment
+        .unix(parseInt(filters.start_date))
+        .startOf("day")
+        .unix();
+
+      const endOfDay = moment
+        .unix(parseInt(filters.end_date))
+        .endOf("day")
+        .unix();
+
       patientWhere.tanggal_daftar = {
-        [Op.between]: [
-          parseInt(filters.start_date),
-          parseInt(filters.end_date),
-        ],
+        [Op.between]: [startOfDay, endOfDay],
       };
     } else if (filters.start_date) {
-      patientWhere.tanggal_daftar = { [Op.gte]: parseInt(filters.start_date) };
+      const startOfDay = moment
+        .unix(parseInt(filters.start_date))
+        .startOf("day")
+        .unix();
+      patientWhere.tanggal_daftar = { [Op.gte]: startOfDay };
     } else if (filters.end_date) {
-      patientWhere.tanggal_daftar = { [Op.lte]: parseInt(filters.end_date) };
+      const endOfDay = moment
+        .unix(parseInt(filters.end_date))
+        .endOf("day")
+        .unix();
+      patientWhere.tanggal_daftar = { [Op.lte]: endOfDay };
     }
 
     if (filters.name) {
