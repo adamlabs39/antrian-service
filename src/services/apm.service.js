@@ -360,7 +360,9 @@ export class APMService {
 
     if (now.isAfter(endTime)) {
       throw new BadRequestException(
-        `Waktu check-in sudah kadaluarsa. Jam praktek dokter berakhir pukul ${jadwalDokter.end_time}.`
+        `Waktu check-in sudah kadaluarsa. Jam praktek dokter berakhir pukul ${
+          jadwalDokter.end_time
+        } pada tanggal ${tanggalJadwalPeriksa.format("DD MMMM YYYY")}.`
       );
     }
 
