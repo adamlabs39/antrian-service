@@ -15,13 +15,13 @@ export class APMService {
       throw new BadRequestException("Data pasien (patient_data) wajib diisi.");
     }
 
-    if (!patientData.identity) {
-      throw new BadRequestException("Jenis identitas wajib diisi.");
-    }
+    // if (!patientData.identity) {
+    //   throw new BadRequestException("Jenis identitas wajib diisi.");
+    // }
 
-    if (!patientData.no_identity) {
-      throw new BadRequestException("Nomor identitas wajib diisi.");
-    }
+    // if (!patientData.no_identity) {
+    //   throw new BadRequestException("Nomor identitas wajib diisi.");
+    // }
 
     const startDate = moment().startOf("day").unix();
     const endDate = moment().endOf("day").unix();
@@ -48,6 +48,7 @@ export class APMService {
 
     const checkBody = {
       faskes_uuid: faskesUuid,
+      no_rm: body.patient_data?.no_rm,
       identity: body.patient_data?.identity,
       no_identity: body.patient_data?.no_identity,
     };

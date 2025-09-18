@@ -165,6 +165,7 @@ export default class AdmisiAntrianRepository {
             "no_antrian_farmasi",
             "payment_method",
             "tanggal_daftar",
+            "tanggal_checkin",
             "jadwal_periksa"
           ],
           include: [
