@@ -33,10 +33,13 @@ export class APMService {
       endDate,
       token,
     });
-
     const sudahTerdaftar = rawatJalanHariIni.some(
       (rj) =>
-        rj.patient?.no_identity === patientData.no_identity &&
+        // cek no_identity
+        ((rj.patient?.no_identity &&
+          rj.patient?.no_identity === patientData.no_identity) ||
+          // cek no_rm
+          (rj.patient?.no_rm && rj.patient?.no_rm === patientData.no_rm)) &&
         rj.schedule?.uuid === body.jadwal_dokter_uuid
     );
 
@@ -119,6 +122,9 @@ export class APMService {
       throw new BadRequestException("Jadwal dokter tidak ditemukan.");
     }
 
+    const tanggalJadwalPeriksa = payload?.jadwal_periksa
+      ? moment.unix(payload.jadwal_periksa)
+      : null;
     const now = moment();
     const todayDate = moment().format("YYYY-MM-DD");
 
@@ -129,7 +135,9 @@ export class APMService {
 
     if (now.isAfter(endTime)) {
       throw new BadRequestException(
-        `Jadwal dokter sudah kadaluarsa. Jam praktek dokter berakhir pukul ${jadwalDokter.end_time}.`
+        `Jadwal dokter sudah kadaluarsa. Jam praktek dokter berakhir pukul ${
+          jadwalDokter.end_time
+        } pada tanggal ${tanggalJadwalPeriksa.format("DD MMMM YYYY")}.`
       );
     }
 
