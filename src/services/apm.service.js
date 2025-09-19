@@ -33,10 +33,13 @@ export class APMService {
       endDate,
       token,
     });
-
     const sudahTerdaftar = rawatJalanHariIni.some(
       (rj) =>
-        rj.patient?.no_identity === patientData.no_identity &&
+        // cek no_identity
+        ((rj.patient?.no_identity &&
+          rj.patient?.no_identity === patientData.no_identity) ||
+          // cek no_rm
+          (rj.patient?.no_rm && rj.patient?.no_rm === patientData.no_rm)) &&
         rj.schedule?.uuid === body.jadwal_dokter_uuid
     );
 
