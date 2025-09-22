@@ -139,7 +139,6 @@ export class JadwalDokterRepository {
       };
     }
 
-   
     if (filters.poli) {
       whereClause["$jadwal_dokter.lokasi.name$"] = {
         [Op.iLike]: `%${filters.poli}%`,
@@ -166,11 +165,13 @@ export class JadwalDokterRepository {
       offset,
       where: whereClause,
       group: ["PractitionerModel.uuid", "jadwal_dokter.lokasi.uuid"],
+      order: [
+        [Sequelize.fn("MIN", Sequelize.col("jadwal_dokter.created_at")), "ASC"],
+      ],
       raw: true,
       nest: true,
       subQuery: false,
     });
-    console.log(result);
 
     const ret = result.map((row) => ({
       doctor: {
@@ -483,11 +484,11 @@ export class JadwalDokterRepository {
         faskesUuid,
         practitionerUuid: dokterUuid,
         lokasiUuid: poliUuid,
-        day: day, 
+        day: day,
         status: true,
         deletedAt: null,
       },
-     
+
       include: [
         {
           model: PractitionerModel,
