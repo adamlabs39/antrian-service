@@ -139,13 +139,19 @@ export class JadwalDokterRepository {
       };
     }
 
-    /**
-     *
-     */
+   
     if (filters.poli) {
       whereClause["$jadwal_dokter.lokasi.name$"] = {
         [Op.iLike]: `%${filters.poli}%`,
       };
+    }
+
+    if (filters.doctor_uuid) {
+      whereClause.uuid = filters.doctor_uuid;
+    }
+
+    if (filters.poli_uuid) {
+      whereClause["$jadwal_dokter.lokasi.uuid$"] = filters.poli_uuid;
     }
 
     if (filters.aktif !== undefined) {
