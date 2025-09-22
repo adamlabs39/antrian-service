@@ -81,6 +81,8 @@ export class JadwalDokterSchema {
     aktif: CommonSchema.TRUE_FALSE_UNDEFINED_STRING.optional(),
     page: CommonSchema.STRING_TO_NUMBER.optional(),
     page_size: CommonSchema.STRING_TO_NUMBER.optional(),
+    doctor_uuid: z.string().uuid("Format UUID dokter tidak valid").optional(),
+    poli_uuid: z.string().uuid("Format UUID poli tidak valid").optional(),
   });
 
   static DOCTOR_LOCATION_UUID_PARAM = z.object({
