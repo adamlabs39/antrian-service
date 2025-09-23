@@ -115,6 +115,25 @@ JadwalDokterSchema.CREATE = z
     jadwal: z.array(JadwalDokterSchema.JADWAL_DETAIL).min(1, {
       message: "Jadwal tidak boleh kosong",
     }),
+    kuota_jkn: z
+      .number({
+        required_error: "Kuota JKN wajib diisi.",
+        invalid_type_error: "Kuota JKN harus berupa angka.",
+      })
+      .int()
+      .nonnegative({
+        message: "Kuota JKN harus lebih dari 0",
+      }),
+    kuota_non_jkn: z
+      .number({
+        required_error: "Kuota Non-JKN wajib diisi.",
+        invalid_type_error: "Kuota Non-JKN harus berupa angka.",
+      })
+      .int()
+      .nonnegative({
+        message: "Kuota Non-JKN harus lebih dari 0",
+      }),
+    day: z.string(),
   })
   .strict();
 
