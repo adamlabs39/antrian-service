@@ -94,6 +94,20 @@ export class JadwalDokterRepository {
           Sequelize.fn("array_agg", Sequelize.col("jadwal_dokter.status")),
           "jadwal_dokter_statuses",
         ],
+        [
+          Sequelize.literal(
+            `array_agg(
+      COALESCE(
+        (SELECT "jumlah_antrian_aktif"
+         FROM "report_antrian"
+         WHERE "report_antrian"."jadwal_dokter_uuid" = "jadwal_dokter"."uuid"
+         AND "report_antrian"."tanggal_pelayanan" = CURRENT_DATE),
+        0
+      )
+    )`
+          ),
+          "jadwal_dokter_terdaftar",
+        ],
       ],
       include: [
         {
@@ -185,17 +199,23 @@ export class JadwalDokterRepository {
         name: row.lokasi_name,
         uuid: row.lokasi_uuid,
       },
-      jadwal_dokter: row.jadwal_dokter_ids.map((uuid, index) => ({
-        jadwal_dokter_uuid: uuid,
-        day: row.jadwal_dokter_days[index],
-        start_time: row.jadwal_dokter_start_times[index],
-        end_time: row.jadwal_dokter_end_times[index],
-        kuota: row.jadwal_dokter_kuotas[index],
-        kuota_jkn: row.jadwal_dokter_kuotajkns[index],
-        kuota_non_jkn: row.jadwal_dokter_kuotanonjkns[index],
-        durasi_pelayanan: row.jadwal_dokter_durasi_pelayanans[index],
-        status: row.jadwal_dokter_statuses[index] ? "aktif" : "non aktif",
-      })),
+      jadwal_dokter: row.jadwal_dokter_ids.map((uuid, index) => {
+        const total_kuota = row.jadwal_dokter_kuotas[index];
+        const jumlah_terdaftar = row.jadwal_dokter_terdaftar[index];
+
+        return {
+          jadwal_dokter_uuid: uuid,
+          day: row.jadwal_dokter_days[index],
+          start_time: row.jadwal_dokter_start_times[index],
+          end_time: row.jadwal_dokter_end_times[index],
+          kuota_jkn: row.jadwal_dokter_kuotajkns[index],
+          kuota_non_jkn: row.jadwal_dokter_kuotanonjkns[index],
+          total_kuota: total_kuota,
+          sisa_kuota: total_kuota - jumlah_terdaftar,
+          durasi_pelayanan: row.jadwal_dokter_durasi_pelayanans[index],
+          status: row.jadwal_dokter_statuses[index] ? "aktif" : "non aktif",
+        };
+      }),
     }));
 
     return {
