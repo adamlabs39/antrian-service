@@ -14,7 +14,6 @@ import moment from "moment";
 import { ToIndoDay } from "../helpers/to-indo-day.js";
 
 export class JadwalDokterService {
-
   //FOR MOBILE START
 
   static async getAvailableKuota({
@@ -39,7 +38,7 @@ export class JadwalDokterService {
     });
 
     if (!jadwalDasarList || jadwalDasarList.length === 0) {
-      return []; 
+      return [];
     }
 
     const jadwalDenganKuota = await Promise.all(
@@ -55,14 +54,12 @@ export class JadwalDokterService {
           end_time: jadwalDasar.endTime,
           total_kuota: report.kuota,
           jumlah_antrian_aktif: report.jumlahAntrianAktif,
-
         };
       })
     );
 
     return jadwalDenganKuota;
   }
-
 
   static async findAll({ faskesUuid, filterBy: filterQuery }) {
     const queries = ZodValidator.validate(
@@ -86,6 +83,16 @@ export class JadwalDokterService {
     }
 
     return { pagination, data };
+  }
+
+  static async getAllJadwalDokterWithoutPagination({ faskesUuid, filters }) {
+    const jadwalDokterList =
+      await JadwalDokterRepository.findAllWithoutPagination({
+        faskesUuid,
+        filters,
+      });
+
+    return jadwalDokterList;
   }
 
   //FOR MOBILE END

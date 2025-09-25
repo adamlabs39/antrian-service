@@ -4,4 +4,8 @@ import { JadwalDokterController } from "../controllers/jadwal-dokter.controller.
 export const jadwalDokterMobileRouter = express.Router();
 
 jadwalDokterMobileRouter.get("/", JadwalDokterController.findAllWithAPIKey);
+jadwalDokterMobileRouter.get(
+  "/all",
+  JadwalDokterController.getAllWithoutpagination
+);
 jadwalDokterMobileRouter.get("/available-kuota", JadwalDokterController.getAvailableKuota);

@@ -4,6 +4,7 @@ import { JadwalDokterController } from "../controllers/jadwal-dokter.controller.
 export const jadwalDokterRouter = express.Router();
 
 jadwalDokterRouter.get("/", JadwalDokterController.findAll);
+jadwalDokterRouter.get("/all", JadwalDokterController.getAll);
 
 jadwalDokterRouter.get(
   "/:doctor_uuid/:location_uuid",
