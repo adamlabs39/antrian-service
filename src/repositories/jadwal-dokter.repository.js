@@ -228,9 +228,83 @@ export class JadwalDokterRepository {
     };
   }
 
-  /**
-   *
-   */
+  static async findAllWithoutPagination({ faskesUuid, filters }) {
+    const whereClause = {
+      faskes_uuid: faskesUuid,
+      is_doctor: true,
+      deletedAt: null,
+    };
+
+    if (filters.dokter) {
+      whereClause["$pegawai.name$"] = { [Op.iLike]: `%${filters.dokter}%` };
+    }
+    if (filters.poli) {
+      whereClause["$jadwal_dokter.lokasi.name$"] = {
+        [Op.iLike]: `%${filters.poli}%`,
+      };
+    }
+    if (filters.doctor_uuid) {
+      whereClause.uuid = filters.doctor_uuid;
+    }
+    if (filters.poli_uuid) {
+      whereClause["$jadwal_dokter.lokasi.uuid$"] = filters.poli_uuid;
+    }
+    if (filters.aktif !== undefined) {
+      whereClause["$jadwal_dokter.status$"] = filters.aktif;
+    }
+
+    const commonOptions = this._buildCommonQueryOptions();
+
+    const queryOptions = {
+      ...commonOptions,
+      where: whereClause,
+      group: ["PractitionerModel.uuid", "jadwal_dokter.lokasi.uuid"],
+      order: [
+        [Sequelize.fn("MIN", Sequelize.col("jadwal_dokter.created_at")), "ASC"],
+      ],
+      raw: true,
+      nest: true,
+      subQuery: false,
+    };
+
+    const { rows: result } = await PractitionerModel.findAndCountAll(
+      queryOptions
+    );
+
+    const ret = result.map((row) => ({
+      doctor: {
+        kode_antrian: row.code_antrian_dokter,
+        name: row.pegawai_name,
+        uuid: row.uuid,
+      },
+      poli: {
+        kode_antrian: row.code_antrian_poli,
+        name: row.lokasi_name,
+        uuid: row.lokasi_uuid,
+      },
+      jadwal_dokter: row.jadwal_dokter_ids.map((uuid, index) => {
+        const total_kuota = row.jadwal_dokter_kuotas[index];
+        const jumlah_terdaftar = row.jadwal_dokter_terdaftar[index];
+
+        return {
+          jadwal_dokter_uuid: uuid,
+          day: row.jadwal_dokter_days[index],
+          start_time: row.jadwal_dokter_start_times[index],
+          end_time: row.jadwal_dokter_end_times[index],
+          kuota: total_kuota,
+          kuota_terisi: jumlah_terdaftar,
+          sisa_kuota: total_kuota - jumlah_terdaftar,
+          kuota_jkn: row.jadwal_dokter_kuotajkns[index],
+          kuota_non_jkn: row.jadwal_dokter_kuotanonjkns[index],
+          durasi_pelayanan: row.jadwal_dokter_durasi_pelayanans[index],
+          status: row.jadwal_dokter_statuses[index] ? "aktif" : "non aktif",
+        };
+      }),
+    }));
+
+    return ret;
+  }
+
   static async findAllByDoctorAndLocation({
     faskesUuid,
     dokterUuid,

@@ -3,7 +3,6 @@ import { JadwalDokterService } from "../services/jadwal-dokter.service.js";
 import { generateSuccessMessage } from "../helpers/generate-message.js";
 
 export class JadwalDokterController {
-
   static async findAll(req, res, next) {
     try {
       const { faskesUuid } = req.author;
@@ -20,6 +19,29 @@ export class JadwalDokterController {
         );
     } catch (err) {
       next(err);
+    }
+  }
+
+  static async getAll(req, res) {
+    try {
+      const faskesUuid = req.author.faskesUuid;
+      const filters = req.query;
+
+      const data =
+        await JadwalDokterService.getAllJadwalDokterWithoutPagination({
+          faskesUuid,
+          filters,
+        });
+
+      res.status(200).json({
+        message: "Successfully fetched all doctor schedules",
+        data: data,
+      });
+    } catch (error) {
+      console.error("Error in JadwalDokterController.getAll:", error);
+      res.status(500).json({
+        message: "Internal Server Error",
+      });
     }
   }
 
@@ -110,6 +132,24 @@ export class JadwalDokterController {
     }
   }
 
+  static async getAllWithoutpagination(req, res, next) {
+    try {
+      const faskesUuid = req.headers["faskes-uuid"];
+
+      const data =
+        await JadwalDokterService.getAllJadwalDokterWithoutPagination({
+          faskesUuid,
+          filters: req.query,
+        });
+
+      res
+        .status(200)
+        .json(generateSuccessMessage("Data berhasil ditampilkan", data));
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getAvailableKuota(req, res, next) {
     try {
       const faskesUuid = req.headers["faskes-uuid"];
@@ -129,5 +169,4 @@ export class JadwalDokterController {
       next(err);
     }
   }
-
 }

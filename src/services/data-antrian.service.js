@@ -59,7 +59,7 @@ export class DataAntrianService {
         requestData.jadwal_dokter_uuid,
         { transaction }
       );
-
+console.log("jadwal hari ini",jadwalHariIni);
       if (!jadwalHariIni) {
         throw new NotFoundException(
           "Tidak ada jadwal aktif untuk dokter ini hari ini."
