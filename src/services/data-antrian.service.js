@@ -18,13 +18,12 @@ export class DataAntrianService {
     isPasienBaru,
     platform,
     token,
-    tanggalPelayanan: tanggalDariService,
     transaction,
   }) {
  
-    let finalTanggalPelayanan;
+    let finalTanggalPelayananString;
     if (platform === "APM") {
-      finalTanggalPelayanan = moment().format("YYYY-MM-DD");
+      finalTanggalPelayananString = moment().format("YYYY-MM-DD");
     } else {
       const tanggalDariRequest =
         requestData.jadwal_periksa ||
@@ -35,8 +34,15 @@ export class DataAntrianService {
           "Format tanggal_pelayanan tidak valid. Gunakan format YYYY-MM-DD."
         );
       }
-      finalTanggalPelayanan = tanggalDariRequest;
+      finalTanggalPelayananString = tanggalDariRequest;
     }
+
+    const finalTanggalPelayananEpoch = moment(
+      finalTanggalPelayananString,
+      "YYYY-MM-DD"
+    )
+      .startOf("day")
+      .unix();
 
     let totalRegistrasiHariIni = 0;
     if (isPasienBaru) {
@@ -59,14 +65,13 @@ export class DataAntrianService {
         requestData.jadwal_dokter_uuid,
         { transaction }
       );
-console.log("jadwal hari ini",jadwalHariIni);
       if (!jadwalHariIni) {
         throw new NotFoundException(
           "Tidak ada jadwal aktif untuk dokter ini hari ini."
         );
       }
 
-      const namaHariPilihan = getDay(finalTanggalPelayanan);
+      const namaHariPilihan = getDay(finalTanggalPelayananString);
       const namaHariJadwal = jadwalHariIni.day;
 
       if (namaHariPilihan !== namaHariJadwal) {
@@ -78,7 +83,7 @@ console.log("jadwal hari ini",jadwalHariIni);
       const report = await ReportAntrianRepository.findOrCreateReport(
         {
           jadwalDokter: jadwalHariIni,
-          tanggalPelayanan: finalTanggalPelayanan,
+          tanggalPelayanan: finalTanggalPelayananEpoch,
         },
         { transaction }
       );
@@ -89,10 +94,8 @@ console.log("jadwal hari ini",jadwalHariIni);
         );
       }
 
-      // 2. Nomor urut baru diambil dari nomor antrian terakhir
       const noUrutPoli = report.noAntrianTerakhir + 1;
 
-      // 3. Update report dengan kolom baru
       await report.update(
         {
           noAntrianTerakhir: noUrutPoli,
@@ -251,24 +254,21 @@ console.log("jadwal hari ini",jadwalHariIni);
       throw new NotFoundException("Jadwal dokter terkait tidak ditemukan.");
     }
 
-    const tanggalPelayanan = moment().format("YYYY-MM-DD");
+   const tanggalPelayananEpoch = moment().startOf("day").unix();
 
     const report = await ReportAntrianRepository.findOrCreateReport({
       jadwalDokter: jadwalDokter,
-      tanggalPelayanan,
+      tanggalPelayanan: tanggalPelayananEpoch,
     });
 
-    // 1. Validasi kuota berdasarkan jumlah antrian aktif
     if (report.jumlahAntrianAktif >= report.kuota) {
       throw new ConflictException(
         "Kuota antrian untuk jadwal ini sudah penuh."
       );
     }
 
-    // 2. Nomor urut baru diambil dari nomor antrian terakhir
     const noUrutPoli = report.noAntrianTerakhir + 1;
 
-    // 3. Update report dengan kolom baru
     await report.update({
       noAntrianTerakhir: noUrutPoli,
       jumlahAntrianAktif: report.jumlahAntrianAktif + 1,
@@ -284,7 +284,7 @@ console.log("jadwal hari ini",jadwalHariIni);
     return {
       no_antrian_poli: noAntrianPoli,
       kode_booking: kodeBooking,
-      tanggal_pelayanan: tanggalPelayanan,
+      tanggal_pelayanan: tanggalPelayananEpoch,
     };
   }
 }

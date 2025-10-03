@@ -59,45 +59,4 @@ export class ReportAntrianRepository {
     });
     return report;
   }
-
-  // static async isPatientAlreadyBooked({
-  //   patientIdentity,
-  //   jadwalDokterUuid,
-  //   tanggalPelayanan,
-  //   transaction,
-  // }) {
-  //   const existing = await ReportAntrianModel.findOne({
-  //     where: {
-  //       jadwalDokterUuid,
-  //       tanggalPelayanan,
-  //       patientIdentity,
-  //       deletedAt: null,
-  //     },
-  //     transaction,
-  //   });
-
-  //   return !!existing;
-  // }
-
-  // static async updateKuotaSisa({
-  //   jadwalDokterUuid,
-  //   tanggalPelayanan,
-  //   increment = 1,
-  //   transaction,
-  // }) {
-  //   const report = await ReportAntrianModel.findOne({
-  //     where: { jadwalDokterUuid, tanggalPelayanan },
-  //     transaction,
-  //   });
-
-  //   if (!report) {
-  //     throw new NotFoundException("Report antrian tidak ditemukan");
-  //   }
-
-  //   // update kuota_sisa
-  //   report.kuotaSisa = report.kuotaSisa + increment;
-
-  //   await report.save({ transaction });
-  //   return report;
-  // }
 }

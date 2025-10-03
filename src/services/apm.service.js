@@ -15,17 +15,9 @@ export class APMService {
       throw new BadRequestException("Data pasien (patient_data) wajib diisi.");
     }
 
-    // if (!patientData.identity) {
-    //   throw new BadRequestException("Jenis identitas wajib diisi.");
-    // }
-
-    // if (!patientData.no_identity) {
-    //   throw new BadRequestException("Nomor identitas wajib diisi.");
-    // }
-
     const startDate = moment().startOf("day").unix();
     const endDate = moment().endOf("day").unix();
-    const tanggalKunjugan = moment().unix();
+    const tanggalKunjugan = moment().startOf("day").unix();
 
     const rawatJalanHariIni = await AdmisiClient.getAllRawatJalan({
       faskesUuid,
@@ -35,10 +27,8 @@ export class APMService {
     });
     const sudahTerdaftar = rawatJalanHariIni.some(
       (rj) =>
-        // cek no_identity
         ((rj.patient?.no_identity &&
           rj.patient?.no_identity === patientData.no_identity) ||
-          // cek no_rm
           (rj.patient?.no_rm && rj.patient?.no_rm === patientData.no_rm)) &&
         rj.schedule?.uuid === body.jadwal_dokter_uuid
     );
@@ -236,7 +226,7 @@ export class APMService {
         platform: platform,
         jadwal_dokter_uuid: body.jadwal_dokter_uuid,
         jadwal_periksa: moment(tanggalPelayananString, "YYYY-MM-DD")
-          .endOf("day")
+          .startOf("day")
           .unix(),
         ...generatedCodes,
       };;
@@ -305,7 +295,9 @@ export class APMService {
       const finalPayload = {
         ...generatedCodes,
         jadwal_dokter_uuid: newJadwalDokterUuid,
-        jadwal_periksa: moment(newTanggalPeriksa, "YYYY-MM-DD").unix(),
+        jadwal_periksa: moment(newTanggalPeriksa, "YYYY-MM-DD")
+          .startOf("day")
+          .unix(),
       };
 
       const pendaftaranTerupdate = await AdmisiClient.updateRawatJalanMobile(
