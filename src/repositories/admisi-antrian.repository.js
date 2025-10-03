@@ -107,32 +107,14 @@ export default class AdmisiAntrianRepository {
     const patientWhere = {};
 
     if (filters.start_date && filters.end_date) {
-      const startOfDay = moment
-        .unix(parseInt(filters.start_date))
-        .startOf("day")
-        .unix();
+      const startDate = moment.unix(filters.start_date).startOf("day").unix(); 
+      const endDate = moment.unix(filters.end_date).endOf("day").unix();
 
-      const endOfDay = moment
-        .unix(parseInt(filters.end_date))
-        .endOf("day")
-        .unix();
-
-      patientWhere.tanggal_daftar = {
-        [Op.between]: [startOfDay, endOfDay],
+      patientWhere.jadwal_periksa = {
+        [Op.between]: [startDate, endDate],
       };
-    } else if (filters.start_date) {
-      const startOfDay = moment
-        .unix(parseInt(filters.start_date))
-        .startOf("day")
-        .unix();
-      patientWhere.tanggal_daftar = { [Op.gte]: startOfDay };
-    } else if (filters.end_date) {
-      const endOfDay = moment
-        .unix(parseInt(filters.end_date))
-        .endOf("day")
-        .unix();
-      patientWhere.tanggal_daftar = { [Op.lte]: endOfDay };
     }
+
 
     if (filters.name) {
       patientWhere.name = { [Op.iLike]: `%${filters.name}%` };
@@ -166,7 +148,7 @@ export default class AdmisiAntrianRepository {
             "payment_method",
             "tanggal_daftar",
             "tanggal_checkin",
-            "jadwal_periksa"
+            "jadwal_periksa",
           ],
           include: [
             {

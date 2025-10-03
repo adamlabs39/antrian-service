@@ -188,7 +188,9 @@ export class APMService {
       throw new Error("API Key untuk layanan Admisi tidak ditemukan.");
     }
 
-    const tanggalPelayananString = moment(body.jadwal_periksa).format("YYYY-MM-DD");
+    const tanggalPelayananString = moment(body.jadwal_periksa).format(
+      "YYYY-MM-DD"
+    );
 
     if (!moment(tanggalPelayananString, "YYYY-MM-DD", true).isValid()) {
       throw new BadRequestException(
@@ -205,6 +207,7 @@ export class APMService {
         {
           faskes_uuid: faskesUuid,
           identity: body.patient_data?.identity,
+          no_rm: body.patient_data?.no_rm,
           no_identity: body.patient_data?.no_identity,
         },
         faskesUuid,
@@ -232,10 +235,11 @@ export class APMService {
       const basePayload = {
         platform: platform,
         jadwal_dokter_uuid: body.jadwal_dokter_uuid,
-        jadwal_periksa: moment(tanggalPelayananString, "YYYY-MM-DD").unix(),
+        jadwal_periksa: moment(tanggalPelayananString, "YYYY-MM-DD")
+          .endOf("day")
+          .unix(),
         ...generatedCodes,
-      };
-
+      };;
       let finalPayload;
       if (isPasienBaru) {
         // Untuk pasien baru
