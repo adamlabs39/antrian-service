@@ -26,7 +26,7 @@ ReportAntrianModel.init(
       allowNull: false,
     },
     tanggalPelayanan: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     jadwalDokterUuid: {

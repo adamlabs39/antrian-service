@@ -101,7 +101,7 @@ export class JadwalDokterRepository {
         (SELECT "jumlah_antrian_aktif"
          FROM "report_antrian"
          WHERE "report_antrian"."jadwal_dokter_uuid" = "jadwal_dokter"."uuid"
-         AND "report_antrian"."tanggal_pelayanan" = CURRENT_DATE),
+         AND "report_antrian"."tanggal_pelayanan" = EXTRACT(EPOCH FROM date_trunc('day', NOW()))::bigint),
         0
       )
     )`

@@ -17,12 +17,14 @@ export class ReportAntrianService {
       );
     }
 
-    const tanggalPelayanan = jadwalPeriksa;
+    const tanggalPelayananEpoch = moment(jadwalPeriksa, "YYYY-MM-DD")
+      .startOf("day")
+      .unix();
     const admisiApiKey = process.env.ADMISI_SECRET_KEY;
 
     const report = await ReportAntrianRepository.findReportByJadwalAndDate(
       jadwalDokterUuid,
-      tanggalPelayanan
+      tanggalPelayananEpoch
     );
 
     if (!report || report.jumlahAntrianAktif <= 0) {

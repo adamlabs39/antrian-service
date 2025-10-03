@@ -29,7 +29,7 @@ export class JadwalDokterService {
     const tanggal = moment(tanggalPelayanan);
     const hariDalamInggris = tanggal.format("dddd");
     const hariDalamIndonesia = ToIndoDay.fromEng(hariDalamInggris);
-
+    const tanggalPelayananEpoch = tanggal.startOf("day").unix();
     const jadwalDasarList = await JadwalDokterRepository.findAllSchedulesByDay({
       faskesUuid,
       dokterUuid,
@@ -45,7 +45,7 @@ export class JadwalDokterService {
       jadwalDasarList.map(async (jadwalDasar) => {
         const report = await ReportAntrianRepository.findOrCreateReport({
           jadwalDokter: jadwalDasar,
-          tanggalPelayanan: tanggal.format("YYYY-MM-DD"),
+          tanggalPelayanan: tanggalPelayananEpoch,
         });
 
         return {
