@@ -107,11 +107,9 @@ export default class AdmisiAntrianRepository {
     const patientWhere = {};
 
     if (filters.start_date && filters.end_date) {
-      const startDate = moment.unix(filters.start_date).startOf("day").unix(); 
-      const endDate = moment.unix(filters.end_date).endOf("day").unix();
-
       patientWhere.jadwal_periksa = {
-        [Op.between]: [startDate, endDate],
+        [Op.gte]: filters.start_date,
+        [Op.lte]: filters.end_date,
       };
     }
 
