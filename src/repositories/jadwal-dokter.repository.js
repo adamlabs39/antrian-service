@@ -11,7 +11,14 @@ import { FormatterService } from "../services/formatter.service.js";
 import { ToIndoDay } from "../helpers/to-indo-day.js";
 
 export class JadwalDokterRepository {
-  static _buildCommonQueryOptions() {
+  static _buildCommonQueryOptions(filters = {}) {
+    let tanggalFilterSql;
+    if (filters.tanggal) {
+      const tanggalEpoch = BigInt(filters.tanggal);
+      tanggalFilterSql = `${tanggalEpoch}`;
+    } else {
+      tanggalFilterSql = "EXTRACT(EPOCH FROM date_trunc('day', NOW()))::bigint";
+    }
     return {
       attributes: [
         // Get the uuid - group by this
@@ -101,7 +108,7 @@ export class JadwalDokterRepository {
         (SELECT "jumlah_antrian_aktif"
          FROM "report_antrian"
          WHERE "report_antrian"."jadwal_dokter_uuid" = "jadwal_dokter"."uuid"
-         AND "report_antrian"."tanggal_pelayanan" = EXTRACT(EPOCH FROM date_trunc('day', NOW()))::bigint),
+         AND "report_antrian"."tanggal_pelayanan" = ${tanggalFilterSql}),
         0
       )
     )`
@@ -171,7 +178,7 @@ export class JadwalDokterRepository {
       whereClause["$jadwal_dokter.status$"] = filters.aktif;
     }
 
-    const commonOptions = this._buildCommonQueryOptions();
+    const commonOptions = this._buildCommonQueryOptions(filters);
 
     const { count, rows: result } = await PractitionerModel.findAndCountAll({
       ...commonOptions,
@@ -253,7 +260,7 @@ export class JadwalDokterRepository {
       whereClause["$jadwal_dokter.status$"] = filters.aktif;
     }
 
-    const commonOptions = this._buildCommonQueryOptions();
+    const commonOptions = this._buildCommonQueryOptions(filters);
 
     const queryOptions = {
       ...commonOptions,
@@ -285,6 +292,8 @@ export class JadwalDokterRepository {
       jadwal_dokter: row.jadwal_dokter_ids.map((uuid, index) => {
         const total_kuota = row.jadwal_dokter_kuotas[index];
         const jumlah_terdaftar = row.jadwal_dokter_terdaftar[index];
+        console.log("total_kuota", total_kuota);
+        console.log("jumlah_terdaftar", jumlah_terdaftar);
 
         return {
           jadwal_dokter_uuid: uuid,

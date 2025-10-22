@@ -230,6 +230,7 @@ export class APMService {
           .unix(),
         ...generatedCodes,
       };;
+      console.log("base payload from mobile", basePayload);
       let finalPayload;
       if (isPasienBaru) {
         // Untuk pasien baru
@@ -237,6 +238,7 @@ export class APMService {
           ...basePayload,
           patient_data: body.patient_data,
         };
+        console.log("final payload pasien baru", finalPayload);
       } else {
         // Pasien lama
         finalPayload = {
@@ -246,6 +248,7 @@ export class APMService {
             patient_uuid: checkResult.uuid,
           },
         };
+        console.log("final payload pasien lama", finalPayload);
       }
 
       const pendaftaran = await AdmisiClient.createRawatJalanMobile(
@@ -299,6 +302,7 @@ export class APMService {
           .startOf("day")
           .unix(),
       };
+      console.log("final payload update mobile", finalPayload);
 
       const pendaftaranTerupdate = await AdmisiClient.updateRawatJalanMobile(
         appointmentUuid,
@@ -306,6 +310,7 @@ export class APMService {
         faskesUuid,
         admisiApiKey
       );
+      console.log("pendaftaran terupdate", pendaftaranTerupdate);
 
       return pendaftaranTerupdate;
     });
